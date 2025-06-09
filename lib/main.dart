@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'login_page.dart';
 import 'customer_signup.dart';
 import 'merchant_signup.dart';
@@ -9,8 +12,34 @@ import 'store_profile_page.dart';
 import 'customer_profile_page.dart';
 import 'store_details_page.dart';
 import 'queue_status_page.dart';
+import 'notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    // Check if Firebase is already initialized to prevent duplicate app error
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (e) {
+      if (e.toString().contains('duplicate-app')) {
+        print('Firebase already initialized, continuing...');
+      } else {
+        print('Firebase initialization error: $e');
+        rethrow;
+      }
+    }
+    
+    print('Firebase initialized successfully');
+    
+    // Initialize notifications on all platforms
+    await NotificationService.initialize();
+  } catch (e) {
+    print('Setup error: $e');
+  }
+  
   runApp(const MyApp());
 }
 

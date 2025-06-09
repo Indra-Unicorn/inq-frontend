@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "42201685589",
+    "project_id": "get-inq-3544b",
+    "storage_bucket": "get-inq-3544b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:42201685589:android:17b8ef9d354aaf17b77edc",
+        "android_client_info": {
+          "package_name": "com.example.inq"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA22vltw2MiY5q41ACpdzF-4BuwhgL4iJQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
