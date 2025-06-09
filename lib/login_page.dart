@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Add this import for clipboard functionality
 import 'google_logo_painter.dart'; // Import custom painter if needed
-import 'notification_service.dart';
+import 'fcm_token_page.dart'; // Import the new FCM token page
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,8 +12,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _tokenController = TextEditingController(); // Add token controller
-  String? _fcmToken; // Store the FCM token
 
   @override
   void initState() {
@@ -26,47 +23,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   void dispose() {
     _tabController.dispose();
     _phoneController.dispose();
-    _tokenController.dispose(); // Dispose token controller
     super.dispose();
-  }
-
-  // Method to get and display FCM token
-  Future<void> _getFCMToken() async {
-    try {
-      String? token = await NotificationService.getToken();
-      setState(() {
-        _fcmToken = token;
-        _tokenController.text = token ?? 'No token received';
-      });
-      print('FCM Token: $token');
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('FCM Token retrieved successfully!'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error getting FCM token: $e'),
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
-  }
-
-  // Method to copy token to clipboard
-  void _copyTokenToClipboard() {
-    if (_fcmToken != null && _fcmToken!.isNotEmpty) {
-      Clipboard.setData(ClipboardData(text: _fcmToken!));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Token copied to clipboard!'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
   }
 
   @override
@@ -76,119 +33,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       body: SafeArea(
         child: Column(
           children: [
-            // FCM Token Testing Section
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              margin: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1E9EA),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE3D4D4)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'FCM Token Testing',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF191010),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Token display text field
-                  TextField(
-                    controller: _tokenController,
-                    readOnly: true,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: 'FCM Token will appear here...',
-                      hintStyle: const TextStyle(
-                        color: Color(0xFF8B5B5C),
-                        fontSize: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE3D4D4),
-                        ),
-                      ),
-                      suffixIcon: _fcmToken != null
-                          ? IconButton(
-                              icon: Icon(Icons.copy, color: Color(0xFF8B5B5C)),
-                              onPressed: _copyTokenToClipboard,
-                              tooltip: 'Copy token',
-                            )
-                          : null,
-                    ),
-                    style: const TextStyle(
-                      color: Color(0xFF191010),
-                      fontSize: 12,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Action buttons row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _getFCMToken,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE9B8BA),
-                            foregroundColor: const Color(0xFF191010),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'Get FCM Token',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await NotificationService.showTestNotification();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Test notification sent')),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF1E9EA),
-                            foregroundColor: const Color(0xFF191010),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'Test Notification',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             
             // Header
             Container(
@@ -298,7 +142,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               ),
               
               const SizedBox(height: 12),
-              
+              // Button to navigate to the FCM Token Page
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => const FCMTokenPage())
+                  );
+                },
+                child: const Text('Go to FCM Token Page'),
+              ),
+            ),
               // Sign up link
               GestureDetector(
                 onTap: () {
