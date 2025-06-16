@@ -1,18 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'login_page.dart';
-import 'customer_signup.dart';
-import 'merchant_signup.dart';
-import 'customer_dashboard.dart';
-import 'merchant_dashboard.dart';
-import 'customer_queues.dart';
-import 'store_profile_page.dart';
-import 'customer_profile_page.dart';
-import 'store_details_page.dart';
-import 'queue_status_page.dart';
-import 'notification_service.dart';
+import 'config/firebase_options.dart';
+import 'features/auth/login_page.dart';
+import 'features/auth/customer_signup.dart';
+import 'features/auth/merchant_signup.dart';
+import 'features/customer/customer_dashboard.dart';
+import 'features/merchant/merchant_dashboard.dart';
+import 'features/customer/customer_queues.dart';
+import 'features/merchant/store_profile_page.dart';
+import 'features/customer/customer_profile_page.dart';
+import 'features/merchant/store_details_page.dart';
+import 'features/queue/queue_status_page.dart';
+import 'features/merchant/merchant_profile.dart';
+import 'features/merchant/queue_management.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +51,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Queue Management',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -59,6 +62,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const LoginPage(),
       routes: {
+        '/login': (context) => const LoginPage(),
         '/customer-signup': (context) => const CustomerSignUpPage(),
         '/merchant-signup': (context) => const MerchantSignUpPage(),
         '/customer-dashboard': (context) => const CustomerDashboard(),
@@ -66,7 +70,12 @@ class MyApp extends StatelessWidget {
         '/customer-queues': (context) => const CustomerQueuesPage(),
         '/store-profile': (context) => const StoreProfilePage(),
         '/customer-profile': (context) => const CustomerProfilePage(),
+        '/merchant-profile': (context) => const MerchantProfile(),
         '/queue-status': (context) => const QueueStatusPage(),
+        '/queue-management': (context) {
+          final queue = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return QueueManagement(queue: queue);
+        },
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/store-details') {
