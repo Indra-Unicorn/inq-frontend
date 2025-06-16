@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import '../Customer/Screens/dashboard/customer_dashboard.dart';
 
 class StoreDetailsPage extends StatefulWidget {
   final String storeName;
   final String storeAddress;
-  final String storeImage;
+  final String? storeImage;
+  final List<Map<String, dynamic>> queues;
 
   const StoreDetailsPage({
     super.key,
-    this.storeName = 'Tech Haven',
-    this.storeAddress = '123 Main Street, Anytown, USA',
-    this.storeImage = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=300&fit=crop',
+    required this.storeName,
+    required this.storeAddress,
+    this.storeImage,
+    required this.queues,
   });
 
   @override
@@ -19,26 +22,24 @@ class StoreDetailsPage extends StatefulWidget {
 class _StoreDetailsPageState extends State<StoreDetailsPage> {
   int _selectedIndex = 1; // Set to 1 since this is accessed from stores
 
-  final List<StoreQueue> storeQueues = [
-    StoreQueue(
-      name: 'Customer Service',
-      estimatedWait: 'Estimated wait: 15 minutes',
-      icon: Icons.people_outline,
-    ),
-    StoreQueue(
-      name: 'Product Returns',
-      estimatedWait: 'Estimated wait: 20 minutes',
-      icon: Icons.inventory_2_outlined,
-    ),
-    StoreQueue(
-      name: 'New Purchases',
-      estimatedWait: 'Estimated wait: 10 minutes',
-      icon: Icons.shopping_cart_outlined,
-    ),
-  ];
+  List<MerchantQueue> get _parsedQueues {
+    return widget.queues.map((queue) => MerchantQueue(
+      id: queue['id'] as String,
+      name: queue['name'] as String,
+      merchantId: queue['merchantId'] as String,
+      merchantName: queue['merchantName'] as String,
+      status: queue['status'] as String,
+      processed: queue['processed'] as int,
+      size: queue['size'] as int,
+      createdAt: DateTime.parse(queue['createdAt'] as String),
+      updatedAt: DateTime.parse(queue['updatedAt'] as String),
+    )).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final queues = _parsedQueues;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -93,10 +94,13 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                       child: Container(
                         height: 218,
                         decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(widget.storeImage),
-                            fit: BoxFit.cover,
-                          ),
+                          color: const Color(0xFFF4F0F0),
+                          image: widget.storeImage != null
+                              ? DecorationImage(
+                                  image: NetworkImage(widget.storeImage!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
                         child: Container(
                           decoration: const BoxDecoration(
@@ -161,55 +165,90 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
 
                   // Queue List
                   Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: storeQueues.length,
-                      itemBuilder: (context, index) {
-                        final queue = storeQueues[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                            leading: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF4F0F0),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                queue.icon,
-                                color: const Color(0xFF181111),
-                                size: 24,
-                              ),
-                            ),
-                            title: Text(
-                              queue.name,
-                              style: const TextStyle(
-                                color: Color(0xFF181111),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            subtitle: Text(
-                              queue.estimatedWait,
-                              style: const TextStyle(
+                    child: queues.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No active queues',
+                              style: TextStyle(
                                 color: Color(0xFF886364),
-                                fontSize: 14,
+                                fontSize: 16,
                               ),
                             ),
-                            trailing: const Icon(
-                              Icons.arrow_forward_ios,
-                              color: Color(0xFF181111),
-                              size: 16,
-                            ),
-                            onTap: () {
-                              _joinQueue(queue);
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: queues.length,
+                            itemBuilder: (context, index) {
+                              final queue = queues[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                  leading: Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF4F0F0),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      _getQueueIcon(queue.name),
+                                      color: const Color(0xFF181111),
+                                      size: 24,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    queue.name,
+                                    style: const TextStyle(
+                                      color: Color(0xFF181111),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Queue Size: ${queue.size}',
+                                        style: const TextStyle(
+                                          color: Color(0xFF886364),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Processed: ${queue.processed}',
+                                        style: const TextStyle(
+                                          color: Color(0xFF886364),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: queue.status == 'OPEN'
+                                          ? const Color(0xFF4CAF50)
+                                          : const Color(0xFFF44336),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      queue.status,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  onTap: () => _joinQueue(queue),
+                                ),
+                              );
                             },
                           ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ),
@@ -271,7 +310,20 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
     );
   }
 
-  void _joinQueue(StoreQueue queue) {
+  IconData _getQueueIcon(String queueName) {
+    final name = queueName.toLowerCase();
+    if (name.contains('service')) {
+      return Icons.people_outline;
+    } else if (name.contains('return')) {
+      return Icons.inventory_2_outlined;
+    } else if (name.contains('purchase')) {
+      return Icons.shopping_cart_outlined;
+    } else {
+      return Icons.queue_outlined;
+    }
+  }
+
+  void _joinQueue(MerchantQueue queue) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -283,11 +335,30 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          content: Text(
-            'Do you want to join the ${queue.name} queue at ${widget.storeName}?\n\n${queue.estimatedWait}',
-            style: const TextStyle(
-              color: Color(0xFF886364),
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Do you want to join the ${queue.name} queue at ${widget.storeName}?',
+                style: const TextStyle(
+                  color: Color(0xFF886364),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Current Queue Size: ${queue.size}',
+                style: const TextStyle(
+                  color: Color(0xFF886364),
+                ),
+              ),
+              Text(
+                'Processed: ${queue.processed}',
+                style: const TextStyle(
+                  color: Color(0xFF886364),
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -324,16 +395,4 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       },
     );
   }
-}
-
-class StoreQueue {
-  final String name;
-  final String estimatedWait;
-  final IconData icon;
-
-  StoreQueue({
-    required this.name,
-    required this.estimatedWait,
-    required this.icon,
-  });
 }

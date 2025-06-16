@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
-import 'customer_signup.dart';
-import 'merchant_signup.dart';
-import 'customer_dashboard.dart';
-import 'merchant_dashboard.dart';
-import 'customer_queues.dart';
-import 'store_profile_page.dart';
-import 'customer_profile_page.dart';
-import 'store_details_page.dart';
+import 'Common/login_page.dart';
+import 'Customer/Screens/Auth/customer_signup.dart';
+import 'merchant/merchant_signup.dart';
+import 'Customer/Screens/dashboard/customer_dashboard.dart';
+import 'merchant/merchant_dashboard.dart';
+import 'Customer/Screens/customer_queues.dart';
+import 'Common/store_profile_page.dart';
+import 'Customer/Screens/Auth/customer_profile_page.dart';
 import 'queue_status_page.dart';
+import 'Common/store_details_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,12 +41,13 @@ class MyApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/store-details') {
-          final args = settings.arguments as Map<String, String>?;
+          final args = settings.arguments as Map<String, dynamic>?;
           return MaterialPageRoute(
             builder: (context) => StoreDetailsPage(
-              storeName: args?['storeName'] ?? 'Store',
-              storeAddress: args?['storeAddress'] ?? 'Address',
-              storeImage: args?['storeImage'] ?? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=300&fit=crop',
+              storeName: args?['storeName'] as String? ?? 'Store',
+              storeAddress: args?['storeAddress'] as String? ?? 'Address',
+              storeImage: args?['storeImage'] as String?,
+              queues: args?['queues'] as List<Map<String, dynamic>>? ?? [],
             ),
           );
         }

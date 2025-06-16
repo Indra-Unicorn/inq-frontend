@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../config.dart';
 
 class StoreProfilePage extends StatefulWidget {
   const StoreProfilePage({super.key});
@@ -97,9 +100,9 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Store Name and Status
                           Column(
                             children: [
@@ -130,7 +133,10 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
 
                     // Store Details Section
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                       alignment: Alignment.centerLeft,
                       child: const Text(
                         'Store Details',
@@ -153,20 +159,20 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
                             label: 'Store Name',
                             controller: _storeNameController,
                           ),
-                          
+
                           // Address Field
                           _buildLabeledInputField(
                             label: 'Address',
                             controller: _addressController,
                           ),
-                          
+
                           // Phone Field
                           _buildLabeledInputField(
                             label: 'Phone',
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                           ),
-                          
+
                           // Email Field
                           _buildLabeledInputField(
                             label: 'Email',
@@ -188,7 +194,10 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
               children: [
                 // Save Changes Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12,
+                  ),
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 480),
                     width: double.infinity,
@@ -216,10 +225,13 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
                     ),
                   ),
                 ),
-                
+
                 // Logout Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8,
+                  ),
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 480),
                     width: double.infinity,
@@ -242,7 +254,7 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
               ],
             ),
@@ -302,34 +314,49 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
                 ),
               ),
               contentPadding: const EdgeInsets.all(15),
-              hintStyle: const TextStyle(
-                color: Color(0xFF886364),
-              ),
+              hintStyle: const TextStyle(color: Color(0xFF886364)),
             ),
-            style: const TextStyle(
-              color: Color(0xFF181111),
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Color(0xFF181111), fontSize: 16),
           ),
         ],
       ),
     );
   }
 
-  void _saveChanges() {
-    // Handle save changes logic
-    print('Saving changes...');
-    print('Store Name: ${_storeNameController.text}');
-    print('Address: ${_addressController.text}');
-    print('Phone: ${_phoneController.text}');
-    print('Email: ${_emailController.text}');
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Store profile updated successfully'),
-        backgroundColor: Color(0xFFE82630),
-      ),
-    );
+  Future<void> _saveChanges() async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/users/merchant/profile'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'shopName': _storeNameController.text,
+          'address': _addressController.text,
+          'phoneNumber': _phoneController.text,
+          'email': _emailController.text,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Store profile updated successfully'),
+            backgroundColor: Color(0xFFE82630),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? 'Failed to update profile'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   void _showLogoutDialog() {
@@ -346,9 +373,7 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
           ),
           content: const Text(
             'Are you sure you want to logout?',
-            style: TextStyle(
-              color: Color(0xFF886364),
-            ),
+            style: TextStyle(color: Color(0xFF886364)),
           ),
           actions: [
             TextButton(
@@ -357,9 +382,7 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
               },
               child: const Text(
                 'Cancel',
-                style: TextStyle(
-                  color: Color(0xFF886364),
-                ),
+                style: TextStyle(color: Color(0xFF886364)),
               ),
             ),
             ElevatedButton(
@@ -367,8 +390,8 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
                 Navigator.of(context).pop();
                 // Navigate to login page and clear all previous routes
                 Navigator.pushNamedAndRemoveUntil(
-                  context, 
-                  '/', 
+                  context,
+                  '/',
                   (route) => false,
                 );
               },

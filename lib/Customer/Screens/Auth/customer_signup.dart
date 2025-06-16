@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../../config.dart';
 
 class CustomerSignUpPage extends StatefulWidget {
   const CustomerSignUpPage({super.key});
@@ -9,17 +12,63 @@ class CustomerSignUpPage extends StatefulWidget {
 
 class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
   final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+  String? _sessionId;
+  bool _isInitiated = false;
 
   @override
   void dispose() {
     _fullNameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
+    _otpController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initiateSignup() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/signup/customer/phone/initiate'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'name': _fullNameController.text,
+        'phoneNumber': _phoneController.text,
+      }),
+    );
+    final data = jsonDecode(response.body);
+    if (data['success'] == true) {
+      setState(() {
+        _sessionId = data['data']['session_id'];
+        _isInitiated = true;
+      });
+    } else {
+      // Handle error, e.g., show a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data['message'] ?? 'Failed to initiate signup')),
+      );
+    }
+  }
+
+  Future<void> _verifySignup() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/signup/customer/phone'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'name': _fullNameController.text,
+        'sessionId': _sessionId,
+        'phone': _phoneController.text,
+        'otp': _otpController.text,
+      }),
+    );
+    final data = jsonDecode(response.body);
+    if (data['success'] == true) {
+      // Navigate to customer dashboard after successful signup
+      Navigator.pushReplacementNamed(context, '/customer-dashboard');
+    } else {
+      // Handle error, e.g., show a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data['message'] ?? 'Failed to verify signup')),
+      );
+    }
   }
 
   @override
@@ -62,7 +111,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                 ],
               ),
             ),
-            
+
             // Form fields
             Expanded(
               child: SingleChildScrollView(
@@ -70,49 +119,39 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
-                    
+
                     // Full Name
                     _buildInputField(
                       controller: _fullNameController,
                       placeholder: 'Full Name',
                     ),
-                    
-                    // Email
-                    _buildInputField(
-                      controller: _emailController,
-                      placeholder: 'Email',
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    
+
                     // Phone
                     _buildInputField(
                       controller: _phoneController,
                       placeholder: 'Phone',
                       keyboardType: TextInputType.phone,
                     ),
-                    
-                    // Password
-                    _buildInputField(
-                      controller: _passwordController,
-                      placeholder: 'Password',
-                      obscureText: true,
-                    ),
-                    
+
+                    if (_isInitiated) ...[
+                      // OTP
+                      _buildInputField(
+                        controller: _otpController,
+                        placeholder: 'Enter OTP',
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+
                     const SizedBox(height: 12),
-                    
+
                     // Sign Up Button
                     Container(
                       constraints: const BoxConstraints(maxWidth: 480),
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          print('Customer Sign Up');
-                          print('Name: ${_fullNameController.text}');
-                          print('Email: ${_emailController.text}');
-                          print('Phone: ${_phoneController.text}');
-                          // Navigate to customer dashboard after successful signup
-                          Navigator.pushReplacementNamed(context, '/customer-dashboard');
-                        },
+                        onPressed: _isInitiated
+                            ? _verifySignup
+                            : _initiateSignup,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE8B4B7),
                           foregroundColor: const Color(0xFF171212),
@@ -122,9 +161,9 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                           ),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(
+                        child: Text(
+                          _isInitiated ? 'Verify OTP' : 'Sign Up',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.015,
@@ -132,9 +171,9 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Login link
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
@@ -148,13 +187,16 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Merchant signup link
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushReplacementNamed(context, '/merchant-signup');
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/merchant-signup',
+                        );
                       },
                       child: const Text(
                         'Are you a merchant? Sign Up',
@@ -166,7 +208,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -193,10 +235,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(
-            color: Color(0xFF82686A),
-            fontSize: 16,
-          ),
+          hintStyle: const TextStyle(color: Color(0xFF82686A), fontSize: 16),
           filled: true,
           fillColor: const Color(0xFFF4F1F1),
           border: OutlineInputBorder(
@@ -213,10 +252,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
           ),
           contentPadding: const EdgeInsets.all(16),
         ),
-        style: const TextStyle(
-          color: Color(0xFF171212),
-          fontSize: 16,
-        ),
+        style: const TextStyle(color: Color(0xFF171212), fontSize: 16),
       ),
     );
   }

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../config.dart';
 
 class MerchantSignUpPage extends StatefulWidget {
   const MerchantSignUpPage({super.key});
@@ -13,7 +16,8 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _shopNameController = TextEditingController();
-  final TextEditingController _streetAddressController = TextEditingController();
+  final TextEditingController _streetAddressController =
+      TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
@@ -74,7 +78,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                 ],
               ),
             ),
-            
+
             // Form fields
             Expanded(
               child: SingleChildScrollView(
@@ -101,57 +105,51 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                       placeholder: 'Phone',
                       keyboardType: TextInputType.phone,
                     ),
-                    
+
                     _buildInputField(
                       controller: _passwordController,
                       placeholder: 'Password',
                       obscureText: true,
                     ),
-                    
+
                     _buildInputField(
                       controller: _shopNameController,
                       placeholder: 'Shop name',
                     ),
-                    
+
                     _buildInputField(
                       controller: _streetAddressController,
                       placeholder: 'Street address',
                     ),
-                    
+
                     _buildInputField(
                       controller: _cityController,
                       placeholder: 'City',
                     ),
-                    
+
                     _buildInputField(
                       controller: _countryController,
                       placeholder: 'Country',
                     ),
-                    
+
                     _buildInputField(
                       controller: _stateController,
                       placeholder: 'State',
                     ),
-                    
+
                     _buildInputField(
                       controller: _postalCodeController,
                       placeholder: 'Postal code',
                     ),
 
                     const SizedBox(height: 12),
-                    
+
                     // Sign Up Button
                     Container(
                       constraints: const BoxConstraints(maxWidth: 480),
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Handle merchant sign up logic
-                          print('Merchant Sign Up');
-                          print('Name: ${_fullNameController.text}');
-                          print('Email: ${_emailController.text}');
-                          print('Shop: ${_shopNameController.text}');
-                        },
+                        onPressed: _signup,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE8B4B7),
                           foregroundColor: const Color(0xFF171212),
@@ -171,9 +169,9 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Instructions and other links
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
@@ -187,12 +185,15 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushReplacementNamed(context, '/customer-signup');
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/customer-signup',
+                        );
                       },
                       child: const Text(
                         'Sign up as a customer',
@@ -204,7 +205,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -214,6 +215,41 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _signup() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/signup/merchant'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': _fullNameController.text,
+          'email': _emailController.text,
+          'phoneNumber': _phoneController.text,
+          'password': _passwordController.text,
+          'shopName': _shopNameController.text,
+          'address': {
+            'streetAddress': _streetAddressController.text,
+            'city': _cityController.text,
+            'state': _stateController.text,
+            'country': _countryController.text,
+            'postalCode': _postalCodeController.text,
+          },
+        }),
+      );
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        Navigator.pushReplacementNamed(context, '/merchant-dashboard');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Failed to sign up')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 
   Widget _buildInputField({
@@ -231,10 +267,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(
-            color: Color(0xFF82686A),
-            fontSize: 16,
-          ),
+          hintStyle: const TextStyle(color: Color(0xFF82686A), fontSize: 16),
           filled: true,
           fillColor: const Color(0xFFF4F1F1),
           border: OutlineInputBorder(
@@ -251,10 +284,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
           ),
           contentPadding: const EdgeInsets.all(16),
         ),
-        style: const TextStyle(
-          color: Color(0xFF171212),
-          fontSize: 16,
-        ),
+        style: const TextStyle(color: Color(0xFF171212), fontSize: 16),
       ),
     );
   }
