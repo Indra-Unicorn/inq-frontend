@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import '../../shared/constants/api_endpoints.dart';
+import '../../shared/constants/app_constants.dart';
 
 class CustomerProfilePage extends StatefulWidget {
   const CustomerProfilePage({super.key});
@@ -8,6 +14,66 @@ class CustomerProfilePage extends StatefulWidget {
 }
 
 class _CustomerProfilePageState extends State<CustomerProfilePage> {
+  bool _isLoading = true;
+  Map<String, dynamic>? _userData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(AppConstants.tokenKey);
+
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      // Decode JWT token to get memberId
+      final decodedToken = JwtDecoder.decode(token);
+      final memberId = decodedToken['memberId'];
+
+      if (memberId == null) {
+        throw Exception('Invalid token');
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.getUserById}/$memberId'),
+        headers: {
+          'accept': '*/*',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('API Response Status: ${response.statusCode}');
+      print('API Response Body: ${response.body}');
+
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        setState(() {
+          _userData = data['data'];
+          _isLoading = false;
+        });
+      } else {
+        throw Exception(data['message'] ?? 'Failed to load user data');
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,113 +117,88 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
             // Content
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Profile Section
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          // Profile Image
-                          Container(
-                            width: 128,
-                            height: 128,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(64),
-                              image: const DecorationImage(
-                                image: NetworkImage(
-                                  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
-                                ),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 16),
-                          
-                          // User Name and Member Info
-                          Column(
+              child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Profile Section
+                        Container(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
                             children: [
-                              const Text(
-                                'Sophia Carter',
-                                style: TextStyle(
-                                  color: Color(0xFF181111),
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.015,
+                              // Profile Image
+                              Container(
+                                width: 128,
+                                height: 128,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(64),
+                                  image: DecorationImage(
+                                    image: NetworkImage(
+                                      _userData?['profileImage'] ?? 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                                textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Member since 2022',
-                                style: TextStyle(
-                                  color: Color(0xFF886364),
-                                  fontSize: 16,
-                                ),
-                                textAlign: TextAlign.center,
+                              
+                              const SizedBox(height: 16),
+                              
+                              // User Name and Member Info
+                              Column(
+                                children: [
+                                  Text(
+                                    _userData?['name'] ?? 'User Name',
+                                    style: const TextStyle(
+                                      color: Color(0xFF181111),
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.015,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Member since ${_userData?['createdAt']?.toString().substring(0, 4) ?? '2024'}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF886364),
+                                      fontSize: 16,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (_userData?['phoneNumber'] != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _userData!['phoneNumber'],
+                                      style: const TextStyle(
+                                        color: Color(0xFF886364),
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                  if (_userData?['inQoin'] != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${_userData!['inQoin']} inQoins',
+                                      style: const TextStyle(
+                                        color: Color(0xFF886364),
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-
-                    // Account Section
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
-                        'Account',
-                        style: TextStyle(
-                          color: Color(0xFF181111),
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.015,
                         ),
-                      ),
-                    ),
 
-                    // Menu Items
-                    _buildMenuItem(
-                      icon: Icons.person_outline,
-                      title: 'Edit Profile',
-                      onTap: () {
-                        // Navigate to edit profile
-                        print('Navigate to edit profile');
-                      },
+                        // Add bottom padding to prevent overlap with logout button
+                        const SizedBox(height: 100),
+                      ],
                     ),
-                    _buildMenuItem(
-                      icon: Icons.notifications_none,
-                      title: 'Notifications',
-                      onTap: () {
-                        // Navigate to notifications
-                        print('Navigate to notifications');
-                      },
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.credit_card_outlined,
-                      title: 'Payment Methods',
-                      onTap: () {
-                        // Navigate to payment methods
-                        print('Navigate to payment methods');
-                      },
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.help_outline,
-                      title: 'Help',
-                      onTap: () {
-                        // Navigate to help
-                        print('Navigate to help');
-                      },
-                    ),
-
-                    // Add bottom padding to prevent overlap with logout button
-                    const SizedBox(height: 100),
-                  ],
-                ),
-              ),
+                  ),
             ),
 
             // Bottom Section with Logout
@@ -203,46 +244,6 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     );
   }
 
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F0F0),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: const Color(0xFF181111),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Color(0xFF181111),
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showLogoutDialog() {
     showDialog(
       context: context,
@@ -274,14 +275,37 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Navigate to login page and clear all previous routes
-                Navigator.pushNamedAndRemoveUntil(
-                  context, 
-                  '/', 
-                  (route) => false,
-                );
+              onPressed: () async {
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  // Set isLoggedIn to false
+                  await prefs.setBool('isLoggedIn', false);
+                  // Remove the JWT token
+                  await prefs.remove(AppConstants.tokenKey);
+                  // Clear all other stored data
+                  await prefs.clear();
+                  
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                    // Navigate to login page and clear all previous routes
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      '/', 
+                      (route) => false,
+                    );
+                  }
+                } catch (e) {
+                  print('Logout error: $e');
+                  // Even if there's an error, try to navigate to login
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      '/', 
+                      (route) => false,
+                    );
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE82630),

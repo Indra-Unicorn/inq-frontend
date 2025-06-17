@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'services/queue_service.dart';
+import 'models/customer_queue_summary.dart';
 
 class CustomerQueuesPage extends StatefulWidget {
   const CustomerQueuesPage({super.key});
@@ -8,28 +10,35 @@ class CustomerQueuesPage extends StatefulWidget {
 }
 
 class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
-  int _selectedIndex = 1; // Set to 1 since this is the "Queues" tab
+  final QueueService _queueService = QueueService();
+  CustomerQueueSummary? _queueSummary;
+  bool _isLoading = true;
+  String? _error;
 
-  final List<ActiveQueue> activeQueues = [
-    ActiveQueue(
-      storeName: 'Tech Haven',
-      estimatedWait: 'Estimated wait: 15 min',
-      imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchQueueSummary();
+  }
 
-  final List<PastQueue> pastQueues = [
-    PastQueue(
-      storeName: 'Fashion Emporium',
-      joinedTime: 'Joined: 10:00 AM',
-      imageUrl: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=100&h=100&fit=crop',
-    ),
-    PastQueue(
-      storeName: 'Home & Decor',
-      joinedTime: 'Joined: 11:30 AM',
-      imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=100&h=100&fit=crop',
-    ),
-  ];
+  Future<void> _fetchQueueSummary() async {
+    try {
+      final summary = await _queueService.getCustomerQueueSummary();
+      if (mounted) {
+        setState(() {
+          _queueSummary = summary;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +47,7 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header with back button
+            // Header
             Container(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -55,9 +64,9 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: const Text(
-                      'Queues',
+                  const Expanded(
+                    child: Text(
+                      'My Queues',
                       style: TextStyle(
                         color: Color(0xFF181111),
                         fontSize: 18,
@@ -72,197 +81,227 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
               ),
             ),
 
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Active Section
-                    if (activeQueues.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        alignment: Alignment.centerLeft,
-                        child: const Text(
-                          'Active',
-                          style: TextStyle(
-                            color: Color(0xFF181111),
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.015,
-                          ),
+            // Active Queues Section
+            if (_queueSummary?.customerQueues.isNotEmpty ?? false) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                alignment: Alignment.centerLeft,
+                child: const Text(
+                  'Active Queues',
+                  style: TextStyle(
+                    color: Color(0xFF181111),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.015,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _queueSummary!.customerQueues.length,
+                  itemBuilder: (context, index) {
+                    final queue = _queueSummary!.customerQueues[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Card(
+                        elevation: 0,
+                        color: const Color(0xFFF4F0F0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-
-                      // Active Queue List
-                      ...activeQueues.map((queue) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                          leading: Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: DecorationImage(
-                                image: NetworkImage(queue.imageUrl),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
+                          contentPadding: const EdgeInsets.all(16),
                           title: Text(
-                            queue.storeName,
+                            queue.queueName ?? 'Queue ${index + 1}',
                             style: const TextStyle(
                               color: Color(0xFF181111),
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          subtitle: Text(
-                            queue.estimatedWait,
-                            style: const TextStyle(
-                              color: Color(0xFF886364),
-                              fontSize: 14,
-                            ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                'Current Position: ${queue.currentRank}',
+                                style: const TextStyle(
+                                  color: Color(0xFF886364),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Queue Size: ${queue.currentQueueSize}',
+                                style: const TextStyle(
+                                  color: Color(0xFF886364),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              if (queue.comment != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Comment: ${queue.comment}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF886364),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                              if (queue.inQoinCharged > 0) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'inQoin Charged: ${queue.inQoinCharged}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF886364),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          onTap: () {
-                            // Navigate to queue status page
-                            Navigator.pushNamed(context, '/queue-status');
-                          },
-                        ),
-                      )),
-                    ],
-
-                    // Past Section
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
-                        'Past',
-                        style: TextStyle(
-                          color: Color(0xFF181111),
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.015,
+                          trailing: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/queue-status',
+                                arguments: {
+                                  'queueId': queue.qid,
+                                  'queueName': queue.queueName ?? 'Queue ${index + 1}',
+                                  'queueData': queue,
+                                },
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE9B8BA),
+                              foregroundColor: const Color(0xFF191010),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('View Status'),
+                          ),
                         ),
                       ),
-                    ),
-
-                    // Past Queue List
-                    ...pastQueues.map((queue) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                        leading: Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: NetworkImage(queue.imageUrl),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        title: Text(
-                          queue.storeName,
-                          style: const TextStyle(
-                            color: Color(0xFF181111),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        subtitle: Text(
-                          queue.joinedTime,
-                          style: const TextStyle(
-                            color: Color(0xFF886364),
-                            fontSize: 14,
-                          ),
-                        ),
-                        onTap: () {
-                          // Show queue history details
-                          print('Show details for ${queue.storeName}');
-                        },
-                      ),
-                    )),
-
-                    const SizedBox(height: 80), // Add bottom padding for navigation bar
-                  ],
+                    );
+                  },
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
 
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: Color(0xFFF4F0F0),
-              width: 1,
-            ),
-          ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-            
-            if (index == 0) {
-              Navigator.pop(context);
-            } else if (index == 2) {
-              Navigator.pushNamed(context, '/customer-profile');
-            }
-          },
-          backgroundColor: Colors.white,
-          selectedItemColor: const Color(0xFF181111),
-          unselectedItemColor: const Color(0xFF886364),
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.list),
-              label: 'Queues',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: 'Profile',
-            ),
+            // Past Queues Section
+            if (_queueSummary?.customerPastQueues.isNotEmpty ?? false) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                alignment: Alignment.centerLeft,
+                child: const Text(
+                  'Past Queues',
+                  style: TextStyle(
+                    color: Color(0xFF181111),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.015,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _queueSummary!.customerPastQueues.length,
+                  itemBuilder: (context, index) {
+                    final queue = _queueSummary!.customerPastQueues[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Card(
+                        elevation: 0,
+                        color: const Color(0xFFF4F0F0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          title: Text(
+                            queue.queueName ?? 'Queue ${index + 1}',
+                            style: const TextStyle(
+                              color: Color(0xFF181111),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                'Processed: ${queue.processed}',
+                                style: const TextStyle(
+                                  color: Color(0xFF886364),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              if (queue.comment != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Comment: ${queue.comment}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF886364),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                              if (queue.inQoinCharged > 0) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'inQoin Charged: ${queue.inQoinCharged}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF886364),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+
+            // Empty State
+            if (_isLoading)
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_error != null)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              )
+            else if ((_queueSummary?.customerQueues.isEmpty ?? true) &&
+                (_queueSummary?.customerPastQueues.isEmpty ?? true))
+              const Expanded(
+                child: Center(
+                  child: Text(
+                    'No queues found',
+                    style: TextStyle(
+                      color: Color(0xFF886364),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
-}
-
-class ActiveQueue {
-  final String storeName;
-  final String estimatedWait;
-  final String imageUrl;
-
-  ActiveQueue({
-    required this.storeName,
-    required this.estimatedWait,
-    required this.imageUrl,
-  });
-}
-
-class PastQueue {
-  final String storeName;
-  final String joinedTime;
-  final String imageUrl;
-
-  PastQueue({
-    required this.storeName,
-    required this.joinedTime,
-    required this.imageUrl,
-  });
 }

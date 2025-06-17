@@ -6,6 +6,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
+import '../../shared/constants/app_constants.dart';
 
 class OTPVerificationPage extends StatefulWidget {
   final String phoneNumber;
@@ -69,7 +70,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
         // Store token and login state
         final prefs = await SharedPreferences.getInstance();
         final token = data['data']['token'];
-        await prefs.setString('token', token);
+        await prefs.setString(AppConstants.tokenKey, token);
         await prefs.setBool('isLoggedIn', true);
 
         // Register FCM token

@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
+import '../../shared/constants/api_endpoints.dart';
+import '../../shared/constants/app_constants.dart';
 
 class CustomerSignUpPage extends StatefulWidget {
   const CustomerSignUpPage({super.key});
@@ -51,7 +53,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://lnq-production.up.railway.app/api/auth/signup/customer/phone/initiate'),
+        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.customerPhoneSignupInitiate}'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -103,7 +105,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://lnq-production.up.railway.app/api/auth/signup/customer/phone'),
+        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.customerPhoneSignup}'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -121,7 +123,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
         // Store token and login state
         final prefs = await SharedPreferences.getInstance();
         final token = data['data']['token'];
-        await prefs.setString('token', token);
+        await prefs.setString(AppConstants.tokenKey, token);
         await prefs.setBool('isLoggedIn', true);
 
         // Register FCM token
@@ -165,7 +167,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
       // Register FCM token
       final response = await http.post(
-        Uri.parse('https://lnq-production.up.railway.app/api/v1/tokens/register'),
+        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.registerFCMToken}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $jwtToken',

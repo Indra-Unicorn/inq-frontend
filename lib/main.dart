@@ -6,10 +6,10 @@ import 'features/auth/login_page.dart';
 import 'features/auth/customer_signup.dart';
 import 'features/auth/merchant_signup.dart';
 import 'features/customer/customer_dashboard.dart';
+import 'features/customer/customer_profile_page.dart';
 import 'features/merchant/merchant_dashboard.dart';
 import 'features/customer/customer_queues.dart';
 import 'features/merchant/store_profile_page.dart';
-import 'features/customer/customer_profile_page.dart';
 import 'features/merchant/store_details_page.dart';
 import 'features/queue/queue_status_page.dart';
 import 'features/merchant/merchant_profile.dart';
@@ -76,18 +76,16 @@ class MyApp extends StatelessWidget {
           final queue = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return QueueManagement(queue: queue);
         },
+        '/store-details': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return StoreDetailsPage(
+            storeName: args['shopName'] as String,
+            storeAddress: args['storeAddress'] as String,
+            storeImage: args['storeImage'] as String? ?? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=300&fit=crop',
+          );
+        },
       },
       onGenerateRoute: (settings) {
-        if (settings.name == '/store-details') {
-          final args = settings.arguments as Map<String, String>?;
-          return MaterialPageRoute(
-            builder: (context) => StoreDetailsPage(
-              storeName: args?['storeName'] ?? 'Store',
-              storeAddress: args?['storeAddress'] ?? 'Address',
-              storeImage: args?['storeImage'] ?? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=300&fit=crop',
-            ),
-          );
-        }
         return null;
       },
     );

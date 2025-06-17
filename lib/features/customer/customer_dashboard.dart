@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'models/shop.dart';
+import 'services/shop_service.dart';
 
 class CustomerDashboard extends StatefulWidget {
   const CustomerDashboard({super.key});
@@ -10,6 +12,10 @@ class CustomerDashboard extends StatefulWidget {
 class _CustomerDashboardState extends State<CustomerDashboard> {
   final TextEditingController _searchController = TextEditingController();
   int _selectedIndex = 0;
+  final ShopService _shopService = ShopService();
+  List<Shop> _shops = [];
+  bool _isLoading = true;
+  String? _error;
 
   final List<String> categories = [
     'Grocery',
@@ -19,31 +25,79 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     'Clothing',
   ];
 
-  final List<Store> nearbyStores = [
-    Store(
-      name: 'Fresh Foods Market',
-      distance: '1.2 miles away',
-      address: '456 Oak Street, Downtown',
-      imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=100&fit=crop',
-    ),
-    Store(
-      name: 'Tech Haven',
-      distance: '2.5 miles away',
-      address: '123 Main Street, Anytown, USA',
-      imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop',
-    ),
-    Store(
-      name: 'Home Essentials',
-      distance: '3.1 miles away',
-      address: '789 Pine Avenue, Uptown',
-      imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchShops();
+  }
+
+  Future<void> _fetchShops() async {
+    try {
+      final shops = await _shopService.getAllShops();
+      setState(() {
+        _shops = shops;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  IconData _getStoreIcon(List<String> categories) {
+    if (categories.isEmpty) return Icons.store;
+    
+    final category = categories.first.toLowerCase();
+    if (category.contains('restaurant') || category.contains('food')) {
+      return Icons.restaurant;
+    } else if (category.contains('gym') || category.contains('fitness')) {
+      return Icons.fitness_center;
+    } else if (category.contains('salon') || category.contains('beauty')) {
+      return Icons.face;
+    } else if (category.contains('medical') || category.contains('pharmacy')) {
+      return Icons.local_pharmacy;
+    } else if (category.contains('grocery') || category.contains('market')) {
+      return Icons.shopping_basket;
+    } else if (category.contains('electronics') || category.contains('tech')) {
+      return Icons.devices;
+    } else if (category.contains('clothing') || category.contains('fashion')) {
+      return Icons.shopping_bag;
+    } else if (category.contains('home') || category.contains('furniture')) {
+      return Icons.home;
+    }
+    return Icons.store;
+  }
+
+  Color _getStoreIconColor(List<String> categories) {
+    if (categories.isEmpty) return const Color(0xFF886364);
+    
+    final category = categories.first.toLowerCase();
+    if (category.contains('restaurant') || category.contains('food')) {
+      return const Color(0xFFE57373);
+    } else if (category.contains('gym') || category.contains('fitness')) {
+      return const Color(0xFF81C784);
+    } else if (category.contains('salon') || category.contains('beauty')) {
+      return const Color(0xFFF06292);
+    } else if (category.contains('medical') || category.contains('pharmacy')) {
+      return const Color(0xFF4FC3F7);
+    } else if (category.contains('grocery') || category.contains('market')) {
+      return const Color(0xFFFFB74D);
+    } else if (category.contains('electronics') || category.contains('tech')) {
+      return const Color(0xFF9575CD);
+    } else if (category.contains('clothing') || category.contains('fashion')) {
+      return const Color(0xFF4DB6AC);
+    } else if (category.contains('home') || category.contains('furniture')) {
+      return const Color(0xFFA1887F);
+    }
+    return const Color(0xFF886364);
   }
 
   @override
@@ -75,7 +129,6 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                     height: 48,
                     child: IconButton(
                       onPressed: () {
-                        // Navigate to profile
                         Navigator.pushNamed(context, '/customer-profile');
                       },
                       icon: const Icon(
@@ -178,57 +231,95 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
 
             // Store List
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: nearbyStores.length,
-                itemBuilder: (context, index) {
-                  final store = nearbyStores[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      leading: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          image: DecorationImage(
-                            image: NetworkImage(store.imageUrl),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        store.name,
-                        style: const TextStyle(
-                          color: Color(0xFF181111),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      subtitle: Text(
-                        store.distance,
-                        style: const TextStyle(
-                          color: Color(0xFF886364),
-                          fontSize: 14,
-                        ),
-                      ),
-                      onTap: () {
-                        // Navigate to store details page
-                        Navigator.pushNamed(
-                          context, 
-                          '/store-details',
-                          arguments: {
-                            'storeName': store.name,
-                            'storeAddress': store.address,
-                            'storeImage': store.imageUrl.replaceAll('w=100&h=100', 'w=600&h=300'),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _shops.length,
+                          itemBuilder: (context, index) {
+                            final shop = _shops[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                leading: Container(
+                                  width: 56,
+                                  height: 56,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0xFFF4F0F0),
+                                    image: shop.images.isNotEmpty && shop.images.first.startsWith('http')
+                                        ? DecorationImage(
+                                            image: NetworkImage(shop.images.first),
+                                            fit: BoxFit.cover,
+                                          )
+                                        : null,
+                                  ),
+                                  child: shop.images.isEmpty || !shop.images.first.startsWith('http')
+                                      ? Icon(
+                                          _getStoreIcon(shop.categories),
+                                          color: _getStoreIconColor(shop.categories),
+                                          size: 28,
+                                        )
+                                      : null,
+                                ),
+                                title: Text(
+                                  shop.shopName,
+                                  style: const TextStyle(
+                                    color: Color(0xFF181111),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${shop.address.city}, ${shop.address.state}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF886364),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    if (shop.isOpen)
+                                      const Text(
+                                        'Open',
+                                        style: TextStyle(
+                                          color: Colors.green,
+                                          fontSize: 12,
+                                        ),
+                                      )
+                                    else
+                                      const Text(
+                                        'Closed',
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  final args = {
+                                    'shopId': shop.shopId,
+                                    'shopName': shop.shopName,
+                                    'storeAddress': '${shop.address.city}, ${shop.address.state}',
+                                    'storeImage': shop.images.isNotEmpty ? shop.images.first : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=300&fit=crop',
+                                  };
+                                  print('Navigating to store details with args: $args');
+                                  print('Shop ID being passed: ${shop.shopId}');
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/store-details',
+                                    arguments: args,
+                                  );
+                                },
+                              ),
+                            );
                           },
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
+                        ),
             ),
           ],
         ),
@@ -280,18 +371,4 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
       ),
     );
   }
-}
-
-class Store {
-  final String name;
-  final String distance;
-  final String address;
-  final String imageUrl;
-
-  Store({
-    required this.name,
-    required this.distance,
-    required this.address,
-    required this.imageUrl,
-  });
 }

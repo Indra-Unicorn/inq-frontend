@@ -21,6 +21,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _shopPhoneController = TextEditingController();
   final TextEditingController _shopNameController = TextEditingController();
   final TextEditingController _streetAddressController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
@@ -50,6 +51,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
+    _shopPhoneController.dispose();
     _shopNameController.dispose();
     _streetAddressController.dispose();
     _postalCodeController.dispose();
@@ -124,6 +126,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         'email': _emailController.text,
         'password': _passwordController.text,
         'phoneNumber': _phoneController.text,
+        'shopPhoneNumber': _shopPhoneController.text,
         'metadata': {
           'deviceType': Platform.isAndroid ? 'ANDROID' : 'IOS',
           'appVersion': '1.0.0',
@@ -163,8 +166,11 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       );
 
       final data = jsonDecode(response.body);
+      print('Merchant Signup Response: ${response.statusCode}');
+      print('Response Body: $data');
       
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (data['success'] == true) {
+        print('Signup successful, proceeding with navigation');
         // Store token and login state
         final prefs = await SharedPreferences.getInstance();
         final token = data['data']['token'];
@@ -175,19 +181,24 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         await _registerFCMToken(token);
         
         if (mounted) {
+          print('Widget is mounted, showing success message and navigating');
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Signup successful! Please login to continue.')),
+            SnackBar(content: Text(data['message'] ?? 'Signup successful! Please login to continue.')),
           );
           // Navigate to login page
           Navigator.pushReplacementNamed(context, '/login');
+        } else {
+          print('Widget is not mounted, cannot navigate');
         }
       } else {
+        print('Signup failed: ${data['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'] ?? 'Signup failed')),
         );
       }
     } catch (e) {
+      print('Error during signup: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -357,6 +368,20 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Shop name is required';
+                    }
+                    return null;
+                  },
+                ),
+                _buildInputField(
+                  controller: _shopPhoneController,
+                  label: 'Shop Phone Number',
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Shop phone number is required';
+                    }
+                    if (!RegExp(r'^\+?[1-9]\d{1,14}$').hasMatch(value)) {
+                      return 'Please enter a valid phone number';
                     }
                     return null;
                   },
