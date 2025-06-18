@@ -72,4 +72,4 @@ class ShopAddress {
       country: json['country'] ?? '',
     );
   }
-} 
+}

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/common_style.dart';
+import '../../../../shared/constants/app_colors.dart';
 
 class CustomerDashboardSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -11,35 +13,31 @@ class CustomerDashboardSearchBar extends StatelessWidget {
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: const Color(0xFFF4F0F0),
+          color: AppColors.backgroundLight,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 16, right: 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 8),
               child: Icon(
                 Icons.search,
-                color: Color(0xFF886364),
+                color: AppColors.secondary,
                 size: 24,
               ),
             ),
             Expanded(
               child: TextField(
                 controller: controller,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Search for stores',
-                  hintStyle: TextStyle(
-                    color: Color(0xFF886364),
-                    fontSize: 16,
+                  hintStyle: CommonStyle.bodyMedium.copyWith(
+                    color: AppColors.secondary,
                   ),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                style: const TextStyle(
-                  color: Color(0xFF181111),
-                  fontSize: 16,
-                ),
+                style: CommonStyle.bodyLarge,
               ),
             ),
           ],

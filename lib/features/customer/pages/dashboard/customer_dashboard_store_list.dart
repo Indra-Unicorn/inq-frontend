@@ -1,129 +1,119 @@
 import 'package:flutter/material.dart';
-import '../../models/shop.dart';
+import '../../../../shared/common_style.dart';
+import '../../../../shared/constants/app_colors.dart';
 
 class CustomerDashboardStoreList extends StatelessWidget {
-  final List<Shop> shops;
-  final bool isLoading;
-  final String? error;
-  final IconData Function(List<String>) getStoreIcon;
-  final Color Function(List<String>) getStoreIconColor;
-  final void Function(Shop) onStoreTap;
+  final List<Map<String, dynamic>> stores;
+  final Function(Map<String, dynamic>) onStoreTap;
 
   const CustomerDashboardStoreList({
     super.key,
-    required this.shops,
-    required this.isLoading,
-    required this.error,
-    required this.getStoreIcon,
-    required this.getStoreIconColor,
+    required this.stores,
     required this.onStoreTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    } else if (error != null) {
-      return Center(
-          child: Text(error!, style: const TextStyle(color: Colors.red)));
-    } else {
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: shops.length,
-        itemBuilder: (context, index) {
-          final shop = shops[index];
-          return StoreListItem(
-            shop: shop,
-            getStoreIcon: getStoreIcon,
-            getStoreIconColor: getStoreIconColor,
-            onTap: () => onStoreTap(shop),
-          );
-        },
-      );
-    }
-  }
-}
-
-class StoreListItem extends StatelessWidget {
-  final Shop shop;
-  final IconData Function(List<String>) getStoreIcon;
-  final Color Function(List<String>) getStoreIconColor;
-  final VoidCallback onTap;
-
-  const StoreListItem({
-    super.key,
-    required this.shop,
-    required this.getStoreIcon,
-    required this.getStoreIconColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-        leading: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: const Color(0xFFF4F0F0),
-            image:
-                shop.images.isNotEmpty && shop.images.first.startsWith('http')
-                    ? DecorationImage(
-                        image: NetworkImage(shop.images.first),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: stores.length,
+      itemBuilder: (context, index) {
+        final store = stores[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: shop.images.isEmpty || !shop.images.first.startsWith('http')
-              ? Icon(
-                  getStoreIcon(shop.categories),
-                  color: getStoreIconColor(shop.categories),
-                  size: 28,
-                )
-              : null,
-        ),
-        title: Text(
-          shop.shopName,
-          style: const TextStyle(
-            color: Color(0xFF181111),
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${shop.address.city}, ${shop.address.state}',
-              style: const TextStyle(
-                color: Color(0xFF886364),
-                fontSize: 14,
+          child: InkWell(
+            onTap: () => onStoreTap(store),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundLight,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            store['name'][0],
+                            style: CommonStyle.heading3.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              store['name'],
+                              style: CommonStyle.heading4,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              store['address'],
+                              style: CommonStyle.bodyMedium.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildInfoItem(
+                        Icons.access_time,
+                        '${store['waitTime']} min',
+                      ),
+                      _buildInfoItem(
+                        Icons.people,
+                        '${store['queueSize']} in queue',
+                      ),
+                      _buildInfoItem(
+                        Icons.star,
+                        store['rating'].toString(),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            if (shop.isOpen)
-              const Text(
-                'Open',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 12,
-                ),
-              )
-            else
-              const Text(
-                'Closed',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 12,
-                ),
-              ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoItem(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 16,
+          color: AppColors.secondary,
         ),
-        onTap: onTap,
-      ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: CommonStyle.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 }

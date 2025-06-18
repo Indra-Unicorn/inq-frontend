@@ -10,7 +10,8 @@ import 'features/customer/pages/profile/customer_profile_page.dart';
 import 'features/merchant/merchant_dashboard.dart';
 import 'features/customer/pages/queue/customer_queues.dart';
 import 'features/merchant/store_profile_page.dart';
-import 'features/merchant/store_details_page.dart';
+import 'features/customer/models/shop.dart';
+import 'features/customer/pages/store/store_details_page.dart';
 import 'features/queue/queue_status_page.dart';
 import 'features/merchant/merchant_profile.dart';
 import 'features/merchant/queue_management.dart';
@@ -18,7 +19,7 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
     // Check if Firebase is already initialized to prevent duplicate app error
     try {
@@ -33,15 +34,15 @@ void main() async {
         rethrow;
       }
     }
-    
+
     print('Firebase initialized successfully');
-    
+
     // Initialize notifications on all platforms
     await NotificationService.initialize();
   } catch (e) {
     print('Setup error: $e');
   }
-  
+
   runApp(const MyApp());
 }
 
@@ -73,16 +74,13 @@ class MyApp extends StatelessWidget {
         '/merchant-profile': (context) => const MerchantProfile(),
         '/queue-status': (context) => const QueueStatusPage(),
         '/queue-management': (context) {
-          final queue = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          final queue = ModalRoute.of(context)!.settings.arguments
+              as Map<String, dynamic>;
           return QueueManagement(queue: queue);
         },
         '/store-details': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-          return StoreDetailsPage(
-            storeName: args['shopName'] as String,
-            storeAddress: args['storeAddress'] as String,
-            storeImage: args['storeImage'] as String? ?? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=300&fit=crop',
-          );
+          final args = ModalRoute.of(context)!.settings.arguments as Shop;
+          return StoreDetailsPage(store: args);
         },
       },
       onGenerateRoute: (settings) {

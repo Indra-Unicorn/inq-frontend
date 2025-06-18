@@ -1,44 +1,52 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/common_style.dart';
+import '../../../../shared/constants/app_colors.dart';
 
 class CustomerDashboardBottomNav extends StatelessWidget {
   final int currentIndex;
-  final void Function(int) onTap;
-  const CustomerDashboardBottomNav(
-      {super.key, required this.currentIndex, required this.onTap});
+  final Function(int) onTap;
+
+  const CustomerDashboardBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFFF4F0F0),
-            width: 1,
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
-        ),
+        ],
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onTap,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF181111),
-        unselectedItemColor: const Color(0xFF886364),
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Find Store',
+            icon: Icon(Icons.store),
+            label: 'Stores',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'My Queue',
+            icon: Icon(Icons.history),
+            label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
+            icon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.secondary,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
       ),
     );
   }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/common_style.dart';
+import '../../../../shared/constants/app_colors.dart';
 
 class CustomerDashboardHeader extends StatelessWidget {
   final VoidCallback onProfileTap;
@@ -10,15 +12,10 @@ class CustomerDashboardHeader extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
               'Find a Store',
-              style: TextStyle(
-                color: Color(0xFF181111),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.015,
-              ),
+              style: CommonStyle.heading4,
               textAlign: TextAlign.center,
             ),
           ),
@@ -27,9 +24,9 @@ class CustomerDashboardHeader extends StatelessWidget {
             height: 48,
             child: IconButton(
               onPressed: onProfileTap,
-              icon: const Icon(
+              icon: Icon(
                 Icons.person_outline,
-                color: Color(0xFF181111),
+                color: AppColors.primary,
                 size: 24,
               ),
             ),

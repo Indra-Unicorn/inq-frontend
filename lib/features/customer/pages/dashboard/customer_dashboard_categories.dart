@@ -1,31 +1,51 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/common_style.dart';
+import '../../../../shared/constants/app_colors.dart';
 
 class CustomerDashboardCategories extends StatelessWidget {
   final List<String> categories;
-  const CustomerDashboardCategories({super.key, required this.categories});
+  final String selectedCategory;
+  final Function(String) onCategorySelected;
+
+  const CustomerDashboardCategories({
+    super.key,
+    required this.categories,
+    required this.selectedCategory,
+    required this.onCategorySelected,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 40,
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
         itemBuilder: (context, index) {
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            child: Chip(
+          final category = categories[index];
+          final isSelected = category == selectedCategory;
+          return Padding(
+            padding: EdgeInsets.only(
+              left: index == 0 ? 16 : 8,
+              right: index == categories.length - 1 ? 16 : 0,
+            ),
+            child: ChoiceChip(
               label: Text(
-                categories[index],
-                style: const TextStyle(
-                  color: Color(0xFF181111),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                category,
+                style: CommonStyle.bodyMedium.copyWith(
+                  color:
+                      isSelected ? AppColors.textWhite : AppColors.textPrimary,
                 ),
               ),
-              backgroundColor: const Color(0xFFF4F0F0),
-              side: BorderSide.none,
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  onCategorySelected(category);
+                }
+              },
+              backgroundColor: AppColors.backgroundLight,
+              selectedColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
