@@ -34,21 +34,34 @@ class Queue {
   });
 
   factory Queue.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == "Infinity" || value == "infinity") {
+        return 999999; // Use a large number to represent infinity
+      }
+      if (value is double) {
+        return value.toInt();
+      }
+      if (value is String) {
+        return int.tryParse(value) ?? 0;
+      }
+      return value as int;
+    }
+
     return Queue(
       qid: json['qid'],
       shopId: json['shopId'],
       status: json['status'],
       name: json['name'],
-      size: (json['size'] is double) ? (json['size'] as double).toInt() : json['size'],
-      maxSize: (json['maxSize'] is double) ? (json['maxSize'] as double).toInt() : json['maxSize'],
-      processed: (json['processed'] is double) ? (json['processed'] as double).toInt() : json['processed'],
+      size: _parseInt(json['size']),
+      maxSize: _parseInt(json['maxSize']),
+      processed: _parseInt(json['processed']),
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
-      inQoinRate: (json['inQoinRate'] is double) ? (json['inQoinRate'] as double).toInt() : json['inQoinRate'],
-      alertNumber: (json['alertNumber'] is double) ? (json['alertNumber'] as double).toInt() : json['alertNumber'],
-      bufferNumber: (json['bufferNumber'] is double) ? (json['bufferNumber'] as double).toInt() : json['bufferNumber'],
+      inQoinRate: _parseInt(json['inQoinRate']),
+      alertNumber: _parseInt(json['alertNumber']),
+      bufferNumber: _parseInt(json['bufferNumber']),
       hasCapacity: json['hasCapacity'],
-      processingRate: (json['processingRate'] is double) ? (json['processingRate'] as double).toInt() : json['processingRate'],
+      processingRate: _parseInt(json['processingRate']),
       full: json['full'],
     );
   }

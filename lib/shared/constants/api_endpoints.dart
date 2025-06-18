@@ -1,6 +1,6 @@
 class ApiEndpoints {
-  // static const String baseUrl = 'https://lnq-production.up.railway.app/api';
-   static const String baseUrl = 'http://localhost:8080/api';
+  static const String baseUrl = 'https://lnq-production.up.railway.app/api';
+  //static const String baseUrl = 'http://localhost:8080/api';
   
   // Auth endpoints
   static const String adminLogin = '/auth/login/admin';

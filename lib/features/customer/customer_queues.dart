@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'services/queue_service.dart';
 import 'models/customer_queue_summary.dart';
 
@@ -14,11 +15,22 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
   CustomerQueueSummary? _queueSummary;
   bool _isLoading = true;
   String? _error;
+  Timer? _pollingTimer;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _fetchQueueSummary();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      _startPolling();
+      _isInitialized = true;
+    }
   }
 
   Future<void> _fetchQueueSummary() async {
@@ -38,6 +50,29 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
         });
       }
     }
+  }
+
+  void _startPolling() {
+    // Poll every 5 seconds to get updated queue information
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted) {
+        _fetchQueueSummary();
+      }
+    });
+  }
+
+  Future<void> _refreshQueues() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    await _fetchQueueSummary();
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -76,7 +111,19 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(width: 48), // Balance the back button
+                  // Refresh button
+                  GestureDetector(
+                    onTap: _refreshQueues,
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      child: const Icon(
+                        Icons.refresh,
+                        color: Color(0xFF181111),
+                        size: 24,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -163,15 +210,27 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
                           ),
                           trailing: ElevatedButton(
                             onPressed: () {
+                              final queueData = {
+                                'queueName': queue.queueName,
+                                'currentRank': queue.currentRank,
+                                'currentQueueSize': queue.currentQueueSize,
+                                'joinedPosition': queue.joinedPosition,
+                                'comment': queue.comment,
+                                'inQoinCharged': queue.inQoinCharged,
+                                'processed': queue.processed,
+                              };
+                              
                               Navigator.pushNamed(
                                 context,
                                 '/queue-status',
                                 arguments: {
                                   'queueId': queue.qid,
-                                  'queueName': queue.queueName ?? 'Queue ${index + 1}',
-                                  'queueData': queue,
+                                  'queueData': queueData,
                                 },
-                              );
+                              ).then((_) {
+                                // Refresh the queue list when returning from queue status page
+                                _fetchQueueSummary();
+                              });
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFE9B8BA),
@@ -280,9 +339,27 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
             else if (_error != null)
               Expanded(
                 child: Center(
-                  child: Text(
-                    _error!,
-                    style: const TextStyle(color: Colors.red),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _refreshQueues,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE9B8BA),
+                          foregroundColor: const Color(0xFF191010),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
                 ),
               )

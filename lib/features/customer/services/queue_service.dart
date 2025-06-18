@@ -110,4 +110,19 @@ class QueueService {
       throw Exception('Error fetching customer queue summary: $e');
     }
   }
+
+  Future<http.Response> getLivePositionStream(String queueId) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('User not authenticated');
+    }
+
+    return await http.get(
+      Uri.parse('${ApiEndpoints.baseUrl}/queue-manager/$queueId/live-position'),
+      headers: {
+        'Accept': 'text/event-stream',
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
 } 

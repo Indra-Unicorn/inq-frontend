@@ -57,23 +57,33 @@ class CustomerQueue {
   });
 
   factory CustomerQueue.fromJson(Map<String, dynamic> json) {
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is double) return value.toInt();
+      if (value is String) {
+        if (value == "Infinity" || value == "infinity") return 999999;
+        return int.tryParse(value) ?? 0;
+      }
+      return value as int;
+    }
+
     return CustomerQueue(
-      id: json['id'],
-      customerId: json['customerId'],
+      id: json['id'] ?? '',
+      customerId: json['customerId'] ?? '',
       queueName: json['queueName'],
-      positionOffset: json['positionOffset'],
-      joinedPosition: json['joinedPosition'],
-      currentRank: json['currentRank'],
-      inQoinCharged: json['inQoinCharged'],
-      currentQueueSize: json['currentQueueSize'],
-      processed: json['processed'],
+      positionOffset: _parseInt(json['positionOffset']),
+      joinedPosition: _parseInt(json['joinedPosition']),
+      currentRank: _parseInt(json['currentRank']),
+      inQoinCharged: _parseInt(json['inQoinCharged']),
+      currentQueueSize: _parseInt(json['currentQueueSize']),
+      processed: _parseInt(json['processed']),
       estimatedWaitTime: json['estimatedWaitTime'],
       comment: json['comment'],
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
       customerName: json['customerName'],
       customerPhoneNumber: json['customerPhoneNumber'],
-      qid: json['qid'],
+      qid: json['qid'] ?? '',
     );
   }
 } 

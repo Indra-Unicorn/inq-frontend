@@ -105,6 +105,10 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
     }
   }
 
+  Future<void> _refreshData() async {
+    await _fetchCustomerQueueSummary();
+  }
+
   bool _isUserInQueue(String queueId) {
     if (_customerQueueSummary == null) return false;
     return _customerQueueSummary!.customerQueues.any((queue) => queue.qid == queueId);
@@ -162,7 +166,10 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                               'shopName': widget.storeName,
                               'queueData': result,
                             },
-                          );
+                          ).then((_) {
+                            // Refresh customer queue summary when returning from queue status
+                            _refreshData();
+                          });
                         }
                       } catch (e) {
                         if (mounted) {
@@ -230,7 +237,19 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(width: 48), // Balance the back button
+                  // Refresh button
+                  GestureDetector(
+                    onTap: _refreshData,
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      child: const Icon(
+                        Icons.refresh,
+                        color: Color(0xFF181111),
+                        size: 24,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
