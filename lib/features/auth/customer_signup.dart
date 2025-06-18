@@ -59,7 +59,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
         },
         body: jsonEncode({
           'name': _fullNameController.text,
-          'phone': _phoneController.text,
+          'phoneNumber': _phoneController.text,
         }),
       );
 
@@ -111,7 +111,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
         },
         body: jsonEncode({
           'name': _fullNameController.text,
-          'phone': _phoneController.text,
+          'phoneNumber': _phoneController.text,
           'sessionId': _sessionId,
           'otp': otp,
         }),
