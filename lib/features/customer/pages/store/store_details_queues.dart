@@ -3,27 +3,93 @@ import '../../../../shared/common_style.dart';
 import '../../../../shared/constants/app_colors.dart';
 import '../../models/queue.dart';
 import '../../models/queue_status.dart';
+import '../../services/queue_service.dart';
 
-class StoreDetailsQueues extends StatelessWidget {
+class StoreDetailsQueues extends StatefulWidget {
   final List<Queue> queues;
-  final Function(Queue) onQueueTap;
 
   const StoreDetailsQueues({
     super.key,
     required this.queues,
-    required this.onQueueTap,
   });
 
   @override
+  State<StoreDetailsQueues> createState() => _StoreDetailsQueuesState();
+}
+
+class _StoreDetailsQueuesState extends State<StoreDetailsQueues> {
+  final QueueService _queueService = QueueService();
+  bool _isJoining = false;
+  String? _error;
+
+  Future<void> _joinQueue(Queue queue) async {
+    setState(() {
+      _isJoining = true;
+      _error = null;
+    });
+
+    try {
+      final result = await _queueService.joinQueue(queue.qid);
+
+      if (!mounted) return;
+
+      // Navigate to queue status page with the queue data
+      Navigator.pushNamed(
+        context,
+        '/queue-status',
+        arguments: {
+          'queueId': queue.qid,
+          'queueData': result,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isJoining = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final queue = queues[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: InkWell(
-              onTap: () => onQueueTap(queue),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Available Queues',
+            style: CommonStyle.heading2,
+          ),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              _error!,
+              style: CommonStyle.errorTextStyle,
+            ),
+          ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: widget.queues.length,
+          itemBuilder: (context, index) {
+            final queue = widget.queues[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              elevation: 0,
+              color: AppColors.backgroundLight,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -32,9 +98,11 @@ class StoreDetailsQueues extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          queue.name,
-                          style: CommonStyle.heading4,
+                        Expanded(
+                          child: Text(
+                            queue.name,
+                            style: CommonStyle.heading3,
+                          ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -47,77 +115,104 @@ class StoreDetailsQueues extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            queue.status.toString().split('.').last,
-                            style: CommonStyle.bodySmall.copyWith(
+                            _getStatusText(queue.status),
+                            style: CommonStyle.caption.copyWith(
                               color: _getStatusColor(queue.status),
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildInfoItem(
-                          Icons.people,
-                          '${queue.size}/${queue.maxSize} in queue',
-                        ),
-                        _buildInfoItem(
-                          Icons.timer,
-                          '${queue.processingRate} min per person',
-                        ),
-                        _buildInfoItem(
-                          Icons.attach_money,
-                          '${queue.inQoinRate} Qoins',
-                        ),
-                      ],
-                    ),
+                    _buildDetailRow(
+                        'Queue Size', '${queue.size}/${queue.maxSize}'),
+                    _buildDetailRow(
+                        'Processing Rate', '${queue.processingRate}/min'),
+                    _buildDetailRow('inQoin Rate', '${queue.inQoinRate} Qoins'),
                     const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => onQueueTap(queue),
-                      style: CommonStyle.primaryButton,
-                      child: const Text('Join Queue'),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed:
+                            queue.status == QueueStatus.active && !_isJoining
+                                ? () => _joinQueue(queue)
+                                : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textWhite,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _isJoining
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Text('Join Queue'),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          );
-        },
-        childCount: queues.length,
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: AppColors.textSecondary,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: CommonStyle.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-          ),
+            );
+          },
         ),
       ],
     );
   }
 
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: CommonStyle.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: CommonStyle.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getStatusText(QueueStatus status) {
+    switch (status) {
+      case QueueStatus.active:
+        return 'Active';
+      case QueueStatus.paused:
+        return 'Paused';
+      case QueueStatus.closed:
+        return 'Closed';
+      default:
+        return 'Unknown';
+    }
+  }
+
   Color _getStatusColor(QueueStatus status) {
     switch (status) {
       case QueueStatus.active:
-        return AppColors.success;
+        return AppColors.queueActive;
       case QueueStatus.paused:
-        return AppColors.warning;
+        return AppColors.queuePaused;
       case QueueStatus.closed:
-        return AppColors.error;
+        return AppColors.queueClosed;
       default:
         return AppColors.textSecondary;
     }

@@ -119,11 +119,10 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
               else
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
-                  sliver: StoreDetailsQueues(
-                    queues: _queues,
-                    onQueueTap: (queue) {
-                      // Handle queue tap
-                    },
+                  sliver: SliverToBoxAdapter(
+                    child: StoreDetailsQueues(
+                      queues: _queues,
+                    ),
                   ),
                 ),
             ],

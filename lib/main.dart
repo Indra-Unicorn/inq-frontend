@@ -12,7 +12,7 @@ import 'features/customer/pages/queue/customer_queues.dart';
 import 'features/merchant/store_profile_page.dart';
 import 'features/customer/models/shop.dart';
 import 'features/customer/pages/store/store_details_page.dart';
-import 'features/queue/queue_status_page.dart';
+import 'features/customer/pages/queue/queue_status_page.dart';
 import 'features/merchant/merchant_profile.dart';
 import 'features/merchant/queue_management.dart';
 import 'services/notification_service.dart';

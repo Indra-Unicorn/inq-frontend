@@ -72,6 +72,10 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     Navigator.pushNamed(context, '/customer-profile');
   }
 
+  void _onHistoryTap() {
+    Navigator.pushNamed(context, '/queue-status');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,7 +131,9 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
           setState(() {
             _currentIndex = index;
           });
-          if (index == 2) {
+          if (index == 1) {
+            _onHistoryTap();
+          } else if (index == 2) {
             _onProfileTap();
           }
         },
