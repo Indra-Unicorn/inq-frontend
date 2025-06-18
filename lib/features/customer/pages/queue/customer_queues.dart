@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'services/queue_service.dart';
-import 'models/customer_queue_summary.dart';
+import '../../services/queue_service.dart';
+import '../../models/customer_queue_summary.dart';
 
 class CustomerQueuesPage extends StatefulWidget {
   const CustomerQueuesPage({super.key});

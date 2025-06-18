@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import '../../shared/constants/api_endpoints.dart';
-import '../../shared/constants/app_constants.dart';
+import '../../../../shared/constants/api_endpoints.dart';
+import '../../../../shared/constants/app_constants.dart';
 
 class CustomerProfilePage extends StatefulWidget {
   const CustomerProfilePage({super.key});
