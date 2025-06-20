@@ -26,7 +26,7 @@ class CustomerQueue {
   final int positionOffset;
   final int joinedPosition;
   final int currentRank;
-  final int inQoinCharged;
+  final double inQoinCharged;
   final int currentQueueSize;
   final int processed;
   final String? estimatedWaitTime;
@@ -67,6 +67,15 @@ class CustomerQueue {
       return value as int;
     }
 
+    double _parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        return double.tryParse(value) ?? 0.0;
+      }
+      return value as double;
+    }
+
     return CustomerQueue(
       id: json['id'] ?? '',
       customerId: json['customerId'] ?? '',
@@ -74,7 +83,7 @@ class CustomerQueue {
       positionOffset: _parseInt(json['positionOffset']),
       joinedPosition: _parseInt(json['joinedPosition']),
       currentRank: _parseInt(json['currentRank']),
-      inQoinCharged: _parseInt(json['inQoinCharged']),
+      inQoinCharged: _parseDouble(json['inQoinCharged']),
       currentQueueSize: _parseInt(json['currentQueueSize']),
       processed: _parseInt(json['processed']),
       estimatedWaitTime: json['estimatedWaitTime'],
@@ -86,4 +95,4 @@ class CustomerQueue {
       qid: json['qid'] ?? '',
     );
   }
-} 
+}
