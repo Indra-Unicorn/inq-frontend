@@ -5,13 +5,16 @@ import '../../../models/customer_queue_summary.dart';
 import 'current_position_widget.dart';
 import 'queue_info_row.dart';
 import 'leave_queue_dialog.dart';
+import 'adaptive_delay_indicator.dart';
 import '../services/queue_status_service.dart';
+import '../services/polling_config.dart';
 
 class QueueCard extends StatelessWidget {
   final CustomerQueue queue;
   final bool isCurrent;
   final int index;
   final VoidCallback? onQueueLeft;
+  final bool isUpdating;
 
   const QueueCard({
     super.key,
@@ -19,6 +22,7 @@ class QueueCard extends StatelessWidget {
     required this.isCurrent,
     required this.index,
     this.onQueueLeft,
+    this.isUpdating = false,
   });
 
   @override
@@ -45,22 +49,53 @@ class QueueCard extends StatelessWidget {
               offset: const Offset(0, 4),
             ),
           ],
+          border: isUpdating
+              ? Border.all(
+                  color: AppColors.success.withOpacity(0.3),
+                  width: 1,
+                )
+              : null,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildQueueHeader(context),
-              const SizedBox(height: 12),
-              if (isCurrent) ...[
-                CurrentPositionWidget(queue: queue),
-              ],
-              QueueInfoRow(queue: queue),
-              if (queue.comment != null && queue.comment!.isNotEmpty)
-                _buildCommentRow(),
-            ],
-          ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildQueueHeader(context),
+                  const SizedBox(height: 12),
+                  if (isCurrent) ...[
+                    CurrentPositionWidget(queue: queue),
+                  ],
+                  QueueInfoRow(queue: queue),
+                  if (queue.comment != null && queue.comment!.isNotEmpty)
+                    _buildCommentRow(),
+                ],
+              ),
+            ),
+            if (isUpdating)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.success),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -90,14 +125,28 @@ class QueueCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                queue.queueName ?? 'Unknown Queue',
-                style: CommonStyle.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      queue.queueName ?? 'Unknown Queue',
+                      style: CommonStyle.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isCurrent &&
+                      PollingConfig.strategy ==
+                          PollingStrategy.adaptivePolling) ...[
+                    const SizedBox(width: 8),
+                    AdaptiveDelayIndicator(
+                      currentPosition: queue.currentRank ?? 0,
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 3),
               Container(
