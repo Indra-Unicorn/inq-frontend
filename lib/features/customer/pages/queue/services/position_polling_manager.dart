@@ -5,6 +5,7 @@ import 'polling_config.dart';
 
 class PositionPollingManager {
   final Map<String, StreamSubscription<CustomerQueue>> _subscriptions = {};
+  final Map<String, DateTime> _lastUpdateTimes = {};
   final Function(CustomerQueue) _onPositionUpdate;
   final Function(String, String) _onError;
 
@@ -50,6 +51,8 @@ class PositionPollingManager {
             print(
                 'Received update for queue: ${updatedQueue.qid}, position: ${updatedQueue.currentRank}');
           }
+          // Update the last update time for this queue
+          _lastUpdateTimes[queueId] = DateTime.now();
           _onPositionUpdate(updatedQueue);
         },
         onError: (error) {
@@ -77,6 +80,7 @@ class PositionPollingManager {
       }
       subscription.cancel();
       _subscriptions.remove(queueId);
+      _lastUpdateTimes.remove(queueId);
     }
   }
 
@@ -88,6 +92,7 @@ class PositionPollingManager {
       subscription.cancel();
     }
     _subscriptions.clear();
+    _lastUpdateTimes.clear();
   }
 
   bool isPolling(String queueId) {
@@ -100,6 +105,14 @@ class PositionPollingManager {
 
   int getActivePollingCount() {
     return _subscriptions.length;
+  }
+
+  DateTime? getLastUpdateTime(String queueId) {
+    return _lastUpdateTimes[queueId];
+  }
+
+  Map<String, DateTime> getAllLastUpdateTimes() {
+    return Map.from(_lastUpdateTimes);
   }
 
   void dispose() {

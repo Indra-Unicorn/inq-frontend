@@ -10,6 +10,7 @@ class QueueListView extends StatelessWidget {
   final VoidCallback? onQueueLeft;
   final List<String> updatingQueueIds;
   final Future<void> Function()? onRefresh;
+  final Map<String, DateTime>? lastUpdateTimes;
 
   const QueueListView({
     super.key,
@@ -18,6 +19,7 @@ class QueueListView extends StatelessWidget {
     this.onQueueLeft,
     this.updatingQueueIds = const [],
     this.onRefresh,
+    this.lastUpdateTimes,
   });
 
   @override
@@ -36,6 +38,7 @@ class QueueListView extends StatelessWidget {
         itemBuilder: (context, index) {
           final queue = queues[index];
           final isUpdating = updatingQueueIds.contains(queue.qid);
+          final lastUpdateTime = lastUpdateTimes?[queue.qid];
 
           return QueueCard(
             queue: queue,
@@ -43,6 +46,7 @@ class QueueListView extends StatelessWidget {
             index: index,
             onQueueLeft: onQueueLeft,
             isUpdating: isUpdating,
+            lastUpdateTime: lastUpdateTime,
           );
         },
       ),

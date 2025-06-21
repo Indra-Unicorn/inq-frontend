@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../../shared/common_style.dart';
 import '../../../../../shared/constants/app_colors.dart';
-import 'last_update_indicator.dart';
 import '../services/polling_config.dart';
 
 class QueueStatusHeader extends StatelessWidget implements PreferredSizeWidget {
   final TabController tabController;
   final bool isPollingActive;
-  final DateTime? lastUpdateTime;
 
   const QueueStatusHeader({
     super.key,
     required this.tabController,
     this.isPollingActive = false,
-    this.lastUpdateTime,
   });
 
   @override
@@ -24,81 +21,70 @@ class QueueStatusHeader extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: Row(
         children: [
-          Row(
-            children: [
-              Text(
-                'Queue Status',
-                style: CommonStyle.heading2.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+          Text(
+            'Queue Status',
+            style: CommonStyle.heading2.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          if (isPollingActive) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.success.withOpacity(0.3),
+                  width: 1,
                 ),
               ),
-              if (isPollingActive) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.success.withOpacity(0.3),
-                      width: 1,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 8,
+                    height: 8,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.success),
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 8,
-                        height: 8,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(AppColors.success),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Live',
-                        style: CommonStyle.caption.copyWith(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    _getStrategyLabel(),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Live',
                     style: CommonStyle.caption.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 9,
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.3),
+                  width: 1,
                 ),
-              ],
-            ],
-          ),
-          if (isPollingActive && lastUpdateTime != null) ...[
-            const SizedBox(height: 4),
-            LastUpdateIndicator(lastUpdateTime: lastUpdateTime),
+              ),
+              child: Text(
+                _getStrategyLabel(),
+                style: CommonStyle.caption.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 9,
+                ),
+              ),
+            ),
           ],
         ],
       ),

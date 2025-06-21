@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../../../../shared/common_style.dart';
 import '../../../../../shared/constants/app_colors.dart';
 import '../../../models/customer_queue_summary.dart';
@@ -9,12 +10,13 @@ import 'adaptive_delay_indicator.dart';
 import '../services/queue_status_service.dart';
 import '../services/polling_config.dart';
 
-class QueueCard extends StatelessWidget {
+class QueueCard extends StatefulWidget {
   final CustomerQueue queue;
   final bool isCurrent;
   final int index;
   final VoidCallback? onQueueLeft;
   final bool isUpdating;
+  final DateTime? lastUpdateTime;
 
   const QueueCard({
     super.key,
@@ -23,14 +25,72 @@ class QueueCard extends StatelessWidget {
     required this.index,
     this.onQueueLeft,
     this.isUpdating = false,
+    this.lastUpdateTime,
   });
+
+  @override
+  State<QueueCard> createState() => _QueueCardState();
+}
+
+class _QueueCardState extends State<QueueCard> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(QueueCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.lastUpdateTime != widget.lastUpdateTime) {
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (widget.lastUpdateTime != null && widget.isCurrent) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) {
+          setState(() {
+            // Trigger rebuild to update the time display
+          });
+        } else {
+          timer.cancel();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _getTimeText() {
+    if (widget.lastUpdateTime == null) return '';
+
+    final now = DateTime.now();
+    final difference = now.difference(widget.lastUpdateTime!);
+
+    if (difference.inSeconds < 60) {
+      return '${difference.inSeconds}s ago';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return '${difference.inHours}h ago';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 300 + (index * 100)),
+      duration: Duration(milliseconds: 300 + (widget.index * 100)),
       curve: Curves.easeInOut,
-      margin: EdgeInsets.only(bottom: 12, top: index == 0 ? 0 : 4),
+      margin: EdgeInsets.only(bottom: 12, top: widget.index == 0 ? 0 : 4),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -49,7 +109,7 @@ class QueueCard extends StatelessWidget {
               offset: const Offset(0, 4),
             ),
           ],
-          border: isUpdating
+          border: widget.isUpdating
               ? Border.all(
                   color: AppColors.success.withOpacity(0.3),
                   width: 1,
@@ -65,16 +125,17 @@ class QueueCard extends StatelessWidget {
                 children: [
                   _buildQueueHeader(context),
                   const SizedBox(height: 12),
-                  if (isCurrent) ...[
-                    CurrentPositionWidget(queue: queue),
+                  if (widget.isCurrent) ...[
+                    CurrentPositionWidget(queue: widget.queue),
                   ],
-                  QueueInfoRow(queue: queue),
-                  if (queue.comment != null && queue.comment!.isNotEmpty)
+                  QueueInfoRow(queue: widget.queue),
+                  if (widget.queue.comment != null &&
+                      widget.queue.comment!.isNotEmpty)
                     _buildCommentRow(),
                 ],
               ),
             ),
-            if (isUpdating)
+            if (widget.isUpdating)
               Positioned(
                 top: 8,
                 right: 8,
@@ -108,14 +169,14 @@ class QueueCard extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: isCurrent
+              colors: widget.isCurrent
                   ? [AppColors.primary, AppColors.primary.withOpacity(0.8)]
                   : [AppColors.success, AppColors.success.withOpacity(0.8)],
             ),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
-            isCurrent ? Icons.queue : Icons.check_circle,
+            widget.isCurrent ? Icons.queue : Icons.check_circle,
             color: AppColors.textWhite,
             size: 20,
           ),
@@ -129,7 +190,7 @@ class QueueCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      queue.queueName ?? 'Unknown Queue',
+                      widget.queue.queueName ?? 'Unknown Queue',
                       style: CommonStyle.bodyMedium.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
@@ -138,12 +199,46 @@ class QueueCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (isCurrent &&
+                  if (widget.isCurrent &&
                       PollingConfig.strategy ==
                           PollingStrategy.adaptivePolling) ...[
                     const SizedBox(width: 8),
                     AdaptiveDelayIndicator(
-                      currentPosition: queue.currentRank ?? 0,
+                      currentPosition: widget.queue.currentRank ?? 0,
+                    ),
+                  ],
+                  if (widget.isCurrent && widget.lastUpdateTime != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.textSecondary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.textSecondary.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 10,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            _getTimeText(),
+                            style: CommonStyle.caption.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ],
@@ -155,15 +250,17 @@ class QueueCard extends StatelessWidget {
                   vertical: 3,
                 ),
                 decoration: BoxDecoration(
-                  color: isCurrent
+                  color: widget.isCurrent
                       ? AppColors.primary.withOpacity(0.1)
                       : AppColors.success.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  isCurrent ? 'Active' : 'Completed',
+                  widget.isCurrent ? 'Active' : 'Completed',
                   style: CommonStyle.caption.copyWith(
-                    color: isCurrent ? AppColors.primary : AppColors.success,
+                    color: widget.isCurrent
+                        ? AppColors.primary
+                        : AppColors.success,
                     fontWeight: FontWeight.w600,
                     fontSize: 10,
                   ),
@@ -173,7 +270,7 @@ class QueueCard extends StatelessWidget {
           ),
         ),
         // Leave button for current queues
-        if (isCurrent)
+        if (widget.isCurrent)
           Container(
             decoration: BoxDecoration(
               color: AppColors.error.withOpacity(0.1),
@@ -203,19 +300,19 @@ class QueueCard extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (context) => LeaveQueueDialog(
-        queueName: queue.queueName ?? 'Unknown Queue',
+        queueName: widget.queue.queueName ?? 'Unknown Queue',
         onConfirm: _handleLeaveQueue,
       ),
     );
 
-    if (result == true && onQueueLeft != null) {
-      onQueueLeft!();
+    if (result == true && widget.onQueueLeft != null) {
+      widget.onQueueLeft!();
     }
   }
 
   Future<void> _handleLeaveQueue(String reason) async {
     try {
-      await QueueStatusService.leaveQueue(queue.qid, reason);
+      await QueueStatusService.leaveQueue(widget.queue.qid, reason);
     } catch (e) {
       rethrow;
     }
@@ -262,7 +359,7 @@ class QueueCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  queue.comment!,
+                  widget.queue.comment!,
                   style: CommonStyle.bodySmall.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,

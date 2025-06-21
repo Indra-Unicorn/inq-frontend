@@ -23,7 +23,6 @@ class _QueueStatusPageState extends State<QueueStatusPage>
   String? _error;
   late PositionPollingManager _pollingManager;
   bool _isPollingActive = false;
-  DateTime? _lastUpdateTime;
 
   @override
   void initState() {
@@ -48,8 +47,6 @@ class _QueueStatusPageState extends State<QueueStatusPage>
       if (index != -1) {
         _currentQueues[index] = updatedQueue;
       }
-      // Update the last update time
-      _lastUpdateTime = DateTime.now();
     });
   }
 
@@ -148,7 +145,6 @@ class _QueueStatusPageState extends State<QueueStatusPage>
       appBar: QueueStatusHeader(
         tabController: _tabController,
         isPollingActive: _isPollingActive,
-        lastUpdateTime: _lastUpdateTime,
       ),
       body: _buildBody(),
     );
@@ -164,6 +160,7 @@ class _QueueStatusPageState extends State<QueueStatusPage>
     }
 
     final updatingQueueIds = _pollingManager.getPollingQueueIds();
+    final lastUpdateTimes = _pollingManager.getAllLastUpdateTimes();
 
     return TabBarView(
       controller: _tabController,
@@ -174,6 +171,7 @@ class _QueueStatusPageState extends State<QueueStatusPage>
           onQueueLeft: _handleQueueLeft,
           updatingQueueIds: updatingQueueIds,
           onRefresh: _fetchQueueData,
+          lastUpdateTimes: lastUpdateTimes,
         ),
         QueueListView(
           queues: _pastQueues,
@@ -181,6 +179,7 @@ class _QueueStatusPageState extends State<QueueStatusPage>
           onQueueLeft: _handleQueueLeft,
           updatingQueueIds: updatingQueueIds,
           onRefresh: _fetchQueueData,
+          lastUpdateTimes: lastUpdateTimes,
         ),
       ],
     );
