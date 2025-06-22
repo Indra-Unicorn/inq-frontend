@@ -18,7 +18,7 @@ class _QueueStatusPageState extends State<QueueStatusPage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   List<CustomerQueue> _currentQueues = [];
-  List<CustomerQueue> _pastQueues = [];
+  List<CustomerPastQueue> _pastQueues = [];
   bool _isLoading = true;
   String? _error;
   late PositionPollingManager _pollingManager;

@@ -7,8 +7,6 @@ class MerchantDetailsCard extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController emailController;
   final TextEditingController phoneController;
-  final String merchantStatus;
-  final ValueChanged<String?> onStatusChanged;
 
   const MerchantDetailsCard({
     super.key,
@@ -17,8 +15,6 @@ class MerchantDetailsCard extends StatelessWidget {
     required this.nameController,
     required this.emailController,
     required this.phoneController,
-    required this.merchantStatus,
-    required this.onStatusChanged,
   });
 
   @override
@@ -71,32 +67,17 @@ class MerchantDetailsCard extends StatelessWidget {
                 ),
                 keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: merchantStatus,
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  prefixIcon: Icon(Icons.verified_user_outlined),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'APPROVED', child: Text('Approved')),
-                  DropdownMenuItem(value: 'PENDING', child: Text('Pending')),
-                  DropdownMenuItem(value: 'REJECTED', child: Text('Rejected')),
-                  DropdownMenuItem(
-                      value: 'SUSPENDED', child: Text('Suspended')),
-                ],
-                onChanged: onStatusChanged,
-              ),
             ] else ...[
               _buildReadOnlyRow('Name', merchantProfile?.name ?? ''),
               _buildReadOnlyRow('Email', merchantProfile?.email ?? ''),
               _buildReadOnlyRow('Phone', merchantProfile?.phoneNumber ?? ''),
-              _buildReadOnlyRow('Status', merchantProfile?.statusDisplay ?? ''),
-              _buildReadOnlyRow(
-                'InQoin',
-                '${merchantProfile?.formattedInQoin ?? '0.00'} Qoins',
-              ),
             ],
+            // Status is always read-only (managed by backend)
+            _buildReadOnlyRow('Status', merchantProfile?.statusDisplay ?? ''),
+            _buildReadOnlyRow(
+              'InQoin',
+              '${merchantProfile?.formattedInQoin ?? '0.00'} Qoins',
+            ),
           ],
         ),
       ),

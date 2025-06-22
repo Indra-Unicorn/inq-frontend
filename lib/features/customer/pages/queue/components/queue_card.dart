@@ -11,7 +11,7 @@ import '../services/queue_status_service.dart';
 import '../services/polling_config.dart';
 
 class QueueCard extends StatefulWidget {
-  final CustomerQueue queue;
+  final dynamic queue;
   final bool isCurrent;
   final int index;
   final VoidCallback? onQueueLeft;
@@ -141,8 +141,12 @@ class _QueueCardState extends State<QueueCard> {
                     const SizedBox(height: 16),
                   ],
                   QueueInfoRow(queue: widget.queue),
-                  if (widget.queue.comment != null &&
-                      widget.queue.comment!.isNotEmpty) ...[
+                  if ((widget.queue is CustomerQueue &&
+                          widget.queue.comment != null &&
+                          widget.queue.comment!.isNotEmpty) ||
+                      (widget.queue is CustomerPastQueue &&
+                          widget.queue.joinComment != null &&
+                          widget.queue.joinComment!.isNotEmpty)) ...[
                     const SizedBox(height: 12),
                     _buildCommentRow(),
                   ],
@@ -367,68 +371,23 @@ class _QueueCardState extends State<QueueCard> {
   }
 
   Widget _buildCommentRow() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.warning.withOpacity(0.06),
-            AppColors.warning.withOpacity(0.03),
-          ],
-          stops: const [0.0, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.warning.withOpacity(0.15),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.comment,
-              size: 16,
-              color: AppColors.warning,
-            ),
+    String comment = '';
+    if (widget.queue is CustomerQueue) {
+      comment = widget.queue.comment ?? '';
+    } else if (widget.queue is CustomerPastQueue) {
+      comment = widget.queue.joinComment ?? '';
+    }
+    return Row(
+      children: [
+        Icon(Icons.comment, color: AppColors.primary, size: 18),
+        const SizedBox(width: 6),
+        Text(
+          comment,
+          style: CommonStyle.bodySmall.copyWith(
+            color: AppColors.textSecondary,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Comment',
-                  style: CommonStyle.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.queue.comment!,
-                  style: CommonStyle.bodySmall.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

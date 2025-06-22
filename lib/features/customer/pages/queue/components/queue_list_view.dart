@@ -5,7 +5,7 @@ import '../../../models/customer_queue_summary.dart';
 import 'queue_card.dart';
 
 class QueueListView extends StatelessWidget {
-  final List<CustomerQueue> queues;
+  final List<dynamic> queues;
   final bool isCurrent;
   final VoidCallback? onQueueLeft;
   final List<String> updatingQueueIds;

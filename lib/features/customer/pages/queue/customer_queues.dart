@@ -219,7 +219,7 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
                                 'inQoinCharged': queue.inQoinCharged,
                                 'processed': queue.processed,
                               };
-                              
+
                               Navigator.pushNamed(
                                 context,
                                 '/queue-status',
@@ -293,16 +293,17 @@ class _CustomerQueuesPageState extends State<CustomerQueuesPage> {
                             children: [
                               const SizedBox(height: 4),
                               Text(
-                                'Processed: ${queue.processed}',
-                                style: const TextStyle(
-                                  color: Color(0xFF886364),
+                                'Status: ${queue.statusDisplay}',
+                                style: TextStyle(
+                                  color: queue.statusColor,
                                   fontSize: 14,
                                 ),
                               ),
-                              if (queue.comment != null) ...[
+                              if (queue.joinComment != null &&
+                                  queue.joinComment!.isNotEmpty) ...[
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Comment: ${queue.comment}',
+                                  'Comment: ${queue.joinComment}',
                                   style: const TextStyle(
                                     color: Color(0xFF886364),
                                     fontSize: 14,

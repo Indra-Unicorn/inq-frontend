@@ -127,9 +127,8 @@ class CurrentPositionWidget extends StatelessWidget {
                   ),
                   const SizedBox(width: 3),
                   Text(
-                    queue.estimatedWaitTime != null &&
-                            queue.estimatedWaitTime!.isNotEmpty
-                        ? '~${queue.estimatedWaitTime}'
+                    queue.estimatedWaitTime != null
+                        ? '~${queue.estimatedWaitTimeDisplay}'
                         : '${queue.currentRank - 1} position${queue.currentRank - 1 == 1 ? '' : 's'} to go',
                     style: CommonStyle.bodySmall.copyWith(
                       color: AppColors.primary,

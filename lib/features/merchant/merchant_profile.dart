@@ -122,8 +122,6 @@ class _MerchantProfileState extends State<MerchantProfile> {
                     nameController: _controller.merchantNameController,
                     emailController: _controller.merchantEmailController,
                     phoneController: _controller.merchantPhoneController,
-                    merchantStatus: _controller.merchantStatus,
-                    onStatusChanged: _controller.updateMerchantStatus,
                   ),
                   const SizedBox(height: 16),
                   // Store Details Card

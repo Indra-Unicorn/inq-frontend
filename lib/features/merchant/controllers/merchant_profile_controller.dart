@@ -18,13 +18,20 @@ class MerchantProfileController extends ChangeNotifier {
   final TextEditingController storeAddressController = TextEditingController();
 
   // State
-  String _merchantStatus = 'APPROVED';
   TimeOfDay _openTime = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _closeTime = const TimeOfDay(hour: 17, minute: 0);
   List<String> _selectedCategories = [];
-  
+
   final List<String> _availableCategories = [
-    'Restaurant', 'Gym', 'Salon', 'Spa', 'Retail', 'Cafe', 'Bar', 'Clinic', 'Other'
+    'Restaurant',
+    'Gym',
+    'Salon',
+    'Spa',
+    'Retail',
+    'Cafe',
+    'Bar',
+    'Clinic',
+    'Other'
   ];
 
   // Getters
@@ -33,7 +40,6 @@ class MerchantProfileController extends ChangeNotifier {
   bool get isEditMode => _isEditMode;
   MerchantProfileData? get merchantProfile => _merchantProfile;
   MerchantShop? get currentShop => _currentShop;
-  String get merchantStatus => _merchantStatus;
   TimeOfDay get openTime => _openTime;
   TimeOfDay get closeTime => _closeTime;
   List<String> get selectedCategories => _selectedCategories;
@@ -55,16 +61,15 @@ class MerchantProfileController extends ChangeNotifier {
     try {
       final profile = await MerchantProfileService.getMerchantProfile();
       final shop = profile.primaryShop;
-      
+
       _merchantProfile = profile;
       _currentShop = shop;
-      
+
       // Initialize controllers
       merchantNameController.text = profile.name;
       merchantEmailController.text = profile.email;
       merchantPhoneController.text = profile.phoneNumber;
-      _merchantStatus = profile.status;
-      
+
       if (shop != null) {
         storeNameController.text = shop.shopName;
         storePhoneController.text = shop.shopPhoneNumber;
@@ -73,7 +78,7 @@ class MerchantProfileController extends ChangeNotifier {
         _closeTime = shop.closeTimeOfDay;
         _selectedCategories = List<String>.from(shop.categories);
       }
-      
+
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -84,7 +89,7 @@ class MerchantProfileController extends ChangeNotifier {
 
   Future<void> saveProfile() async {
     if (_merchantProfile == null || _currentShop == null) return;
-    
+
     _setUpdating(true);
     try {
       await MerchantProfileService.updateMerchantProfile(
@@ -101,7 +106,7 @@ class MerchantProfileController extends ChangeNotifier {
         images: _currentShop!.images,
         shopMetadata: _currentShop!.metadata,
       );
-      
+
       _setEditMode(false);
       await loadProfile();
     } catch (e) {
@@ -113,13 +118,6 @@ class MerchantProfileController extends ChangeNotifier {
 
   void toggleEditMode() {
     _setEditMode(!_isEditMode);
-  }
-
-  void updateMerchantStatus(String? status) {
-    if (status != null) {
-      _merchantStatus = status;
-      notifyListeners();
-    }
   }
 
   void updateOpenTime(TimeOfDay time) {
@@ -151,4 +149,4 @@ class MerchantProfileController extends ChangeNotifier {
     _isEditMode = editMode;
     notifyListeners();
   }
-} 
+}

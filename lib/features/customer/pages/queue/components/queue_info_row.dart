@@ -4,7 +4,7 @@ import '../../../../../shared/constants/app_colors.dart';
 import '../../../models/customer_queue_summary.dart';
 
 class QueueInfoRow extends StatelessWidget {
-  final CustomerQueue queue;
+  final dynamic queue;
 
   const QueueInfoRow({
     super.key,
@@ -13,6 +13,13 @@ class QueueInfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final joinedPosition = (queue is CustomerQueue)
+        ? queue.joinedPosition
+        : (queue as CustomerPastQueue).joinedPosition;
+    final inQoinCharged = (queue is CustomerQueue)
+        ? queue.inQoinCharged
+        : (queue as CustomerPastQueue).inQoinCharged;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -57,7 +64,7 @@ class QueueInfoRow extends StatelessWidget {
                       ),
                       const SizedBox(height: 1),
                       Text(
-                        '${queue.joinedPosition}',
+                        '$joinedPosition',
                         style: CommonStyle.bodySmall.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
@@ -76,7 +83,7 @@ class QueueInfoRow extends StatelessWidget {
             color: AppColors.borderLight,
           ),
           // inQoin Charged
-          if (queue.inQoinCharged > 0) ...[
+          if (inQoinCharged > 0) ...[
             Expanded(
               child: Row(
                 children: [
@@ -107,7 +114,7 @@ class QueueInfoRow extends StatelessWidget {
                         ),
                         const SizedBox(height: 1),
                         Text(
-                          '${queue.inQoinCharged}',
+                          '$inQoinCharged',
                           style: CommonStyle.bodySmall.copyWith(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
