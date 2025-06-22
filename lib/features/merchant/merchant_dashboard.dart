@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../shared/constants/api_endpoints.dart';
+import 'services/merchant_queue_service.dart';
+import 'models/merchant_queue.dart';
+import 'components/queue_card.dart';
+import 'components/create_queue_dialog.dart';
 
 class MerchantDashboard extends StatefulWidget {
   const MerchantDashboard({super.key});
@@ -14,7 +14,8 @@ class MerchantDashboard extends StatefulWidget {
 class _MerchantDashboardState extends State<MerchantDashboard> {
   int _selectedIndex = 0;
   bool _isLoading = true;
-  List<dynamic> _queues = [];
+  List<MerchantQueue> _queues = [];
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -25,205 +26,77 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   Future<void> _loadQueues() async {
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-
-      if (token == null) {
-        throw Exception('Not authenticated');
-      }
-
-      final response = await http.get(
-        Uri.parse('${ApiEndpoints.baseUrl}/queues/merchant'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 200 && data['success'] == true) {
-        setState(() {
-          _queues = data['data'];
-        });
-      } else {
-        throw Exception(data['message'] ?? 'Failed to load queues');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
+      final queues = await MerchantQueueService.getMerchantQueues();
       setState(() {
+        _queues = queues;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
         _isLoading = false;
       });
     }
   }
 
   Future<void> _showCreateQueueDialog() async {
-    final nameController = TextEditingController();
-    final maxSizeController = TextEditingController(text: '10');
-    final inQoinRateController = TextEditingController(text: '10');
-    final alertNumberController = TextEditingController(text: '3');
-    final bufferNumberController = TextEditingController(text: '5');
-
-    return showDialog(
+    await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create New Queue'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Queue Name',
-                  hintText: 'Enter queue name',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: maxSizeController,
-                decoration: const InputDecoration(
-                  labelText: 'Max Size',
-                  hintText: 'Enter maximum queue size',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: inQoinRateController,
-                decoration: const InputDecoration(
-                  labelText: 'InQoin Rate',
-                  hintText: 'Enter InQoin rate',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: alertNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Alert Number',
-                  hintText: 'Enter alert number',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: bufferNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Buffer Number',
-                  hintText: 'Enter buffer number',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (nameController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a queue name')),
-                );
-                return;
-              }
-
-              try {
-                final prefs = await SharedPreferences.getInstance();
-                final token = prefs.getString('token');
-
-                if (token == null) {
-                  throw Exception('Not authenticated');
-                }
-
-                final response = await http.post(
-                  Uri.parse('${ApiEndpoints.baseUrl}/queues/create'),
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer $token',
-                  },
-                  body: jsonEncode({
-                    'name': nameController.text,
-                    'maxSize': int.parse(maxSizeController.text),
-                    'inQoinRate': int.parse(inQoinRateController.text),
-                    'alertNumber': int.parse(alertNumberController.text),
-                    'bufferNumber': int.parse(bufferNumberController.text),
-                  }),
-                );
-
-                final data = jsonDecode(response.body);
-                
-                if (response.statusCode == 200 && data['success'] == true) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Queue created successfully'),
-                      backgroundColor: Color(0xFFE8B4B7),
-                    ),
-                  );
-                  _loadQueues();
-                } else {
-                  throw Exception(data['message'] ?? 'Failed to create queue');
-                }
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
+      builder: (context) => CreateQueueDialog(
+        onCreateQueue: _handleCreateQueue,
       ),
     );
   }
 
-  Future<void> _moveQueueForward(String queueId) async {
+  Future<void> _handleCreateQueue({
+    required String name,
+    required int maxSize,
+    required double inQoinRate,
+    required int alertNumber,
+    required int bufferNumber,
+  }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-
-      if (token == null) {
-        throw Exception('Not authenticated');
-      }
-
-      final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}/queue-manager/$queueId/process-next'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+      await MerchantQueueService.createQueue(
+        name: name,
+        maxSize: maxSize,
+        inQoinRate: inQoinRate,
+        alertNumber: alertNumber,
+        bufferNumber: bufferNumber,
       );
 
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 200 && data['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Queue moved forward successfully'),
-            backgroundColor: Color(0xFFE8B4B7),
-          ),
-        );
-        _loadQueues(); // Refresh queue list
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['message'] ?? 'Failed to move queue forward'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Queue created successfully'),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+
+      _loadQueues(); // Refresh the list
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> _handleProcessNext(MerchantQueue queue) async {
+    try {
+      await MerchantQueueService.processNextCustomer(queue.qid);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Customer processed successfully'),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+      _loadQueues(); // Refresh the list
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -232,6 +105,74 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         ),
       );
     }
+  }
+
+  Future<void> _handlePauseQueue(MerchantQueue queue) async {
+    try {
+      await MerchantQueueService.pauseQueue(queue.qid);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Queue paused successfully'),
+          backgroundColor: Color(0xFFFF9800),
+        ),
+      );
+      _loadQueues(); // Refresh the list
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleResumeQueue(MerchantQueue queue) async {
+    try {
+      await MerchantQueueService.resumeQueue(queue.qid);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Queue resumed successfully'),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+      _loadQueues(); // Refresh the list
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleStopQueue(MerchantQueue queue) async {
+    try {
+      await MerchantQueueService.stopQueue(queue.qid);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Queue stopped successfully'),
+          backgroundColor: Color(0xFFF44336),
+        ),
+      );
+      _loadQueues(); // Refresh the list
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _navigateToQueueDetails(MerchantQueue queue) {
+    Navigator.pushNamed(
+      context,
+      '/queue-management',
+      arguments: queue,
+    );
   }
 
   @override
@@ -246,12 +187,12 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Expanded(
-                    child: const Text(
-                      'Queues',
+                  const Expanded(
+                    child: Text(
+                      'Queue Management',
                       style: TextStyle(
                         color: Color(0xFF191010),
-                        fontSize: 18,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.015,
                       ),
@@ -261,11 +202,17 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                   Container(
                     width: 48,
                     height: 48,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4CAF50), Color(0xFF45A049)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: IconButton(
                       onPressed: _showCreateQueueDialog,
                       icon: const Icon(
                         Icons.add,
-                        color: Color(0xFF191010),
+                        color: Colors.white,
                         size: 24,
                       ),
                     ),
@@ -274,128 +221,209 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               ),
             ),
 
-            // Active Queues Section
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              alignment: Alignment.centerLeft,
-              child: const Text(
-                'Active Queues',
-                style: TextStyle(
-                  color: Color(0xFF191010),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.015,
+            // Stats Summary
+            if (_queues.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4CAF50), Color(0xFF45A049)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
+                child: Row(
+                  children: [
+                    _buildStatItem(
+                      icon: Icons.queue,
+                      label: 'Total Queues',
+                      value: _queues.length.toString(),
+                    ),
+                    const SizedBox(width: 24),
+                    _buildStatItem(
+                      icon: Icons.play_circle_filled,
+                      label: 'Active',
+                      value: _queues.where((q) => q.isActive).length.toString(),
+                    ),
+                    const SizedBox(width: 24),
+                    _buildStatItem(
+                      icon: Icons.people,
+                      label: 'Total Customers',
+                      value:
+                          _queues.fold(0, (sum, q) => sum + q.size).toString(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Queue List Header
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+              child: Row(
+                children: [
+                  const Text(
+                    'Your Queues',
+                    style: TextStyle(
+                      color: Color(0xFF191010),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.015,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: _loadQueues,
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Color(0xFF8B5B5C),
+                    ),
+                  ),
+                ],
               ),
             ),
 
             // Queue List
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _queues.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No active queues',
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF4CAF50)),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Loading queues...',
                             style: TextStyle(
                               color: Color(0xFF8B5B5C),
                               fontSize: 16,
                             ),
                           ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _queues.length,
-                          itemBuilder: (context, index) {
-                            final queue = _queues[index];
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/queue-management',
-                                    arguments: queue,
-                                  );
-                                },
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 48,
-                                            height: 48,
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFF1E9EA),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: const Icon(
-                                              Icons.list,
-                                              color: Color(0xFF191010),
-                                              size: 24,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  queue['name'],
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF191010),
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Front: ${queue['frontPerson'] ?? 'No one'}',
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF8B5B5C),
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '${queue['size']}/${queue['maxSize']} people in line | ${queue['status']}',
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF8B5B5C),
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      height: 32,
-                                      child: TextButton(
-                                        onPressed: () => _moveQueueForward(queue['qid']),
-                                        style: TextButton.styleFrom(
-                                          backgroundColor: const Color(0xFFF1E9EA),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
-                                          ),
-                                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        ),
-                                        child: const Text(
-                                          'Move Queue',
-                                          style: TextStyle(
-                                            color: Color(0xFF191010),
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                        ],
+                      ),
+                    )
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Color(0xFFF44336),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Error loading queues',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1B0E0E),
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: Color(0xFF8B5B5C),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadQueues,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _queues.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 120,
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0F0F0),
+                                      borderRadius: BorderRadius.circular(60),
+                                    ),
+                                    child: const Icon(
+                                      Icons.queue,
+                                      size: 60,
+                                      color: Color(0xFF8B5B5C),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  const Text(
+                                    'No queues yet',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1B0E0E),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Create your first queue to start managing customers',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color(0xFF8B5B5C),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  ElevatedButton.icon(
+                                    onPressed: _showCreateQueueDialog,
+                                    icon: const Icon(Icons.add),
+                                    label: const Text('Create Queue'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF4CAF50),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _loadQueues,
+                              color: const Color(0xFF4CAF50),
+                              child: ListView.builder(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: _queues.length,
+                                itemBuilder: (context, index) {
+                                  final queue = _queues[index];
+                                  return QueueCard(
+                                    queue: queue,
+                                    onTap: () => _navigateToQueueDetails(queue),
+                                    onProcessNext: () =>
+                                        _handleProcessNext(queue),
+                                    onPause: () => _handlePauseQueue(queue),
+                                    onResume: () => _handleResumeQueue(queue),
+                                    onStop: () => _handleStopQueue(queue),
+                                  );
+                                },
+                              ),
+                            ),
             ),
           ],
         ),
@@ -417,7 +445,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             setState(() {
               _selectedIndex = index;
             });
-            
+
             if (index == 1) {
               Navigator.pushNamed(context, '/merchant-profile');
             }
@@ -429,7 +457,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           elevation: 0,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.list),
+              icon: Icon(Icons.queue),
               label: 'Queues',
             ),
             BottomNavigationBarItem(
@@ -438,6 +466,40 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: Colors.white,
+            size: 24,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white70,
+            ),
+          ),
+        ],
       ),
     );
   }

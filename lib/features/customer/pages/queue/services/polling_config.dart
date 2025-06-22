@@ -19,11 +19,11 @@ class PollingConfig {
 
   // Hybrid polling configuration
   static const int hybridLongPollTimeout = 30; // seconds
-  static const int hybridMinDelayBetweenRequests = 2; // seconds
+  static const int hybridMinDelayBetweenRequests = 3; // seconds
   static const int hybridErrorRetryDelay = 10; // seconds
 
   // Adaptive polling configuration
-  static const int adaptiveLongPollTimeout = 30; // seconds
+  static const int adaptiveLongPollTimeout = 60; // seconds
   static const int adaptiveErrorRetryDelay = 10; // seconds
   static const int adaptiveMaxDelay = 30; // seconds
   static const int adaptiveCriticalPosition =
@@ -78,13 +78,13 @@ class PollingConfig {
   // Calculate adaptive delay based on queue position
   static int getAdaptiveDelay(int currentPosition) {
     if (currentPosition <= adaptiveCriticalPosition) {
-      return 3; // No delay for critical positions (≤3)
+      return 10; // No delay for critical positions (≤3)
     }
 
     // Linear increase from 0 to adaptiveMaxDelay
-    // Formula: delay = (position - critical) * (maxDelay / (30 - critical))
+    // Formula: delay = (position - critical) * (maxDelay / (60 - critical))
     final delay = (currentPosition - adaptiveCriticalPosition) *
-        (adaptiveMaxDelay / (30 - adaptiveCriticalPosition));
+        (adaptiveMaxDelay / (60 - adaptiveCriticalPosition));
 
     // Ensure delay doesn't exceed max
     return delay.round().clamp(0, adaptiveMaxDelay);

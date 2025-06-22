@@ -15,6 +15,7 @@ import 'features/customer/pages/store/store_details_page.dart';
 import 'features/customer/pages/queue/queue_status_page.dart';
 import 'features/merchant/merchant_profile.dart';
 import 'features/merchant/queue_management.dart';
+import 'features/merchant/models/merchant_queue.dart';
 import 'services/notification_service.dart';
 
 void main() async {
@@ -74,8 +75,17 @@ class MyApp extends StatelessWidget {
         '/merchant-profile': (context) => const MerchantProfile(),
         '/queue-status': (context) => const QueueStatusPage(),
         '/queue-management': (context) {
-          final queue = ModalRoute.of(context)!.settings.arguments
-              as Map<String, dynamic>;
+          final queueData = ModalRoute.of(context)!.settings.arguments;
+          MerchantQueue queue;
+
+          if (queueData is MerchantQueue) {
+            queue = queueData;
+          } else if (queueData is Map<String, dynamic>) {
+            queue = MerchantQueue.fromJson(queueData);
+          } else {
+            throw ArgumentError('Invalid queue data type');
+          }
+
           return QueueManagement(queue: queue);
         },
         '/store-details': (context) {
