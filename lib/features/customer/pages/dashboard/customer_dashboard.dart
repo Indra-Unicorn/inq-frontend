@@ -105,21 +105,8 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                           ),
                         )
                       : CustomerDashboardStoreList(
-                          stores: _stores
-                              .map((shop) => {
-                                    'name': shop.shopName,
-                                    'address':
-                                        '${shop.address.city}, ${shop.address.state}',
-                                    'waitTime':
-                                        15, // Default value since it's not in the model
-                                    'queueSize':
-                                        5, // Default value since it's not in the model
-                                    'rating': shop.rating,
-                                  })
-                              .toList(),
-                          onStoreTap: (store) => _onStoreTap(_stores.firstWhere(
-                            (s) => s.shopName == store['name'],
-                          )),
+                          stores: _stores,
+                          onStoreTap: _onStoreTap,
                         ),
             ),
           ],
