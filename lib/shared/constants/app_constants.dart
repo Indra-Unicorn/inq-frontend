@@ -5,22 +5,23 @@ class AppConstants {
   static const int receiveTimeout = 30000;
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
-  
+  static const String locationKey = 'user_location';
+
   // User types
   static const String userTypeCustomer = 'CUSTOMER';
   static const String userTypeMerchant = 'MERCHANT';
   static const String userTypeAdmin = 'ADMIN';
-  
+
   // Queue statuses
   static const String queueStatusActive = 'ACTIVE';
   static const String queueStatusPaused = 'PAUSED';
   static const String queueStatusClosed = 'CLOSED';
-  
+
   // Merchant statuses
   static const String merchantStatusCreated = 'CREATED';
   static const String merchantStatusApproved = 'APPROVED';
   static const String merchantStatusBlocked = 'BLOCKED';
-  
+
   // Device types
   static const String deviceTypeAndroid = 'ANDROID';
   static const String deviceTypeIOS = 'IOS';

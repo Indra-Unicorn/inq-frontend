@@ -44,4 +44,34 @@ class ProfileService {
     await prefs.remove(AppConstants.tokenKey);
     await prefs.clear();
   }
+
+  Future<void> updateCustomerLocation(
+      {double? latitude, double? longitude}) async {
+    if (latitude == null || longitude == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(AppConstants.tokenKey);
+    if (token == null) throw Exception('User not authenticated');
+
+    final response = await http.patch(
+      Uri.parse('${ApiEndpoints.baseUrl}/users/customer/location/update'),
+      headers: {
+        'accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: '{"latitude": $latitude, "longitude": $longitude}',
+    );
+
+    if (response.statusCode == 200) {
+      final data = response.body;
+      // Parse the response to get the location string
+      final location =
+          RegExp(r'"location"\s*:\s*"([^"]+)"').firstMatch(data)?.group(1);
+      if (location != null) {
+        await prefs.setString(AppConstants.locationKey, location);
+      }
+    } else {
+      throw Exception('Failed to update location');
+    }
+  }
 }

@@ -147,21 +147,24 @@ class CustomerDashboardStoreList extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildInfoIconText(
+            Expanded(
+                child: _buildInfoIconText(
               Icons.access_time_filled,
-              '~${store.metadata['avgWaitTime'] ?? 0} min', // Example from metadata
+              '~${store.metadata['avgWaitTime'] ?? 0} min',
               AppColors.success,
-            ),
-            _buildInfoIconText(
+            )),
+            Expanded(
+                child: _buildInfoIconText(
               Icons.people_alt,
-              '${store.metadata['activeQueues'] ?? 0} active', // Example from metadata
+              '${store.metadata['activeQueues'] ?? 0} active',
               AppColors.info,
-            ),
-            _buildInfoIconText(
+            )),
+            Expanded(
+                child: _buildInfoIconText(
               Icons.category,
               store.categories.first,
               AppColors.warning,
-            ),
+            )),
           ],
         ),
       ],
@@ -207,11 +210,15 @@ class CustomerDashboardStoreList extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 6),
-        Text(
-          text,
-          style: CommonStyle.bodySmall.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w500,
+        Expanded(
+          child: Text(
+            text,
+            style: CommonStyle.bodySmall.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

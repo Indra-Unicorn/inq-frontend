@@ -37,8 +37,8 @@ class _QueueManagementState extends State<QueueManagement> {
         _isLoading = false;
       });
 
-      // TODO: Replace with actual API call to get top customers
-      _loadMockCustomers();
+      // Fetch real queue members from API
+      await _loadQueueMembers();
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -47,36 +47,27 @@ class _QueueManagementState extends State<QueueManagement> {
     }
   }
 
-  void _loadMockCustomers() {
-    // Mock data - replace with actual API call
-    setState(() {
-      _topCustomers = [
-        {
-          'name': 'Sophia Clark',
-          'reservationId': '12345',
-          'imageUrl':
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuDkVT3HJth0XTIcK5jE3UbA4Qhh5qqp7yltLCeSvXfFJx4CZAXQFHNTO08YsAhZ1A8NdL1L93DINKyu79Gc4cRrzhabgd6yAk_fbbBhEGRULGyRt9QnuhhXixr3cREuKCIyuzOhl0Qo4sfoNZ6XV02DLhGiePx-mKwQK4_Rtp-ageQ7VqWlF_D7CmRE7HsVbD2CjKqAaS2FXN1VCoZfBNLjo1Cr_yn5ODaz5FeQ5gPUSeFrKr99b_hWHcYRmLPTzXvXXOx3DAeOTyYX',
-          'position': 1,
-          'waitTime': '5 min',
-        },
-        {
-          'name': 'Ethan Miller',
-          'reservationId': '67890',
-          'imageUrl':
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuAP0Z6xpxPJiWslyOX09-6xPmtLp1ZLdETtpYEoSFa0T236hZ0Pe_aUdQcT27XF7oiLs8PHa6RtyldKuzk4wGLwrnLw0F9r4e-LZIb7cYkCUQT7FS35EGFZHsMvqsIfifMzYR3uFePxHvMSclE2orO7qeuSV0uTw4lNslVqjShZz3NJlSpKXzylMkzSMCvFVNvKv8uNLZ2zNDPgsbVkCZUGrOjB81UUldbnk3oDxCi5abkf0bg1zqZAItEfAjCVv-iKati8RgGKOYrZ',
-          'position': 2,
-          'waitTime': '10 min',
-        },
-        {
-          'name': 'Olivia Davis',
-          'reservationId': '11223',
-          'imageUrl':
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuAvuyvEXJiIk2WaPj-dnCkHkqoyXqnlG8nSVTW7FVtrH_3Ma8-9UJsLZzSv45JlW2RvNOO1bVBROWBze44pyYtzbufxoWXhaiyKHgp5zAMoOLtesenPkgEKuW6E-eIBtXnZMj3RI4MuLtYz-PpukWYTgTBhra0vw-COklksAg6mXRBRlU6Cloqc7Kzjb-b9ghHn1RCDUHnTfwo20edgpnmMZsi7JFk-qoPGzNndUuL37YkkygewEqcUVZG3dlRvp0Uyh27JeN9a6ESi',
-          'position': 3,
-          'waitTime': '15 min',
-        },
-      ];
-    });
+  Future<void> _loadQueueMembers() async {
+    try {
+      final members =
+          await MerchantQueueService.getQueueMembers(widget.queue.qid);
+      setState(() {
+        _topCustomers = members
+            .take(3)
+            .map((member) => {
+                  'name': member.customerName ?? 'Unknown',
+                  'reservationId': member.id,
+                  'imageUrl': null, // No image in API, can use placeholder
+                  'position': member.currentRank,
+                  'waitTime': member.estimatedWaitTimeDisplay,
+                })
+            .toList();
+      });
+    } catch (e) {
+      setState(() {
+        _topCustomers = [];
+      });
+    }
   }
 
   Future<void> _processNextCustomer() async {

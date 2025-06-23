@@ -8,6 +8,8 @@ import 'customer_dashboard_search_bar.dart';
 import 'customer_dashboard_categories.dart';
 import 'customer_dashboard_store_list.dart';
 import 'customer_dashboard_bottom_nav.dart';
+import '../../../../services/notification_service.dart';
+import '../../services/profile_service.dart';
 
 class CustomerDashboard extends StatefulWidget {
   const CustomerDashboard({super.key});
@@ -24,6 +26,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   bool _isLoading = true;
   String? _error;
   List<Shop> _stores = [];
+  bool _locationChecked = false;
 
   final List<String> _categories = [
     'All',
@@ -37,6 +40,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   void initState() {
     super.initState();
     _loadStores();
+    _checkAndUpdateLocation();
   }
 
   Future<void> _loadStores() async {
@@ -51,6 +55,28 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _checkAndUpdateLocation() async {
+    if (_locationChecked) return;
+    _locationChecked = true;
+    final locationService = LocationService();
+    final profileService = ProfileService();
+    final position = await locationService.getCurrentLocation();
+    if (position != null) {
+      try {
+        await profileService.updateCustomerLocation(
+            latitude: position.latitude, longitude: position.longitude);
+      } catch (e) {
+        print("Error updating location: $e");
+      }
+    } else {
+      try {
+        await profileService.updateCustomerLocation(); // Call with no location
+      } catch (e) {
+        print("Error updating location: $e");
+      }
     }
   }
 

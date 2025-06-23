@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/constants/api_endpoints.dart';
 import '../models/merchant_queue.dart';
+import '../../customer/models/customer_queue_summary.dart';
 
 class MerchantQueueService {
   static Future<String?> _getAuthToken() async {
@@ -221,6 +222,30 @@ class MerchantQueueService {
       }
     } catch (e) {
       throw Exception('Failed to delete queue: $e');
+    }
+  }
+
+  static Future<List<CustomerQueue>> getQueueMembers(String queueId) async {
+    try {
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}/queue-manager/$queueId/members'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        final List<dynamic> membersData = data['data'] ?? [];
+        return membersData.map((json) => CustomerQueue.fromJson(json)).toList();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to load queue members');
+      }
+    } catch (e) {
+      throw Exception('Failed to load queue members: $e');
     }
   }
 }
