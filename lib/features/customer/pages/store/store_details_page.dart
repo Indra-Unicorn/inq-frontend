@@ -139,6 +139,9 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 final queue = _queues[index];
+                                if (queue == null) {
+                                  return const SizedBox.shrink();
+                                }
                                 return StoreQueueCard(
                                   queue: queue,
                                   onJoin: queue.status == QueueStatus.active

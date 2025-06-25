@@ -162,7 +162,7 @@ class CustomerDashboardStoreList extends StatelessWidget {
             Expanded(
                 child: _buildInfoIconText(
               Icons.category,
-              store.categories.first,
+              store.categories.isNotEmpty ? store.categories.first : 'General',
               AppColors.warning,
             )),
           ],

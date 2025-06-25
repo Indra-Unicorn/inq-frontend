@@ -4,7 +4,6 @@ import '../../../../shared/constants/app_colors.dart';
 import '../../models/shop.dart';
 import '../../services/shop_service.dart';
 import 'customer_dashboard_header.dart';
-import 'customer_dashboard_search_bar.dart';
 import 'customer_dashboard_categories.dart';
 import 'customer_dashboard_store_list.dart';
 import 'customer_dashboard_bottom_nav.dart';
@@ -31,7 +30,6 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
 
   // Search state
   List<Shop> _searchResults = [];
-  bool _isSearching = false;
   bool _showSearchTray = false;
   bool _searchLoading = false;
   String? _searchError;
@@ -82,6 +80,16 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   }
 
   void _debouncedSearch(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _showSearchTray = false;
+        _searchError = null;
+        _searchLoading = false;
+      });
+      return;
+    }
+
     final now = DateTime.now();
     if (_lastSearchTime != null &&
         now.difference(_lastSearchTime!) < Duration(milliseconds: 400)) {
@@ -98,58 +106,73 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         latitude: _userLat,
         longitude: _userLong,
       );
-      setState(() {
-        _searchResults = results;
-        _showSearchTray = true;
-        _searchLoading = false;
-        _searchError = null;
-      });
+      if (mounted) {
+        setState(() {
+          _searchResults = results;
+          _showSearchTray = true;
+          _searchLoading = false;
+          _searchError = null;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _searchResults = [];
-        _showSearchTray = true;
-        _searchLoading = false;
-        _searchError = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _searchResults = [];
+          _showSearchTray = true;
+          _searchLoading = false;
+          _searchError = e.toString();
+        });
+      }
     }
   }
 
   Future<void> _loadStores() async {
     try {
       final stores = await _shopService.getAllShops();
-      setState(() {
-        _stores = stores;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _stores = stores;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _checkAndUpdateLocation() async {
     if (_locationChecked) return;
     _locationChecked = true;
-    final locationService = LocationService();
-    final profileService = ProfileService();
-    final position = await locationService.getCurrentLocation();
-    if (position != null) {
-      _userLat = position.latitude;
-      _userLong = position.longitude;
-      try {
-        await profileService.updateCustomerLocation(
-            latitude: position.latitude, longitude: position.longitude);
-      } catch (e) {
-        print("Error updating location: $e");
+
+    try {
+      final locationService = LocationService();
+      final profileService = ProfileService();
+      final position = await locationService.getCurrentLocation();
+      if (position != null) {
+        _userLat = position.latitude;
+        _userLong = position.longitude;
+        try {
+          await profileService.updateCustomerLocation(
+              latitude: position.latitude, longitude: position.longitude);
+        } catch (e) {
+          print("Error updating location: $e");
+        }
+      } else {
+        try {
+          await profileService
+              .updateCustomerLocation(); // Call with no location
+        } catch (e) {
+          print("Error updating location: $e");
+        }
       }
-    } else {
-      try {
-        await profileService.updateCustomerLocation(); // Call with no location
-      } catch (e) {
-        print("Error updating location: $e");
-      }
+    } catch (e) {
+      print("Error in location check: $e");
+      // Continue without location
     }
   }
 
@@ -264,16 +287,13 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         ),
                       ],
                     ),
-                    if (_showSearchTray &&
-                        (_searchResults.isNotEmpty ||
-                            _searchLoading ||
-                            _searchError != null))
+                    if (_showSearchTray)
                       Positioned.fill(
                         child: Material(
                           color: Colors.white.withOpacity(0.98),
                           child: Column(
                             children: [
-                              // Search bar at the top of the tray
+                              // Search bar at the top of the tray (always visible)
                               SafeArea(
                                 bottom: false,
                                 child: Padding(
@@ -356,68 +376,132 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                                       color: Colors.red)),
                                             ),
                                           )
-                                        : ListView.separated(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 24, vertical: 8),
-                                            itemCount: _searchResults.length,
-                                            separatorBuilder: (_, __) =>
-                                                const Divider(height: 1),
-                                            itemBuilder: (context, index) {
-                                              final shop =
-                                                  _searchResults[index];
-                                              return ListTile(
-                                                leading: shop.images.isNotEmpty
-                                                    ? ClipRRect(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                        child: Image.network(
-                                                          shop.images.first,
-                                                          width: 40,
-                                                          height: 40,
-                                                          fit: BoxFit.cover,
-                                                        ),
-                                                      )
-                                                    : Container(
-                                                        width: 40,
-                                                        height: 40,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: AppColors
-                                                              .backgroundLight,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                        ),
-                                                        child: const Icon(
-                                                            Icons.store,
-                                                            color: AppColors
-                                                                .primary),
-                                                      ),
-                                                title: Text(
-                                                  shop.shopName,
-                                                  style: CommonStyle.bodyLarge,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                subtitle: Text(
-                                                  shop.categories.isNotEmpty
-                                                      ? shop.categories
-                                                          .join(', ')
-                                                      : '',
-                                                  style: CommonStyle.bodySmall
-                                                      .copyWith(
-                                                          color: AppColors
-                                                              .textSecondary),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                onTap: () => _onStoreTap(shop),
-                                              );
-                                            },
-                                          ),
+                                        : _searchResults.isEmpty
+                                            ? Center(
+                                                child: Text('No stores found.'))
+                                            : ListView.separated(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 24,
+                                                        vertical: 8),
+                                                itemCount:
+                                                    _searchResults.length,
+                                                separatorBuilder: (_, __) =>
+                                                    const Divider(height: 1),
+                                                itemBuilder: (context, index) {
+                                                  if (index >=
+                                                      _searchResults.length) {
+                                                    return const SizedBox
+                                                        .shrink();
+                                                  }
+                                                  final shop =
+                                                      _searchResults[index];
+                                                  return ListTile(
+                                                    leading: shop
+                                                            .images.isNotEmpty
+                                                        ? ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                            child:
+                                                                Image.network(
+                                                              shop.images.first,
+                                                              width: 40,
+                                                              height: 40,
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder:
+                                                                  (context,
+                                                                          error,
+                                                                          stackTrace) =>
+                                                                      Container(
+                                                                width: 40,
+                                                                height: 40,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: AppColors
+                                                                      .backgroundLight,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              8),
+                                                                ),
+                                                                child: const Icon(
+                                                                    Icons.store,
+                                                                    color: AppColors
+                                                                        .primary),
+                                                              ),
+                                                            ),
+                                                          )
+                                                        : Container(
+                                                            width: 40,
+                                                            height: 40,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: AppColors
+                                                                  .backgroundLight,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8),
+                                                            ),
+                                                            child: const Icon(
+                                                                Icons.store,
+                                                                color: AppColors
+                                                                    .primary),
+                                                          ),
+                                                    title: Text(
+                                                      shop.shopName,
+                                                      style:
+                                                          CommonStyle.bodyLarge,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    subtitle: Text(
+                                                      shop.categories.isNotEmpty
+                                                          ? shop.categories
+                                                              .join(', ')
+                                                          : '',
+                                                      style: CommonStyle
+                                                          .bodySmall
+                                                          .copyWith(
+                                                              color: AppColors
+                                                                  .textSecondary),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    onTap: () {
+                                                      setState(() {
+                                                        _showSearchTray = false;
+                                                        _searchController
+                                                            .clear();
+                                                        _searchFocusNode
+                                                            .unfocus();
+                                                      });
+                                                      Navigator.pushNamed(
+                                                        context,
+                                                        '/store-details',
+                                                        arguments: {
+                                                          'shopId': shop.shopId,
+                                                          'storeName':
+                                                              shop.shopName,
+                                                          'storeAddress':
+                                                              _buildAddressString(
+                                                                  shop.address),
+                                                          'storeImage': (shop
+                                                                  .images
+                                                                  .isNotEmpty
+                                                              ? shop
+                                                                  .images.first
+                                                              : ''),
+                                                        },
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              ),
                               ),
                             ],
                           ),
@@ -447,6 +531,15 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   }
 
   Widget _buildResponsiveStoreList(bool isDesktop) {
+    if (_stores.isEmpty) {
+      return const Center(
+        child: Text(
+          'No stores available.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
+
     if (isDesktop) {
       // Use a grid for desktop
       return GridView.builder(
@@ -459,6 +552,9 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         ),
         itemCount: _stores.length,
         itemBuilder: (context, index) {
+          if (index >= _stores.length) {
+            return const SizedBox.shrink();
+          }
           return CustomerDashboardStoreList(
             stores: [_stores[index]],
             onStoreTap: _onStoreTap,
@@ -472,5 +568,13 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         onStoreTap: _onStoreTap,
       );
     }
+  }
+
+  String _buildAddressString(ShopAddress address) {
+    final parts = <String>[];
+    if (address.streetAddress.isNotEmpty) parts.add(address.streetAddress);
+    if (address.city.isNotEmpty) parts.add(address.city);
+    if (address.state.isNotEmpty) parts.add(address.state);
+    return parts.isEmpty ? 'Address not available' : parts.join(', ');
   }
 }
