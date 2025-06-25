@@ -9,7 +9,8 @@ class ShopService {
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(AppConstants.tokenKey);
-    print('Retrieved token: ${token != null ? 'Token exists' : 'No token found'}');
+    print(
+        'Retrieved token: ${token != null ? 'Token exists' : 'No token found'}');
     return token;
   }
 
@@ -46,4 +47,56 @@ class ShopService {
       throw Exception('Error fetching shops: $e');
     }
   }
-} 
+
+  Future<List<Shop>> searchShops({
+    required String search,
+    double? latitude,
+    double? longitude,
+    int radiusKm = 30,
+  }) async {
+    try {
+      final token = await _getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+      final body = <String, dynamic>{
+        'shopName': search,
+        'radiusKm': radiusKm,
+      };
+      if (latitude != null && longitude != null) {
+        body['location'] = {
+          'latitude': latitude,
+          'longitude': longitude,
+        };
+      }
+      final response = await http.post(
+        Uri.parse('${ApiEndpoints.baseUrl}/users/nearby'),
+        headers: {
+          'accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        List<dynamic> data;
+        if (decoded is List) {
+          data = decoded;
+        } else if (decoded is Map && decoded['data'] is List) {
+          data = decoded['data'];
+        } else {
+          data = [];
+        }
+        return data
+            .where((shop) => shop != null && shop is Map<String, dynamic>)
+            .take(10)
+            .map((shop) => Shop.fromJson(shop as Map<String, dynamic>))
+            .toList();
+      }
+      throw Exception('Failed to search shops');
+    } catch (e) {
+      throw Exception('Error searching shops: $e');
+    }
+  }
+}

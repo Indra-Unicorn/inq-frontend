@@ -20,6 +20,7 @@ class CustomerDashboard extends StatefulWidget {
 
 class _CustomerDashboardState extends State<CustomerDashboard> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final ShopService _shopService = ShopService();
   int _currentIndex = 0;
   String _selectedCategory = 'All';
@@ -27,6 +28,16 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   String? _error;
   List<Shop> _stores = [];
   bool _locationChecked = false;
+
+  // Search state
+  List<Shop> _searchResults = [];
+  bool _isSearching = false;
+  bool _showSearchTray = false;
+  bool _searchLoading = false;
+  String? _searchError;
+  double? _userLat;
+  double? _userLong;
+  DateTime? _lastSearchTime;
 
   final List<String> _categories = [
     'All',
@@ -41,6 +52,66 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     super.initState();
     _loadStores();
     _checkAndUpdateLocation();
+    _searchController.addListener(_onSearchChanged);
+    _searchFocusNode.addListener(_onSearchFocusChanged);
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _showSearchTray = false;
+        _searchError = null;
+      });
+      return;
+    }
+    _debouncedSearch(query);
+  }
+
+  void _onSearchFocusChanged() {
+    if (!_searchFocusNode.hasFocus) {
+      setState(() {
+        _showSearchTray = false;
+      });
+    } else if (_searchResults.isNotEmpty) {
+      setState(() {
+        _showSearchTray = true;
+      });
+    }
+  }
+
+  void _debouncedSearch(String query) async {
+    final now = DateTime.now();
+    if (_lastSearchTime != null &&
+        now.difference(_lastSearchTime!) < Duration(milliseconds: 400)) {
+      return;
+    }
+    _lastSearchTime = now;
+    setState(() {
+      _searchLoading = true;
+      _searchError = null;
+    });
+    try {
+      final results = await _shopService.searchShops(
+        search: query,
+        latitude: _userLat,
+        longitude: _userLong,
+      );
+      setState(() {
+        _searchResults = results;
+        _showSearchTray = true;
+        _searchLoading = false;
+        _searchError = null;
+      });
+    } catch (e) {
+      setState(() {
+        _searchResults = [];
+        _showSearchTray = true;
+        _searchLoading = false;
+        _searchError = e.toString();
+      });
+    }
   }
 
   Future<void> _loadStores() async {
@@ -65,6 +136,8 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     final profileService = ProfileService();
     final position = await locationService.getCurrentLocation();
     if (position != null) {
+      _userLat = position.latitude;
+      _userLong = position.longitude;
       try {
         await profileService.updateCustomerLocation(
             latitude: position.latitude, longitude: position.longitude);
@@ -83,6 +156,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -92,6 +166,10 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
       '/store-details',
       arguments: store,
     );
+    setState(() {
+      _showSearchTray = false;
+      _searchController.clear();
+    });
   }
 
   void _onProfileTap() {
@@ -107,35 +185,178 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            CustomerDashboardHeader(onProfileTap: _onProfileTap),
-            CustomerDashboardSearchBar(controller: _searchController),
-            CustomerDashboardCategories(
-              categories: _categories,
-              selectedCategory: _selectedCategory,
-              onCategorySelected: (category) {
-                setState(() {
-                  _selectedCategory = category;
-                });
-              },
-            ),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                      ? Center(
-                          child: Text(
-                            _error!,
-                            style: CommonStyle.errorTextStyle,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 900;
+            return Center(
+              child: Container(
+                constraints:
+                    BoxConstraints(maxWidth: isDesktop ? 900 : double.infinity),
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 0),
+                child: Stack(
+                  children: [
+                    Column(
+                      children: [
+                        CustomerDashboardHeader(onProfileTap: _onProfileTap),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12),
+                          child: Container(
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.backgroundLight,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 16, right: 8),
+                                  child: Icon(
+                                    Icons.search,
+                                    color: AppColors.secondary,
+                                    size: 24,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _searchController,
+                                    focusNode: _searchFocusNode,
+                                    decoration: InputDecoration(
+                                      hintText: 'Search for stores',
+                                      hintStyle:
+                                          CommonStyle.bodyMedium.copyWith(
+                                        color: AppColors.secondary,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              vertical: 14),
+                                    ),
+                                    style: CommonStyle.bodyLarge,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        )
-                      : CustomerDashboardStoreList(
-                          stores: _stores,
-                          onStoreTap: _onStoreTap,
                         ),
-            ),
-          ],
+                        CustomerDashboardCategories(
+                          categories: _categories,
+                          selectedCategory: _selectedCategory,
+                          onCategorySelected: (category) {
+                            setState(() {
+                              _selectedCategory = category;
+                            });
+                          },
+                        ),
+                        Expanded(
+                          child: _isLoading
+                              ? const Center(child: CircularProgressIndicator())
+                              : _error != null
+                                  ? Center(
+                                      child: Text(
+                                        _error!,
+                                        style: CommonStyle.errorTextStyle,
+                                      ),
+                                    )
+                                  : _buildResponsiveStoreList(isDesktop),
+                        ),
+                      ],
+                    ),
+                    if (_showSearchTray &&
+                        (_searchResults.isNotEmpty ||
+                            _searchLoading ||
+                            _searchError != null))
+                      Positioned(
+                        left: 16,
+                        right: 16,
+                        top: 76,
+                        child: Material(
+                          elevation: 6,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            constraints: const BoxConstraints(maxHeight: 400),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: _searchLoading
+                                ? const Padding(
+                                    padding: EdgeInsets.all(24.0),
+                                    child: Center(
+                                        child: CircularProgressIndicator()),
+                                  )
+                                : _searchError != null
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(24.0),
+                                        child: Text(_searchError!,
+                                            style:
+                                                TextStyle(color: Colors.red)),
+                                      )
+                                    : ListView.separated(
+                                        shrinkWrap: true,
+                                        itemCount: _searchResults.length,
+                                        separatorBuilder: (_, __) =>
+                                            const Divider(height: 1),
+                                        itemBuilder: (context, index) {
+                                          final shop = _searchResults[index];
+                                          return ListTile(
+                                            leading: shop.images.isNotEmpty
+                                                ? ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    child: Image.network(
+                                                      shop.images.first,
+                                                      width: 40,
+                                                      height: 40,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  )
+                                                : Container(
+                                                    width: 40,
+                                                    height: 40,
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors
+                                                          .backgroundLight,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    child: const Icon(
+                                                        Icons.store,
+                                                        color:
+                                                            AppColors.primary),
+                                                  ),
+                                            title: Text(
+                                              shop.shopName,
+                                              style: CommonStyle.bodyLarge,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            subtitle: Text(
+                                              shop.categories.isNotEmpty
+                                                  ? shop.categories.join(', ')
+                                                  : '',
+                                              style: CommonStyle.bodySmall
+                                                  .copyWith(
+                                                      color: AppColors
+                                                          .textSecondary),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            onTap: () => _onStoreTap(shop),
+                                          );
+                                        },
+                                      ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
       bottomNavigationBar: CustomerDashboardBottomNav(
@@ -152,5 +373,33 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         },
       ),
     );
+  }
+
+  Widget _buildResponsiveStoreList(bool isDesktop) {
+    if (isDesktop) {
+      // Use a grid for desktop
+      return GridView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.2,
+        ),
+        itemCount: _stores.length,
+        itemBuilder: (context, index) {
+          return CustomerDashboardStoreList(
+            stores: [_stores[index]],
+            onStoreTap: _onStoreTap,
+          );
+        },
+      );
+    } else {
+      // Use the existing list for mobile
+      return CustomerDashboardStoreList(
+        stores: _stores,
+        onStoreTap: _onStoreTap,
+      );
+    }
   }
 }
