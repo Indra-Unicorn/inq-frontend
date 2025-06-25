@@ -198,48 +198,49 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                     Column(
                       children: [
                         CustomerDashboardHeader(onProfileTap: _onProfileTap),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 12),
-                          child: Container(
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: AppColors.backgroundLight,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(left: 16, right: 8),
-                                  child: Icon(
-                                    Icons.search,
-                                    color: AppColors.secondary,
-                                    size: 24,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _searchController,
-                                    focusNode: _searchFocusNode,
-                                    decoration: InputDecoration(
-                                      hintText: 'Search for stores',
-                                      hintStyle:
-                                          CommonStyle.bodyMedium.copyWith(
-                                        color: AppColors.secondary,
-                                      ),
-                                      border: InputBorder.none,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                              vertical: 14),
+                        if (!_showSearchTray)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 12),
+                            child: Container(
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.backgroundLight,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 16, right: 8),
+                                    child: Icon(
+                                      Icons.search,
+                                      color: AppColors.secondary,
+                                      size: 24,
                                     ),
-                                    style: CommonStyle.bodyLarge,
                                   ),
-                                ),
-                              ],
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _searchController,
+                                      focusNode: _searchFocusNode,
+                                      decoration: InputDecoration(
+                                        hintText: 'Search for stores',
+                                        hintStyle:
+                                            CommonStyle.bodyMedium.copyWith(
+                                          color: AppColors.secondary,
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                      ),
+                                      style: CommonStyle.bodyLarge,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
                         CustomerDashboardCategories(
                           categories: _categories,
                           selectedCategory: _selectedCategory,
@@ -267,88 +268,158 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         (_searchResults.isNotEmpty ||
                             _searchLoading ||
                             _searchError != null))
-                      Positioned(
-                        left: 16,
-                        right: 16,
-                        top: 76,
+                      Positioned.fill(
                         child: Material(
-                          elevation: 6,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            constraints: const BoxConstraints(maxHeight: 400),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: _searchLoading
-                                ? const Padding(
-                                    padding: EdgeInsets.all(24.0),
-                                    child: Center(
-                                        child: CircularProgressIndicator()),
-                                  )
-                                : _searchError != null
-                                    ? Padding(
-                                        padding: const EdgeInsets.all(24.0),
-                                        child: Text(_searchError!,
-                                            style:
-                                                TextStyle(color: Colors.red)),
-                                      )
-                                    : ListView.separated(
-                                        shrinkWrap: true,
-                                        itemCount: _searchResults.length,
-                                        separatorBuilder: (_, __) =>
-                                            const Divider(height: 1),
-                                        itemBuilder: (context, index) {
-                                          final shop = _searchResults[index];
-                                          return ListTile(
-                                            leading: shop.images.isNotEmpty
-                                                ? ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                    child: Image.network(
-                                                      shop.images.first,
-                                                      width: 40,
-                                                      height: 40,
-                                                      fit: BoxFit.cover,
+                          color: Colors.white.withOpacity(0.98),
+                          child: Column(
+                            children: [
+                              // Search bar at the top of the tray
+                              SafeArea(
+                                bottom: false,
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(24, 24, 56, 12),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.backgroundLight,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 16, right: 8),
+                                                child: Icon(
+                                                  Icons.search,
+                                                  color: AppColors.secondary,
+                                                  size: 24,
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: TextField(
+                                                  controller: _searchController,
+                                                  focusNode: _searchFocusNode,
+                                                  decoration: InputDecoration(
+                                                    hintText:
+                                                        'Search for stores',
+                                                    hintStyle: CommonStyle
+                                                        .bodyMedium
+                                                        .copyWith(
+                                                      color:
+                                                          AppColors.secondary,
                                                     ),
-                                                  )
-                                                : Container(
-                                                    width: 40,
-                                                    height: 40,
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors
-                                                          .backgroundLight,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                    child: const Icon(
-                                                        Icons.store,
-                                                        color:
-                                                            AppColors.primary),
+                                                    border: InputBorder.none,
+                                                    contentPadding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                            vertical: 14),
                                                   ),
-                                            title: Text(
-                                              shop.shopName,
-                                              style: CommonStyle.bodyLarge,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            subtitle: Text(
-                                              shop.categories.isNotEmpty
-                                                  ? shop.categories.join(', ')
-                                                  : '',
-                                              style: CommonStyle.bodySmall
-                                                  .copyWith(
-                                                      color: AppColors
-                                                          .textSecondary),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            onTap: () => _onStoreTap(shop),
-                                          );
+                                                  style: CommonStyle.bodyLarge,
+                                                  autofocus: true,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.close,
+                                            size: 28, color: Colors.black87),
+                                        onPressed: () {
+                                          setState(() {
+                                            _showSearchTray = false;
+                                            _searchController.clear();
+                                            _searchFocusNode.unfocus();
+                                          });
                                         },
                                       ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Results below
+                              Expanded(
+                                child: _searchLoading
+                                    ? const Center(
+                                        child: CircularProgressIndicator())
+                                    : _searchError != null
+                                        ? Center(
+                                            child: Padding(
+                                              padding: EdgeInsets.all(24.0),
+                                              child: Text(_searchError!,
+                                                  style: TextStyle(
+                                                      color: Colors.red)),
+                                            ),
+                                          )
+                                        : ListView.separated(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 24, vertical: 8),
+                                            itemCount: _searchResults.length,
+                                            separatorBuilder: (_, __) =>
+                                                const Divider(height: 1),
+                                            itemBuilder: (context, index) {
+                                              final shop =
+                                                  _searchResults[index];
+                                              return ListTile(
+                                                leading: shop.images.isNotEmpty
+                                                    ? ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        child: Image.network(
+                                                          shop.images.first,
+                                                          width: 40,
+                                                          height: 40,
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                      )
+                                                    : Container(
+                                                        width: 40,
+                                                        height: 40,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: AppColors
+                                                              .backgroundLight,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                        ),
+                                                        child: const Icon(
+                                                            Icons.store,
+                                                            color: AppColors
+                                                                .primary),
+                                                      ),
+                                                title: Text(
+                                                  shop.shopName,
+                                                  style: CommonStyle.bodyLarge,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                subtitle: Text(
+                                                  shop.categories.isNotEmpty
+                                                      ? shop.categories
+                                                          .join(', ')
+                                                      : '',
+                                                  style: CommonStyle.bodySmall
+                                                      .copyWith(
+                                                          color: AppColors
+                                                              .textSecondary),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                onTap: () => _onStoreTap(shop),
+                                              );
+                                            },
+                                          ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
