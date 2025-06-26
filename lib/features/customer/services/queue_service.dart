@@ -3,14 +3,13 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/constants/app_constants.dart';
 import '../../../shared/constants/api_endpoints.dart';
+import '../../../services/auth_service.dart';
 import '../models/queue.dart';
 import '../models/customer_queue_summary.dart';
 
 class QueueService {
   Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
-    return token;
+    return await AuthService.getToken();
   }
 
   Future<List<Queue>> getShopQueues(String shopId) async {
@@ -45,7 +44,8 @@ class QueueService {
     }
   }
 
-  Future<Map<String, dynamic>> joinQueue(String queueId, {String? comment}) async {
+  Future<Map<String, dynamic>> joinQueue(String queueId,
+      {String? comment}) async {
     try {
       final token = await _getToken();
       if (token == null) {
@@ -95,7 +95,8 @@ class QueueService {
         },
       );
 
-      print('Customer Queue Summary API Response Status: ${response.statusCode}');
+      print(
+          'Customer Queue Summary API Response Status: ${response.statusCode}');
       print('Customer Queue Summary API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -125,4 +126,4 @@ class QueueService {
       },
     );
   }
-} 
+}

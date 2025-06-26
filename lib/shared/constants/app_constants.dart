@@ -6,6 +6,8 @@ class AppConstants {
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
   static const String locationKey = 'user_location';
+  static const String refreshTokenKey = 'refresh_token';
+  static const String loginTimeKey = 'login_time';
 
   // User types
   static const String userTypeCustomer = 'CUSTOMER';
@@ -26,6 +28,9 @@ class AppConstants {
   static const String deviceTypeAndroid = 'ANDROID';
   static const String deviceTypeIOS = 'IOS';
   static const String deviceTypeWeb = 'WEB';
+
+  // Token expiration buffer (5 minutes before actual expiration)
+  static const int tokenExpirationBufferMinutes = 5;
 }
 
 // lib/core/utils/validators.dart

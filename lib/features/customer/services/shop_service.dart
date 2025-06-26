@@ -3,12 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/constants/app_constants.dart';
 import '../../../shared/constants/api_endpoints.dart';
+import '../../../services/auth_service.dart';
 import '../models/shop.dart';
 
 class ShopService {
   Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
     print(
         'Retrieved token: ${token != null ? 'Token exists' : 'No token found'}');
     return token;

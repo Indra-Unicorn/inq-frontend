@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'config/firebase_options.dart';
+import 'features/auth/splash_screen.dart';
 import 'features/auth/login_page.dart';
 import 'features/auth/customer_signup.dart';
 import 'features/auth/merchant_signup.dart';
@@ -62,8 +63,9 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const LoginPage(),
+      home: const SplashScreen(),
       routes: {
+        '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginPage(),
         '/customer-signup': (context) => const CustomerSignUpPage(),
         '/merchant-signup': (context) => const MerchantSignUpPage(),

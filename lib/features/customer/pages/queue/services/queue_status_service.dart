@@ -4,13 +4,13 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../shared/constants/app_constants.dart';
 import '../../../../../shared/constants/api_endpoints.dart';
+import '../../../../../services/auth_service.dart';
 import '../../../models/customer_queue_summary.dart';
 import 'polling_config.dart';
 
 class QueueStatusService {
   static Future<CustomerQueueSummary> fetchQueueData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
 
     if (token == null) {
       throw Exception('Authentication token not found');
@@ -38,8 +38,7 @@ class QueueStatusService {
   }
 
   static Future<String> leaveQueue(String queueId, String leaveReason) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
 
     if (token == null) {
       throw Exception('Authentication token not found');
@@ -89,8 +88,7 @@ class QueueStatusService {
 
   // Short polling implementation
   static Stream<CustomerQueue> _shortPollQueuePosition(String queueId) async* {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
 
     if (token == null) {
       throw Exception('Authentication token not found');
@@ -135,8 +133,7 @@ class QueueStatusService {
 
   // Long polling implementation
   static Stream<CustomerQueue> _longPollQueuePosition(String queueId) async* {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
 
     if (token == null) {
       throw Exception('Authentication token not found');
@@ -184,8 +181,7 @@ class QueueStatusService {
 
   // Hybrid polling implementation
   static Stream<CustomerQueue> _hybridPollQueuePosition(String queueId) async* {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
 
     if (token == null) {
       throw Exception('Authentication token not found');
@@ -244,8 +240,7 @@ class QueueStatusService {
   // Adaptive polling implementation
   static Stream<CustomerQueue> _adaptivePollQueuePosition(
       String queueId) async* {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
 
     if (token == null) {
       throw Exception('Authentication token not found');
