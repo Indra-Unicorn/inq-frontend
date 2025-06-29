@@ -18,9 +18,10 @@ class CustomerSignUpPage extends StatefulWidget {
 class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _otpControllers =
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
-  
+
   bool _isLoading = false;
   bool _otpSent = false;
   String? _sessionId;
@@ -53,7 +54,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.customerPhoneSignupInitiate}'),
+        Uri.parse(
+            '${ApiEndpoints.baseUrl}${ApiEndpoints.customerPhoneSignupInitiate}'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -64,7 +66,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       );
 
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         setState(() {
           _otpSent = true;
@@ -118,7 +120,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       );
 
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         // Store token and login state
         final prefs = await SharedPreferences.getInstance();
@@ -128,7 +130,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
         // Register FCM token
         await _registerFCMToken(token);
-        
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/customer-dashboard');
         }
@@ -162,7 +164,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       // Get device information
       final deviceType = Platform.isAndroid ? 'ANDROID' : 'IOS';
       final deviceModel = Platform.operatingSystemVersion;
-      final appVersion = '1.0.0'; // You might want to get this from your app's version
+      final appVersion =
+          '1.0.0'; // You might want to get this from your app's version
       final osVersion = Platform.operatingSystemVersion;
 
       // Register FCM token
@@ -232,7 +235,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                 ],
               ),
             ),
-            
+
             // Form fields
             Expanded(
               child: SingleChildScrollView(
@@ -240,14 +243,14 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
-                    
+
                     // Full Name
                     _buildInputField(
                       controller: _fullNameController,
                       placeholder: 'Full Name',
                       enabled: !_otpSent,
                     ),
-                    
+
                     // Phone
                     _buildInputField(
                       controller: _phoneController,
@@ -255,13 +258,13 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                       keyboardType: TextInputType.phone,
                       enabled: _isPhoneEnabled,
                     ),
-                    
+
                     if (_otpSent) ...[
                       const SizedBox(height: 24),
                       const Text(
                         'Enter OTP',
                         style: TextStyle(
-                          color: Color(0xFF171212),
+                          color: Color(0xFF1A1D29),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -281,7 +284,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF171212),
+                                color: Color(0xFF1A1D29),
                               ),
                               decoration: InputDecoration(
                                 counterText: '',
@@ -310,18 +313,20 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                         }),
                       ),
                     ],
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Sign Up Button
                     Container(
                       constraints: const BoxConstraints(maxWidth: 480),
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : (_otpSent ? _verifyOTP : _initiateSignup),
+                        onPressed: _isLoading
+                            ? null
+                            : (_otpSent ? _verifyOTP : _initiateSignup),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8B4B7),
-                          foregroundColor: const Color(0xFF171212),
+                          backgroundColor: const Color(0xFF305CDE),
+                          foregroundColor: const Color(0xFFFFFFFF),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -330,7 +335,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                         ),
                         child: _isLoading
                             ? const CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF171212)),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFFFFFFFF)),
                               )
                             : Text(
                                 _otpSent ? 'Verify OTP' : 'Send OTP',
@@ -342,7 +348,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                               ),
                       ),
                     ),
-                    
+
                     if (_otpSent) ...[
                       const SizedBox(height: 12),
                       TextButton(
@@ -350,48 +356,49 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                         child: const Text(
                           'Resend OTP',
                           style: TextStyle(
-                            color: Color(0xFF82686A),
+                            color: Color(0xFF305CDE),
                             fontSize: 14,
                             decoration: TextDecoration.underline,
                           ),
                         ),
                       ),
                     ],
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Login link
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: const Text(
                         'Already have an account? Log In',
                         style: TextStyle(
-                          color: Color(0xFF82686A),
+                          color: Color(0xFF6B7280),
                           fontSize: 14,
                           decoration: TextDecoration.underline,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Merchant signup link
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushReplacementNamed(context, '/merchant-signup');
+                        Navigator.pushReplacementNamed(
+                            context, '/merchant-signup');
                       },
                       child: const Text(
                         'Are you a merchant? Sign Up',
                         style: TextStyle(
-                          color: Color(0xFF82686A),
+                          color: Color(0xFF6B7280),
                           fontSize: 14,
                           decoration: TextDecoration.underline,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -421,11 +428,12 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
         decoration: InputDecoration(
           hintText: placeholder,
           hintStyle: const TextStyle(
-            color: Color(0xFF82686A),
+            color: Color(0xFF6B7280),
             fontSize: 16,
           ),
           filled: true,
-          fillColor: enabled ? const Color(0xFFF4F1F1) : const Color(0xFFE8E8E8),
+          fillColor:
+              enabled ? const Color(0xFFF4F1F1) : const Color(0xFFE8E8E8),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -441,7 +449,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
           contentPadding: const EdgeInsets.all(16),
         ),
         style: TextStyle(
-          color: const Color(0xFF171212).withOpacity(enabled ? 1.0 : 0.5),
+          color: const Color(0xFF1A1D29).withValues(alpha: enabled ? 1.0 : 0.5),
           fontSize: 16,
         ),
       ),

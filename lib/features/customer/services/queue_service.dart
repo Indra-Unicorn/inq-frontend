@@ -6,13 +6,14 @@ import '../../../shared/constants/api_endpoints.dart';
 import '../../../services/auth_service.dart';
 import '../models/queue.dart';
 import '../models/customer_queue_summary.dart';
+import '../models/shop_queue_response.dart';
 
 class QueueService {
   Future<String?> _getToken() async {
     return await AuthService.getToken();
   }
 
-  Future<List<Queue>> getShopQueues(String shopId) async {
+  Future<ShopQueueResponse> getShopQueues(String shopId) async {
     try {
       final token = await _getToken();
       if (token == null) {
@@ -33,15 +34,19 @@ class QueueService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
         if (jsonResponse['success'] == true) {
-          final List<dynamic> queuesData = jsonResponse['data'];
-          return queuesData.map((queue) => Queue.fromJson(queue)).toList();
+          return ShopQueueResponse.fromJson(jsonResponse);
         }
       }
-      throw Exception('Failed to load queues');
+      throw Exception('Failed to load shop and queue data');
     } catch (e) {
       print('Error in getShopQueues: $e');
-      throw Exception('Error fetching queues: $e');
+      throw Exception('Error fetching shop and queue data: $e');
     }
+  }
+
+  Future<List<Queue>> getShopQueuesOnly(String shopId) async {
+    final response = await getShopQueues(shopId);
+    return response.queues;
   }
 
   Future<Map<String, dynamic>> joinQueue(String queueId,

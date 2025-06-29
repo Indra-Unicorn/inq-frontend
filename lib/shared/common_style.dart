@@ -7,119 +7,117 @@ class CommonStyle {
   // Private constructor to prevent instantiation
   CommonStyle._();
 
-  // Text Styles
+  // Typography
   static const TextStyle heading1 = TextStyle(
-    color: AppColors.textPrimary,
     fontSize: 32,
     fontWeight: FontWeight.bold,
-    letterSpacing: -0.015,
+    color: AppColors.textPrimary,
+    letterSpacing: -0.5,
   );
 
   static const TextStyle heading2 = TextStyle(
-    color: AppColors.textPrimary,
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: FontWeight.bold,
-    letterSpacing: -0.015,
+    color: AppColors.textPrimary,
+    letterSpacing: -0.3,
   );
 
   static const TextStyle heading3 = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
-    fontSize: 20,
-    fontWeight: FontWeight.bold,
-    letterSpacing: -0.015,
+    letterSpacing: -0.2,
   );
 
   static const TextStyle heading4 = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    letterSpacing: -0.015,
+    letterSpacing: -0.1,
   );
 
   static const TextStyle bodyLarge = TextStyle(
-    color: AppColors.textPrimary,
     fontSize: 16,
     fontWeight: FontWeight.normal,
-    letterSpacing: 0.015,
+    color: AppColors.textPrimary,
+    height: 1.5,
   );
 
   static const TextStyle bodyMedium = TextStyle(
-    color: AppColors.textPrimary,
     fontSize: 14,
     fontWeight: FontWeight.normal,
-    letterSpacing: 0.015,
+    color: AppColors.textPrimary,
+    height: 1.4,
   );
 
   static const TextStyle bodySmall = TextStyle(
-    color: AppColors.textPrimary,
     fontSize: 12,
     fontWeight: FontWeight.normal,
-    letterSpacing: 0.015,
+    color: AppColors.textSecondary,
+    height: 1.3,
   );
 
   static const TextStyle caption = TextStyle(
-    color: AppColors.textSecondary,
     fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textSecondary,
+    letterSpacing: 0.1,
+  );
+
+  static const TextStyle errorTextStyle = TextStyle(
+    fontSize: 14,
     fontWeight: FontWeight.normal,
-    letterSpacing: 0.015,
+    color: AppColors.error,
+    height: 1.4,
   );
 
   // Button Styles
   static final ButtonStyle primaryButton = ElevatedButton.styleFrom(
-    backgroundColor: AppColors.buttonPrimary,
+    backgroundColor: AppColors.primary,
     foregroundColor: AppColors.textWhite,
+    elevation: 0,
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
     ),
-    elevation: 0,
+    textStyle: const TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    ),
   );
 
   static final ButtonStyle secondaryButton = ElevatedButton.styleFrom(
-    backgroundColor: AppColors.buttonSecondary,
-    foregroundColor: AppColors.textPrimary,
+    backgroundColor: AppColors.backgroundLight,
+    foregroundColor: AppColors.primary,
+    elevation: 0,
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
+      side: const BorderSide(color: AppColors.border),
     ),
-    elevation: 0,
+    textStyle: const TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    ),
   );
 
-  static final ButtonStyle textButton = TextButton.styleFrom(
+  static final ButtonStyle outlineButton = OutlinedButton.styleFrom(
     foregroundColor: AppColors.primary,
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    side: const BorderSide(color: AppColors.primary),
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-    ),
-  );
-
-  // Input Styles
-  static final InputDecoration textFieldDecoration = InputDecoration(
-    filled: true,
-    fillColor: AppColors.backgroundLight,
-    border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
     ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
+    textStyle: const TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
     ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.primary),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.error),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   );
 
   // Card Styles
   static final BoxDecoration cardDecoration = BoxDecoration(
-    color: AppColors.background,
-    borderRadius: BorderRadius.circular(12),
+    color: AppColors.backgroundLight,
+    borderRadius: BorderRadius.circular(16),
     border: Border.all(color: AppColors.borderLight),
     boxShadow: [
       BoxShadow(
@@ -128,6 +126,25 @@ class CommonStyle {
         offset: const Offset(0, 2),
       ),
     ],
+  );
+
+  // Input Styles
+  static final InputDecoration inputDecoration = InputDecoration(
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.border),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.border),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+    ),
+    filled: true,
+    fillColor: AppColors.background,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
   );
 
   // Container Styles
@@ -210,11 +227,6 @@ class CommonStyle {
       CircularProgressIndicator(
     valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
     strokeWidth: 2,
-  );
-
-  // Error Styles
-  static final TextStyle errorTextStyle = bodySmall.copyWith(
-    color: AppColors.error,
   );
 
   // Success Styles

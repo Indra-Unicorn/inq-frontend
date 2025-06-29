@@ -47,9 +47,10 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
   Future<void> _fetchQueues() async {
     try {
       print('Fetching queues...');
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       print('Route args: $args');
-      
+
       if (args == null) {
         print('Args is null');
         setState(() {
@@ -61,7 +62,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
 
       final shopId = args['shopId'] as String?;
       print('Shop ID: $shopId');
-      
+
       if (shopId == null) {
         print('Shop ID is null');
         setState(() {
@@ -70,8 +71,8 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
         });
         return;
       }
-      
-      final queues = await _queueService.getShopQueues(shopId);
+
+      final queues = await _queueService.getShopQueuesOnly(shopId);
       print('Fetched queues: ${queues.length}');
       if (mounted) {
         setState(() {
@@ -94,7 +95,8 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
     try {
       print('Fetching customer queue summary...');
       final summary = await _queueService.getCustomerQueueSummary();
-      print('Customer queue summary: ${summary.customerQueues.length} active queues');
+      print(
+          'Customer queue summary: ${summary.customerQueues.length} active queues');
       if (mounted) {
         setState(() {
           _customerQueueSummary = summary;
@@ -111,7 +113,8 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
 
   bool _isUserInQueue(String queueId) {
     if (_customerQueueSummary == null) return false;
-    return _customerQueueSummary!.customerQueues.any((queue) => queue.qid == queueId);
+    return _customerQueueSummary!.customerQueues
+        .any((queue) => queue.qid == queueId);
   }
 
   Future<void> _showJoinQueueDialog(Queue queue) async {
@@ -190,7 +193,8 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
                       ),
                     )
                   : const Text('Join Queue'),
@@ -310,11 +314,14 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                      ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+                      ? Center(
+                          child: Text(_error!,
+                              style: const TextStyle(color: Colors.red)))
                       : _queues.isEmpty
                           ? const Center(child: Text('No queues available'))
                           : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               itemCount: _queues.length,
                               itemBuilder: (context, index) {
                                 final queue = _queues[index];
@@ -337,13 +344,16 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                                         ),
                                       ),
                                       subtitle: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const SizedBox(height: 4),
                                           Text(
                                             'Status: ${queue.status}',
                                             style: TextStyle(
-                                              color: queue.status == 'ACTIVE' ? Colors.green : Colors.red,
+                                              color: queue.status == 'ACTIVE'
+                                                  ? Colors.green
+                                                  : Colors.red,
                                               fontSize: 14,
                                             ),
                                           ),
@@ -376,17 +386,25 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                                               ),
                                             )
                                           : ElevatedButton(
-                                              onPressed: queue.full ? null : () {
-                                                _showJoinQueueDialog(queue);
-                                              },
+                                              onPressed: queue.full
+                                                  ? null
+                                                  : () {
+                                                      _showJoinQueueDialog(
+                                                          queue);
+                                                    },
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFFE9B8BA),
-                                                foregroundColor: const Color(0xFF191010),
+                                                backgroundColor:
+                                                    const Color(0xFFE9B8BA),
+                                                foregroundColor:
+                                                    const Color(0xFF191010),
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                 ),
                                               ),
-                                              child: Text(queue.full ? 'Full' : 'Join Queue'),
+                                              child: Text(queue.full
+                                                  ? 'Full'
+                                                  : 'Join Queue'),
                                             ),
                                     ),
                                   ),

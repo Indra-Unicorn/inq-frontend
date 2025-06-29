@@ -37,9 +37,9 @@ class CustomerDashboardStoreList extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.shadowLight.withOpacity(0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: AppColors.shadowLight.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -99,11 +99,9 @@ class CustomerDashboardStoreList extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withOpacity(0.1),
-            AppColors.secondary.withOpacity(0.1),
+            AppColors.primary.withValues(alpha: 0.1),
+            AppColors.primaryLight.withValues(alpha: 0.1),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
       ),
       child: const Icon(
@@ -180,8 +178,8 @@ class CustomerDashboardStoreList extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-      backgroundColor:
-          (isOpen ? AppColors.success : AppColors.error).withOpacity(0.85),
+      backgroundColor: (isOpen ? AppColors.success : AppColors.error)
+          .withValues(alpha: 0.85),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       labelPadding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -198,7 +196,7 @@ class CustomerDashboardStoreList extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-      backgroundColor: Colors.black.withOpacity(0.5),
+      backgroundColor: Colors.black.withValues(alpha: 0.5),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       labelPadding: const EdgeInsets.only(left: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

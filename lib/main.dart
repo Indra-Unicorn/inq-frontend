@@ -58,10 +58,46 @@ class MyApp extends StatelessWidget {
       title: 'Queue Management',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFE9B8BA),
+          seedColor: const Color(0xFF305CDE),
+          secondary: const Color(0xFF20B2AA),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
+        fontFamily: 'Inter',
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF305CDE),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          color: Colors.white,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF305CDE), width: 2),
+          ),
+          filled: true,
+          fillColor: const Color(0xFFFAFBFF),
+        ),
       ),
       home: const SplashScreen(),
       routes: {

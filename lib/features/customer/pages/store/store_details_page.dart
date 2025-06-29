@@ -26,18 +26,20 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
   bool _isLoading = true;
   String? _error;
   List<Queue> _queues = [];
+  Shop? _updatedShop;
 
   @override
   void initState() {
     super.initState();
-    _loadQueues();
+    _loadShopAndQueues();
   }
 
-  Future<void> _loadQueues() async {
+  Future<void> _loadShopAndQueues() async {
     try {
-      final queues = await _queueService.getShopQueues(widget.store.shopId);
+      final response = await _queueService.getShopQueues(widget.store.shopId);
       setState(() {
-        _queues = queues;
+        _queues = response.queues;
+        _updatedShop = response.shop;
         _isLoading = false;
       });
     } catch (e) {
@@ -53,8 +55,11 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       _isLoading = true;
       _error = null;
     });
-    await _loadQueues();
+    await _loadShopAndQueues();
   }
+
+  // Get the current shop data (either updated from API or original)
+  Shop get currentShop => _updatedShop ?? widget.store;
 
   @override
   Widget build(BuildContext context) {
@@ -71,58 +76,121 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                 padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 0),
                 child: RefreshIndicator(
                   onRefresh: _onRefresh,
+                  color: AppColors.primary,
                   child: CustomScrollView(
                     slivers: [
                       SliverToBoxAdapter(
                         child: StoreDetailsHeader(
-                          store: widget.store,
+                          store: currentShop,
                         ),
                       ),
                       SliverToBoxAdapter(
                         child: StoreDetailsInfo(
-                          store: widget.store,
+                          store: currentShop,
                         ),
                       ),
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            'Available Queues',
-                            style: CommonStyle.heading3,
+                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Available Queues',
+                                style: CommonStyle.heading3.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                       if (_isLoading)
                         const SliverFillRemaining(
                           child: Center(
-                            child: CircularProgressIndicator(),
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
                           ),
                         )
                       else if (_error != null)
                         SliverFillRemaining(
                           child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _error!,
-                                  style: CommonStyle.errorTextStyle,
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: _onRefresh,
-                                  style: CommonStyle.primaryButton,
-                                  child: const Text('Retry'),
-                                ),
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: AppColors.error,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Something went wrong',
+                                    style: CommonStyle.heading4,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _error!,
+                                    style: CommonStyle.bodyMedium.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  ElevatedButton(
+                                    onPressed: _onRefresh,
+                                    style: CommonStyle.primaryButton,
+                                    child: const Text('Try Again'),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         )
                       else if (_queues.isEmpty)
-                        const SliverFillRemaining(
+                        SliverFillRemaining(
                           child: Center(
-                            child: Text('No queues available'),
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.queue_outlined,
+                                    size: 64,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No queues available',
+                                    style: CommonStyle.heading4.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'This store doesn\'t have any active queues at the moment.',
+                                    style: CommonStyle.bodyMedium.copyWith(
+                                      color: AppColors.textTertiary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         )
                       else if (isDesktop)
@@ -164,7 +232,10 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(
                                               SnackBar(
-                                                  content: Text('Error: $e')),
+                                                content: Text('Error: $e'),
+                                                backgroundColor:
+                                                    AppColors.error,
+                                              ),
                                             );
                                           } finally {
                                             if (mounted)

@@ -71,4 +71,30 @@ class ProfileService {
       throw Exception('Failed to update location');
     }
   }
+
+  Future<void> updateCustomerProfile(
+      {required String name, required String email}) async {
+    final token = await AuthService.getToken();
+    if (token == null) throw Exception('User not authenticated');
+
+    final response = await http.put(
+      Uri.parse('${ApiEndpoints.baseUrl}/users/customer/update'),
+      headers: {
+        'accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200 && data['success'] == true) {
+      return;
+    } else {
+      throw Exception(data['message'] ?? 'Failed to update profile');
+    }
+  }
 }

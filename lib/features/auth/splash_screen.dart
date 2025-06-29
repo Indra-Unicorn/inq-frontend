@@ -94,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F9),
+      backgroundColor: const Color(0xFFFAFBFF),
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -106,11 +106,18 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE9B8BA),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF305CDE),
+                      Color(0xFF20B2AA),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFE9B8BA).withOpacity(0.3),
+                      color: const Color(0xFF305CDE).withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -130,7 +137,7 @@ class _SplashScreenState extends State<SplashScreen>
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF191010),
+                  color: Color(0xFF1A1D29),
                   letterSpacing: -0.5,
                 ),
               ),
@@ -141,7 +148,7 @@ class _SplashScreenState extends State<SplashScreen>
                 'Smart Queue Management System',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF8B5B5C),
+                  color: Color(0xFF6B7280),
                   letterSpacing: 0.5,
                 ),
               ),
@@ -149,7 +156,7 @@ class _SplashScreenState extends State<SplashScreen>
 
               // Loading indicator
               const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE9B8BA)),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF305CDE)),
                 strokeWidth: 3,
               ),
             ],

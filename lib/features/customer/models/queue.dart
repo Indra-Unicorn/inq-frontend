@@ -18,6 +18,7 @@ class Queue {
   final bool hasCapacity;
   final int processingRate;
   final bool full;
+  final int? avgTimePerCustomer;
 
   Queue._({
     required this.qid,
@@ -35,6 +36,7 @@ class Queue {
     required this.hasCapacity,
     required this.processingRate,
     required this.full,
+    this.avgTimePerCustomer,
   });
 
   factory Queue.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,7 @@ class Queue {
     final alertNumber = QueueParser.parseInt(json['alertNumber']);
     final bufferNumber = QueueParser.parseInt(json['bufferNumber']);
     final processingRate = QueueParser.parseInt(json['processingRate']);
+    final avgTimePerCustomer = QueueParser.parseInt(json['avgTimePerCustomer']);
 
     if (!QueueValidator.validateQueueData(
       size: size,
@@ -74,6 +77,7 @@ class Queue {
       hasCapacity: QueueParser.parseBoolean(json['hasCapacity']),
       processingRate: processingRate,
       full: QueueParser.parseBoolean(json['full']),
+      avgTimePerCustomer: avgTimePerCustomer,
     );
   }
 
@@ -94,6 +98,7 @@ class Queue {
       'hasCapacity': hasCapacity,
       'processingRate': processingRate,
       'full': full,
+      'avgTimePerCustomer': avgTimePerCustomer,
     };
   }
 
@@ -113,6 +118,7 @@ class Queue {
     bool? hasCapacity,
     int? processingRate,
     bool? full,
+    int? avgTimePerCustomer,
   }) {
     return Queue._(
       qid: qid ?? this.qid,
@@ -130,6 +136,7 @@ class Queue {
       hasCapacity: hasCapacity ?? this.hasCapacity,
       processingRate: processingRate ?? this.processingRate,
       full: full ?? this.full,
+      avgTimePerCustomer: avgTimePerCustomer ?? this.avgTimePerCustomer,
     );
   }
 
@@ -152,7 +159,8 @@ class Queue {
           bufferNumber == other.bufferNumber &&
           hasCapacity == other.hasCapacity &&
           processingRate == other.processingRate &&
-          full == other.full;
+          full == other.full &&
+          avgTimePerCustomer == other.avgTimePerCustomer;
 
   @override
   int get hashCode =>
@@ -170,5 +178,6 @@ class Queue {
       bufferNumber.hashCode ^
       hasCapacity.hashCode ^
       processingRate.hashCode ^
-      full.hashCode;
+      full.hashCode ^
+      avgTimePerCustomer.hashCode;
 }

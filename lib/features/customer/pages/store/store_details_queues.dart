@@ -19,15 +19,22 @@ class StoreQueueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 0,
-      color: AppColors.backgroundLight,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -37,32 +44,33 @@ class StoreQueueCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     queue.name,
-                    style: CommonStyle.heading3,
+                    style: CommonStyle.heading4,
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 12,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(queue.status).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
+                    color: _getStatusColor(queue.status).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     _getStatusText(queue.status),
                     style: CommonStyle.caption.copyWith(
                       color: _getStatusColor(queue.status),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             _buildDetailRow('Queue Size', '${queue.size}/${queue.maxSize}'),
             _buildDetailRow('Processing Rate', '${queue.processingRate}/min'),
             _buildDetailRow('inQoin Rate', '${queue.inQoinRate} Qoins'),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -72,12 +80,17 @@ class StoreQueueCard extends StatelessWidget {
                     ? onJoin
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: queue.status == QueueStatus.active
+                      ? AppColors.primary
+                      : AppColors.textTertiary,
                   foregroundColor: AppColors.textWhite,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  disabledBackgroundColor: AppColors.border,
+                  disabledForegroundColor: AppColors.textSecondary,
                 ),
                 child: isJoining
                     ? const SizedBox(
@@ -89,7 +102,15 @@ class StoreQueueCard extends StatelessWidget {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Text('Join Queue'),
+                    : Text(
+                        queue.status == QueueStatus.active
+                            ? 'Join Queue'
+                            : 'Queue ${_getStatusText(queue.status).toLowerCase()}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -100,7 +121,7 @@ class StoreQueueCard extends StatelessWidget {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -114,7 +135,7 @@ class StoreQueueCard extends StatelessWidget {
             value,
             style: CommonStyle.bodyMedium.copyWith(
               color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
