@@ -11,7 +11,6 @@ import 'features/customer/pages/profile/customer_profile_page.dart';
 import 'features/merchant/merchant_dashboard.dart';
 import 'features/customer/pages/queue/customer_queues.dart';
 import 'features/merchant/store_profile_page.dart';
-import 'features/customer/models/shop.dart';
 import 'features/customer/pages/store/store_details_page.dart';
 import 'features/customer/pages/queue/queue_status_page.dart';
 import 'features/merchant/merchant_profile.dart';
@@ -126,12 +125,16 @@ class MyApp extends StatelessWidget {
 
           return QueueManagement(queue: queue);
         },
-        '/store-details': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Shop;
-          return StoreDetailsPage(store: args);
-        },
       },
       onGenerateRoute: (settings) {
+        // Handle store details with shop ID in URL
+        if (settings.name?.startsWith('/store/') == true) {
+          final shopId = settings.name!.substring('/store/'.length);
+          return MaterialPageRoute(
+            builder: (context) => StoreDetailsPage(shopId: shopId),
+            settings: settings,
+          );
+        }
         return null;
       },
     );

@@ -4,17 +4,18 @@ import '../../../../shared/constants/app_colors.dart';
 import '../../models/queue.dart';
 import '../../models/shop.dart';
 import '../../services/queue_service.dart';
+import '../../services/shop_service.dart';
 import 'store_details_header.dart';
 import 'store_details_info.dart';
 import 'store_details_queues.dart';
 import '../../models/queue_status.dart';
 
 class StoreDetailsPage extends StatefulWidget {
-  final Shop store;
+  final String shopId;
 
   const StoreDetailsPage({
     super.key,
-    required this.store,
+    required this.shopId,
   });
 
   @override
@@ -23,23 +24,49 @@ class StoreDetailsPage extends StatefulWidget {
 
 class _StoreDetailsPageState extends State<StoreDetailsPage> {
   final QueueService _queueService = QueueService();
+  final ShopService _shopService = ShopService();
   bool _isLoading = true;
   String? _error;
   List<Queue> _queues = [];
-  Shop? _updatedShop;
+  Shop? _shop;
 
   @override
   void initState() {
     super.initState();
-    _loadShopAndQueues();
+    _loadShopById();
+  }
+
+  Future<void> _loadShopById() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final shop = await _shopService.getShopById(widget.shopId);
+      setState(() {
+        _shop = shop;
+        _isLoading = false;
+      });
+
+      _loadShopAndQueues();
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadShopAndQueues() async {
+    if (_shop == null) return;
+
     try {
-      final response = await _queueService.getShopQueues(widget.store.shopId);
+      final response = await _queueService.getShopQueues(_shop!.shopId);
       setState(() {
         _queues = response.queues;
-        _updatedShop = response.shop;
+        // Update shop with latest data from API
+        _shop = response.shop;
         _isLoading = false;
       });
     } catch (e) {
@@ -55,14 +82,78 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       _isLoading = true;
       _error = null;
     });
-    await _loadShopAndQueues();
+
+    await _loadShopById();
   }
 
-  // Get the current shop data (either updated from API or original)
-  Shop get currentShop => _updatedShop ?? widget.store;
+  // Get the current shop data
+  Shop? get currentShop => _shop;
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading && currentShop == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
+
+    if (_error != null && currentShop == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Store not found',
+                    style: CommonStyle.heading4,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _error!,
+                    style: CommonStyle.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: CommonStyle.primaryButton,
+                    child: const Text('Go Back'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (currentShop == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(
+          child: Text('Store not found'),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -81,12 +172,12 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                     slivers: [
                       SliverToBoxAdapter(
                         child: StoreDetailsHeader(
-                          store: currentShop,
+                          store: currentShop!,
                         ),
                       ),
                       SliverToBoxAdapter(
                         child: StoreDetailsInfo(
-                          store: currentShop,
+                          store: currentShop!,
                         ),
                       ),
                       SliverToBoxAdapter(

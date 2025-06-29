@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../shared/common_style.dart';
 import '../../../../shared/constants/app_colors.dart';
+import '../../../../shared/constants/app_constants.dart';
 import '../../models/shop.dart';
 
 class StoreDetailsHeader extends StatelessWidget {
@@ -10,6 +13,53 @@ class StoreDetailsHeader extends StatelessWidget {
     super.key,
     required this.store,
   });
+
+  void _shareStore(BuildContext context) async {
+    try {
+      // Dynamically extract the domain from the API base URL
+      final domain = AppConstants.getShareableDomain();
+
+      // Create a shareable URL with the store ID using the dynamic domain
+      final shareableUrl = '$domain/store/${store.shopId}';
+
+      // Create a fallback deep link for the app
+      final deepLink = 'inqueue.in/store/${store.shopId}';
+
+      // Create share text with store information
+      final shareText = '''
+Check out ${store.shopName} on InQ!
+
+📍 ${store.address.streetAddress}, ${store.address.city}
+${store.categories.isNotEmpty ? '🏷️ ${store.categories.take(3).join(', ')}' : ''}
+
+Join queues and skip the wait! 🚀
+
+$shareableUrl
+$deepLink
+'''
+          .trim();
+
+      // Use share_plus to share the content
+      await Share.share(
+        shareText,
+        subject: 'Check out ${store.shopName} on InQ',
+      );
+    } catch (e) {
+      // Fallback to clipboard if sharing fails
+      final fallbackUrl = 'http://inqueue.in/store/${store.shopId}';
+      await Clipboard.setData(ClipboardData(text: fallbackUrl));
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Store link copied to clipboard!'),
+            backgroundColor: AppColors.primary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +106,7 @@ class StoreDetailsHeader extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: IconButton(
-                    onPressed: () {
-                      // TODO: Implement share functionality
-                    },
+                    onPressed: () => _shareStore(context),
                     icon: const Icon(
                       Icons.share_outlined,
                       color: AppColors.textWhite,

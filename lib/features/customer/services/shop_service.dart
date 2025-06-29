@@ -99,4 +99,32 @@ class ShopService {
       throw Exception('Error searching shops: $e');
     }
   }
+
+  Future<Shop> getShopById(String shopId) async {
+    try {
+      final token = await _getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}/queues/shop/$shopId'),
+        headers: {
+          'accept': '*/*',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        if (jsonResponse['success'] == true) {
+          return Shop.fromJson(jsonResponse['data']);
+        }
+      }
+      throw Exception('Failed to load shop details');
+    } catch (e) {
+      print('Error in getShopById: $e');
+      throw Exception('Error fetching shop details: $e');
+    }
+  }
 }

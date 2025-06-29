@@ -184,10 +184,10 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   }
 
   void _onStoreTap(Shop store) {
+    // Always navigate with shop ID to ensure URL consistency
     Navigator.pushNamed(
       context,
-      '/store-details',
-      arguments: store,
+      '/store/${store.shopId}',
     );
     setState(() {
       _showSearchTray = false;
@@ -482,21 +482,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                                       });
                                                       Navigator.pushNamed(
                                                         context,
-                                                        '/store-details',
-                                                        arguments: {
-                                                          'shopId': shop.shopId,
-                                                          'storeName':
-                                                              shop.shopName,
-                                                          'storeAddress':
-                                                              _buildAddressString(
-                                                                  shop.address),
-                                                          'storeImage': (shop
-                                                                  .images
-                                                                  .isNotEmpty
-                                                              ? shop
-                                                                  .images.first
-                                                              : ''),
-                                                        },
+                                                        '/store/${shop.shopId}',
                                                       );
                                                     },
                                                   );
@@ -568,13 +554,5 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         onStoreTap: _onStoreTap,
       );
     }
-  }
-
-  String _buildAddressString(ShopAddress address) {
-    final parts = <String>[];
-    if (address.streetAddress.isNotEmpty) parts.add(address.streetAddress);
-    if (address.city.isNotEmpty) parts.add(address.city);
-    if (address.state.isNotEmpty) parts.add(address.state);
-    return parts.isEmpty ? 'Address not available' : parts.join(', ');
   }
 }
