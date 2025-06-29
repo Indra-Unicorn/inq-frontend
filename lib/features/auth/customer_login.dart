@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../shared/constants/api_endpoints.dart';
+import '../../shared/constants/app_colors.dart';
 import 'otp_verification_page.dart';
 
 class CustomerLogin extends StatefulWidget {
@@ -24,7 +25,10 @@ class _CustomerLoginState extends State<CustomerLogin> {
   Future<void> _handleLogin() async {
     if (_phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your phone number')),
+        SnackBar(
+          content: const Text('Please enter your phone number'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
@@ -35,14 +39,15 @@ class _CustomerLoginState extends State<CustomerLogin> {
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.customerLoginInitiate}?phoneNumber=${_phoneController.text}'),
+        Uri.parse(
+            '${ApiEndpoints.baseUrl}${ApiEndpoints.customerLoginInitiate}?phoneNumber=${_phoneController.text}'),
         headers: {
           'Content-Type': 'application/json',
         },
       );
 
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         if (mounted) {
           Navigator.push(
@@ -57,12 +62,18 @@ class _CustomerLoginState extends State<CustomerLogin> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Failed to send OTP')),
+          SnackBar(
+            content: Text(data['message'] ?? 'Failed to send OTP'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       setState(() {
@@ -76,7 +87,7 @@ class _CustomerLoginState extends State<CustomerLogin> {
     return Column(
       children: [
         const Spacer(),
-        
+
         // Phone Input Section
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -88,9 +99,9 @@ class _CustomerLoginState extends State<CustomerLogin> {
                 label: 'Phone Number',
                 keyboardType: TextInputType.phone,
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Continue with Phone Button
               Container(
                 constraints: const BoxConstraints(maxWidth: 480),
@@ -98,8 +109,8 @@ class _CustomerLoginState extends State<CustomerLogin> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE9B8BA),
-                    foregroundColor: const Color(0xFF191010),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.textWhite,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
@@ -107,8 +118,9 @@ class _CustomerLoginState extends State<CustomerLogin> {
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
+                      ? CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textWhite),
                         )
                       : const Text(
                           'Continue with Phone',
@@ -120,18 +132,18 @@ class _CustomerLoginState extends State<CustomerLogin> {
                         ),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Sign up link
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, '/customer-signup');
                 },
-                child: const Text(
+                child: Text(
                   'New user? Sign up as a Customer',
                   style: TextStyle(
-                    color: Color(0xFF8B5B5C),
+                    color: AppColors.textSecondary,
                     fontSize: 14,
                     decoration: TextDecoration.underline,
                   ),
@@ -141,7 +153,7 @@ class _CustomerLoginState extends State<CustomerLogin> {
             ],
           ),
         ),
-        
+
         const Spacer(),
       ],
     );
@@ -160,22 +172,30 @@ class _CustomerLoginState extends State<CustomerLogin> {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF8B5B5C),
+          labelStyle: TextStyle(
+            color: AppColors.textSecondary,
             fontSize: 16,
           ),
           filled: true,
-          fillColor: const Color(0xFFF4F1F1),
+          fillColor: AppColors.backgroundLight,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
           ),
         ),
-        style: const TextStyle(
-          color: Color(0xFF191010),
+        style: TextStyle(
+          color: AppColors.textPrimary,
           fontSize: 16,
         ),
       ),
     );
   }
-} 
+}

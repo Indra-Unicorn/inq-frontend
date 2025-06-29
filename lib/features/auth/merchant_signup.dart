@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
+import '../../shared/constants/app_colors.dart';
 
 class MerchantSignUpPage extends StatefulWidget {
   const MerchantSignUpPage({super.key});
@@ -23,19 +24,20 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _shopPhoneController = TextEditingController();
   final TextEditingController _shopNameController = TextEditingController();
-  final TextEditingController _streetAddressController = TextEditingController();
+  final TextEditingController _streetAddressController =
+      TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   TimeOfDay? _openTime;
   TimeOfDay? _closeTime;
   String? _location;
   List<String> _selectedCategories = [];
-  
+
   final List<String> _categories = [
     'Restaurant',
     'Cafe',
@@ -68,7 +70,10 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         final requestPermission = await Geolocator.requestPermission();
         if (requestPermission == LocationPermission.denied) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permission is required')),
+            SnackBar(
+              content: const Text('Location permission is required'),
+              backgroundColor: AppColors.error,
+            ),
           );
           return;
         }
@@ -80,7 +85,10 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error getting location: $e')),
+        SnackBar(
+          content: Text('Error getting location: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -105,13 +113,19 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
     if (!_formKey.currentState!.validate()) return;
     if (_openTime == null || _closeTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select opening and closing times')),
+        SnackBar(
+          content: const Text('Please select opening and closing times'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
     if (_selectedCategories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one category')),
+        SnackBar(
+          content: const Text('Please select at least one category'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
@@ -141,8 +155,10 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
           'country': _countryController.text,
         },
         'isOpen': false,
-        'openTime': '${_openTime!.hour.toString().padLeft(2, '0')}:${_openTime!.minute.toString().padLeft(2, '0')}',
-        'closeTime': '${_closeTime!.hour.toString().padLeft(2, '0')}:${_closeTime!.minute.toString().padLeft(2, '0')}',
+        'openTime':
+            '${_openTime!.hour.toString().padLeft(2, '0')}:${_openTime!.minute.toString().padLeft(2, '0')}',
+        'closeTime':
+            '${_closeTime!.hour.toString().padLeft(2, '0')}:${_closeTime!.minute.toString().padLeft(2, '0')}',
         'categories': _selectedCategories,
         'images': [], // Empty array for now, can be implemented later
         'shopMetadata': {
@@ -168,7 +184,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       final data = jsonDecode(response.body);
       print('Merchant Signup Response: ${response.statusCode}');
       print('Response Body: $data');
-      
+
       if (data['success'] == true) {
         print('Signup successful, proceeding with navigation');
         // Store token and login state
@@ -179,12 +195,16 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
 
         // Register FCM token
         await _registerFCMToken(token);
-        
+
         if (mounted) {
           print('Widget is mounted, showing success message and navigating');
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'] ?? 'Signup successful! Please login to continue.')),
+            SnackBar(
+              content: Text(data['message'] ??
+                  'Signup successful! Please login to continue.'),
+              backgroundColor: AppColors.success,
+            ),
           );
           // Navigate to login page
           Navigator.pushReplacementNamed(context, '/login');
@@ -194,13 +214,19 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       } else {
         print('Signup failed: ${data['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Signup failed')),
+          SnackBar(
+            content: Text(data['message'] ?? 'Signup failed'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
       print('Error during signup: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       setState(() {
@@ -252,7 +278,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -265,15 +291,19 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back),
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: AppColors.textPrimary,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Merchant Sign Up',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -284,11 +314,12 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                 const SizedBox(height: 24),
 
                 // Basic Information
-                const Text(
+                Text(
                   'Basic Information',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -313,7 +344,8 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                     if (value == null || value.isEmpty) {
                       return 'Email is required';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value)) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -324,8 +356,14 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                   label: 'Password',
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: AppColors.textSecondary,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -354,11 +392,12 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                 const SizedBox(height: 24),
 
                 // Shop Information
-                const Text(
+                Text(
                   'Shop Information',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -436,22 +475,29 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: _getCurrentLocation,
-                        icon: const Icon(Icons.location_on),
-                        label: Text(_location ?? 'Get Location (Optional)'),
+                        icon: Icon(
+                          Icons.location_on,
+                          color: AppColors.textWhite,
+                        ),
+                        label: Text(
+                          _location ?? 'Get Location (Optional)',
+                          style: TextStyle(color: AppColors.textWhite),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE9B8BA),
-                          foregroundColor: const Color(0xFF191010),
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textWhite,
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Business Hours',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -460,11 +506,17 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => _selectTime(true),
-                        icon: const Icon(Icons.access_time),
-                        label: Text(_openTime?.format(context) ?? 'Opening Time'),
+                        icon: Icon(
+                          Icons.access_time,
+                          color: AppColors.textWhite,
+                        ),
+                        label: Text(
+                          _openTime?.format(context) ?? 'Opening Time',
+                          style: TextStyle(color: AppColors.textWhite),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE9B8BA),
-                          foregroundColor: const Color(0xFF191010),
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textWhite,
                         ),
                       ),
                     ),
@@ -472,22 +524,29 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => _selectTime(false),
-                        icon: const Icon(Icons.access_time),
-                        label: Text(_closeTime?.format(context) ?? 'Closing Time'),
+                        icon: Icon(
+                          Icons.access_time,
+                          color: AppColors.textWhite,
+                        ),
+                        label: Text(
+                          _closeTime?.format(context) ?? 'Closing Time',
+                          style: TextStyle(color: AppColors.textWhite),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE9B8BA),
-                          foregroundColor: const Color(0xFF191010),
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textWhite,
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Categories',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -507,11 +566,13 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                           }
                         });
                       },
-                      backgroundColor: const Color(0xFFF4F1F1),
-                      selectedColor: const Color(0xFFE9B8BA),
-                      checkmarkColor: const Color(0xFF191010),
+                      backgroundColor: AppColors.backgroundLight,
+                      selectedColor: AppColors.primary,
+                      checkmarkColor: AppColors.textWhite,
                       labelStyle: TextStyle(
-                        color: isSelected ? const Color(0xFF191010) : const Color(0xFF8B5B5C),
+                        color: isSelected
+                            ? AppColors.textWhite
+                            : AppColors.textSecondary,
                       ),
                     );
                   }).toList(),
@@ -522,16 +583,17 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleSignup,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE9B8BA),
-                      foregroundColor: const Color(0xFF191010),
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textWhite,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
+                        ? CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.textWhite),
                           )
                         : const Text(
                             'Sign Up',
@@ -546,10 +608,10 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                 Center(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
+                    child: Text(
                       'Already have an account? Log in',
                       style: TextStyle(
-                        color: Color(0xFF8B5B5C),
+                        color: AppColors.textSecondary,
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -579,18 +641,29 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         obscureText: obscureText,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF8B5B5C),
+          labelStyle: TextStyle(
+            color: AppColors.textSecondary,
           ),
           filled: true,
-          fillColor: const Color(0xFFF4F1F1),
+          fillColor: AppColors.backgroundLight,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
           ),
           suffixIcon: suffixIcon,
         ),
         validator: validator,
+        style: TextStyle(
+          color: AppColors.textPrimary,
+        ),
       ),
     );
   }
