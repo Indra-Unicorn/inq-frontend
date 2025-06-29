@@ -4,13 +4,14 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../shared/constants/api_endpoints.dart';
+import '../../../services/auth_service.dart';
 import '../models/merchant_profile.dart';
 
 class MerchantProfileService {
   static Future<MerchantProfileData> getMerchantProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-    final memberId = prefs.getString('memberId');
+    final token = await AuthService.getToken();
+    final userData = await AuthService.getUserData();
+    final memberId = userData?['memberId']?.toString();
 
     if (token == null || memberId == null) {
       throw Exception('Authentication required');
@@ -47,8 +48,7 @@ class MerchantProfileService {
     List<String>? images,
     Map<String, dynamic>? shopMetadata,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = await AuthService.getToken();
 
     if (token == null) {
       throw Exception('Authentication required');
@@ -136,11 +136,6 @@ class MerchantProfileService {
   }
 
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', false);
-    await prefs.remove('token');
-    await prefs.remove('memberId');
-    await prefs.remove('userType');
-    await prefs.clear();
+    await AuthService.clearAuthData();
   }
 }

@@ -7,11 +7,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_constants.dart';
+import '../../services/auth_service.dart';
 
 class OTPVerificationPage extends StatefulWidget {
   final String phoneNumber;
   final String sessionId;
-  
+
   const OTPVerificationPage({
     super.key,
     required this.phoneNumber,
@@ -23,7 +24,8 @@ class OTPVerificationPage extends StatefulWidget {
 }
 
 class _OTPVerificationPageState extends State<OTPVerificationPage> {
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   bool _isLoading = false;
 
@@ -65,17 +67,23 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
       );
 
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
-        // Store token and login state
-        final prefs = await SharedPreferences.getInstance();
+        // Store token and login state using AuthService
         final token = data['data']['token'];
-        await prefs.setString(AppConstants.tokenKey, token);
-        await prefs.setBool('isLoggedIn', true);
+        final userDataRaw = data['data']['user'] ?? {};
+        final Map<String, dynamic> userData =
+            Map<String, dynamic>.from(userDataRaw);
+
+        await AuthService.storeAuthData(
+          token: token,
+          userData: userData,
+          refreshToken: data['data']['refreshToken'],
+        );
 
         // Register FCM token
         await _registerFCMToken(token);
-        
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/customer-dashboard');
         }
@@ -109,7 +117,8 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
       // Get device information
       final deviceType = Platform.isAndroid ? 'ANDROID' : 'IOS';
       final deviceModel = Platform.operatingSystemVersion;
-      final appVersion = '1.0.0'; // You might want to get this from your app's version
+      final appVersion =
+          '1.0.0'; // You might want to get this from your app's version
       final osVersion = Platform.operatingSystemVersion;
 
       // Register FCM token
@@ -238,7 +247,8 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
                         )
                       : const Text(
                           'Verify',
@@ -272,4 +282,4 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
       ),
     );
   }
-} 
+}

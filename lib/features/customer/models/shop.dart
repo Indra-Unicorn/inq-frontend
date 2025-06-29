@@ -32,7 +32,16 @@ class Shop {
       shopId: json['shopId'],
       shopName: json['shopName'],
       shopPhoneNumber: json['shopPhoneNumber'],
-      address: ShopAddress.fromJson(json['address']),
+      address: json['address'] != null
+          ? ShopAddress.fromJson(json['address'])
+          : ShopAddress(
+              streetAddress: '',
+              postalCode: '',
+              location: '',
+              city: '',
+              state: '',
+              country: '',
+            ),
       isOpen: json['isOpen'],
       openTime: json['openTime'],
       closeTime: json['closeTime'],

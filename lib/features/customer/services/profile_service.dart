@@ -4,11 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../../../shared/constants/api_endpoints.dart';
 import '../../../shared/constants/app_constants.dart';
+import '../../../services/auth_service.dart';
 
 class ProfileService {
   Future<Map<String, dynamic>> getUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
 
     if (token == null) {
       throw Exception('Not authenticated');
@@ -39,17 +39,13 @@ class ProfileService {
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', false);
-    await prefs.remove(AppConstants.tokenKey);
-    await prefs.clear();
+    await AuthService.clearAuthData();
   }
 
   Future<void> updateCustomerLocation(
       {double? latitude, double? longitude}) async {
     if (latitude == null || longitude == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConstants.tokenKey);
+    final token = await AuthService.getToken();
     if (token == null) throw Exception('User not authenticated');
 
     final response = await http.patch(
@@ -68,10 +64,37 @@ class ProfileService {
       final location =
           RegExp(r'"location"\s*:\s*"([^"]+)"').firstMatch(data)?.group(1);
       if (location != null) {
+        final prefs = await SharedPreferences.getInstance();
         await prefs.setString(AppConstants.locationKey, location);
       }
     } else {
       throw Exception('Failed to update location');
+    }
+  }
+
+  Future<void> updateCustomerProfile(
+      {required String name, required String email}) async {
+    final token = await AuthService.getToken();
+    if (token == null) throw Exception('User not authenticated');
+
+    final response = await http.put(
+      Uri.parse('${ApiEndpoints.baseUrl}/users/customer/update'),
+      headers: {
+        'accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200 && data['success'] == true) {
+      return;
+    } else {
+      throw Exception(data['message'] ?? 'Failed to update profile');
     }
   }
 }

@@ -6,6 +6,10 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
+import '../../shared/constants/app_colors.dart';
+import '../../shared/constants/app_constants.dart';
+import '../../../services/auth_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MerchantLogin extends StatefulWidget {
   const MerchantLogin({super.key});
@@ -30,7 +34,10 @@ class _MerchantLoginState extends State<MerchantLogin> {
   Future<void> _handleLogin() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        SnackBar(
+          content: const Text('Please fill in all fields'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
@@ -52,34 +59,54 @@ class _MerchantLoginState extends State<MerchantLogin> {
       );
 
       final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 200 && data['success'] == true) {
-        // Store token and login state
-        final prefs = await SharedPreferences.getInstance();
-        final token = data['data']['token'];
-        await prefs.setString('token', token);
-        await prefs.setBool('isLoggedIn', true);
-        await prefs.setString('userType', data['data']['userType']);
-        await prefs.setString('memberId', data['data']['id']);
-        await prefs.setString('email', data['data']['email']);
-        await prefs.setString('name', data['data']['name']);
-        await prefs.setString('phoneNumber', data['data']['phoneNumber']);
-        await prefs.setString('status', data['data']['status']);
 
-        // Register FCM token
-        await _registerFCMToken(token);
-        
+      if (response.statusCode == 200 && data['success'] == true) {
+        final token = data['data']['token'];
+        final userData = {
+          'userType': data['data']['userType'],
+          'memberId': data['data']['id'],
+          'email': data['data']['email'],
+          'name': data['data']['name'],
+          'phoneNumber': data['data']['phoneNumber'],
+          'status': data['data']['status'],
+        };
+        final refreshToken = data['data']['refreshToken'];
+
+        // Store token and user data using AuthService
+        await AuthService.storeAuthData(
+          token: token,
+          userData: userData,
+          refreshToken: refreshToken,
+        );
+        print('[MerchantLogin] Token saved: $token');
+
+        // Debug: Read token back
+        final prefs = await SharedPreferences.getInstance();
+        print(
+            '[MerchantLogin] Token after save: ${prefs.getString(AppConstants.tokenKey)}');
+
+        // Register FCM token (only on mobile platforms)
+        if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+          await _registerFCMToken(token);
+        }
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/merchant-dashboard');
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Login failed')),
+          SnackBar(
+            content: Text(data['message'] ?? 'Login failed'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       setState(() {
@@ -133,7 +160,7 @@ class _MerchantLoginState extends State<MerchantLogin> {
     return Column(
       children: [
         const Spacer(),
-        
+
         // Login Form for Merchant
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -144,9 +171,9 @@ class _MerchantLoginState extends State<MerchantLogin> {
                 label: 'Email',
                 keyboardType: TextInputType.emailAddress,
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               _buildInputField(
                 controller: _passwordController,
                 label: 'Password',
@@ -154,7 +181,7 @@ class _MerchantLoginState extends State<MerchantLogin> {
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                    color: const Color(0xFF8B5B5C),
+                    color: AppColors.textSecondary,
                   ),
                   onPressed: () {
                     setState(() {
@@ -163,9 +190,9 @@ class _MerchantLoginState extends State<MerchantLogin> {
                   },
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Login Button
               Container(
                 constraints: const BoxConstraints(maxWidth: 480),
@@ -173,8 +200,8 @@ class _MerchantLoginState extends State<MerchantLogin> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE9B8BA),
-                    foregroundColor: const Color(0xFF191010),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.textWhite,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
@@ -182,8 +209,9 @@ class _MerchantLoginState extends State<MerchantLogin> {
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
+                      ? CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textWhite),
                         )
                       : const Text(
                           'Login',
@@ -195,18 +223,18 @@ class _MerchantLoginState extends State<MerchantLogin> {
                         ),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Sign up link
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, '/merchant-signup');
                 },
-                child: const Text(
+                child: Text(
                   'New user? Sign up as a Merchant',
                   style: TextStyle(
-                    color: Color(0xFF8B5B5C),
+                    color: AppColors.textSecondary,
                     fontSize: 14,
                     decoration: TextDecoration.underline,
                   ),
@@ -216,7 +244,7 @@ class _MerchantLoginState extends State<MerchantLogin> {
             ],
           ),
         ),
-        
+
         const Spacer(),
       ],
     );
@@ -238,23 +266,31 @@ class _MerchantLoginState extends State<MerchantLogin> {
         obscureText: obscureText,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF8B5B5C),
+          labelStyle: TextStyle(
+            color: AppColors.textSecondary,
             fontSize: 16,
           ),
           filled: true,
-          fillColor: const Color(0xFFF4F1F1),
+          fillColor: AppColors.backgroundLight,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
           ),
           suffixIcon: suffixIcon,
         ),
-        style: const TextStyle(
-          color: Color(0xFF191010),
+        style: TextStyle(
+          color: AppColors.textPrimary,
           fontSize: 16,
         ),
       ),
     );
   }
-} 
+}

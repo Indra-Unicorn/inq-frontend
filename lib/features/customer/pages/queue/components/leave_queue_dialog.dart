@@ -93,7 +93,7 @@ class _LeaveQueueDialogState extends State<LeaveQueueDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -134,13 +134,13 @@ class _LeaveQueueDialogState extends State<LeaveQueueDialog> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
-                    color: AppColors.borderMedium,
+                    color: AppColors.border,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
-                    color: AppColors.borderMedium,
+                    color: AppColors.border,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(

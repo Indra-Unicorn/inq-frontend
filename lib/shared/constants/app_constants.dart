@@ -1,3 +1,5 @@
+import 'api_endpoints.dart';
+
 class AppConstants {
   static const String appName = 'Queue Management';
   static const String fcmTopic = 'queue_updates';
@@ -6,6 +8,8 @@ class AppConstants {
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
   static const String locationKey = 'user_location';
+  static const String refreshTokenKey = 'refresh_token';
+  static const String loginTimeKey = 'login_time';
 
   // User types
   static const String userTypeCustomer = 'CUSTOMER';
@@ -26,6 +30,14 @@ class AppConstants {
   static const String deviceTypeAndroid = 'ANDROID';
   static const String deviceTypeIOS = 'IOS';
   static const String deviceTypeWeb = 'WEB';
+
+  // Token expiration buffer (5 minutes before actual expiration)
+  static const int tokenExpirationBufferMinutes = 5;
+
+  /// Extracts the domain from the API base URL for shareable links
+  static String getShareableDomain() {
+    return 'https://inqueue.in';
+  }
 }
 
 // lib/core/utils/validators.dart

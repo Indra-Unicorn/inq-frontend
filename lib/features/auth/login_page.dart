@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../shared/constants/app_colors.dart';
 import 'customer_login.dart';
 import 'merchant_login.dart';
 
@@ -9,7 +10,8 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -27,40 +29,40 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F9),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
             // Header
             Container(
               padding: const EdgeInsets.all(16.0),
-              child: const Text(
+              child: Text(
                 'Queue Management',
                 style: TextStyle(
-                  color: Color(0xFF191010),
+                  color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.015,
                 ),
               ),
             ),
-            
+
             // Tab Bar
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: Color(0xFFE3D4D4),
+                    color: AppColors.border,
                     width: 1,
                   ),
                 ),
               ),
               child: TabBar(
                 controller: _tabController,
-                indicatorColor: const Color(0xFFE9B8BA),
+                indicatorColor: AppColors.primary,
                 indicatorWeight: 3,
-                labelColor: const Color(0xFF191010),
-                unselectedLabelColor: const Color(0xFF8B5B5C),
+                labelColor: AppColors.textPrimary,
+                unselectedLabelColor: AppColors.textSecondary,
                 labelStyle: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -72,7 +74,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 ],
               ),
             ),
-            
+
             // Content
             Expanded(
               child: TabBarView(

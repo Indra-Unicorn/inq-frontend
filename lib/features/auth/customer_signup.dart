@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_constants.dart';
+import '../../shared/constants/app_colors.dart';
 
 class CustomerSignUpPage extends StatefulWidget {
   const CustomerSignUpPage({super.key});
@@ -18,9 +19,10 @@ class CustomerSignUpPage extends StatefulWidget {
 class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _otpControllers =
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
-  
+
   bool _isLoading = false;
   bool _otpSent = false;
   String? _sessionId;
@@ -42,7 +44,10 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
   Future<void> _initiateSignup() async {
     if (_fullNameController.text.isEmpty || _phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        SnackBar(
+          content: const Text('Please fill in all fields'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
@@ -53,7 +58,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.customerPhoneSignupInitiate}'),
+        Uri.parse(
+            '${ApiEndpoints.baseUrl}${ApiEndpoints.customerPhoneSignupInitiate}'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -64,7 +70,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       );
 
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         setState(() {
           _otpSent = true;
@@ -72,16 +78,25 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
           _isPhoneEnabled = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP sent successfully')),
+          SnackBar(
+            content: const Text('OTP sent successfully'),
+            backgroundColor: AppColors.success,
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Failed to send OTP')),
+          SnackBar(
+            content: Text(data['message'] ?? 'Failed to send OTP'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       setState(() {
@@ -94,7 +109,10 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
     final otp = _otpControllers.map((controller) => controller.text).join();
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the complete OTP')),
+        SnackBar(
+          content: const Text('Please enter the complete OTP'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
@@ -118,7 +136,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       );
 
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         // Store token and login state
         final prefs = await SharedPreferences.getInstance();
@@ -128,18 +146,24 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
         // Register FCM token
         await _registerFCMToken(token);
-        
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/customer-dashboard');
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Failed to verify OTP')),
+          SnackBar(
+            content: Text(data['message'] ?? 'Failed to verify OTP'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       setState(() {
@@ -162,7 +186,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       // Get device information
       final deviceType = Platform.isAndroid ? 'ANDROID' : 'IOS';
       final deviceModel = Platform.operatingSystemVersion;
-      final appVersion = '1.0.0'; // You might want to get this from your app's version
+      final appVersion =
+          '1.0.0'; // You might want to get this from your app's version
       final osVersion = Platform.operatingSystemVersion;
 
       // Register FCM token
@@ -195,7 +220,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -209,18 +234,18 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                     child: Container(
                       width: 48,
                       height: 48,
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back,
-                        color: Color(0xFF171212),
+                        color: AppColors.textPrimary,
                         size: 24,
                       ),
                     ),
                   ),
                   Expanded(
-                    child: const Text(
+                    child: Text(
                       'Sign Up',
                       style: TextStyle(
-                        color: Color(0xFF171212),
+                        color: AppColors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.015,
@@ -232,7 +257,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                 ],
               ),
             ),
-            
+
             // Form fields
             Expanded(
               child: SingleChildScrollView(
@@ -240,14 +265,14 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
-                    
+
                     // Full Name
                     _buildInputField(
                       controller: _fullNameController,
                       placeholder: 'Full Name',
                       enabled: !_otpSent,
                     ),
-                    
+
                     // Phone
                     _buildInputField(
                       controller: _phoneController,
@@ -255,13 +280,13 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                       keyboardType: TextInputType.phone,
                       enabled: _isPhoneEnabled,
                     ),
-                    
+
                     if (_otpSent) ...[
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'Enter OTP',
                         style: TextStyle(
-                          color: Color(0xFF171212),
+                          color: AppColors.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -278,26 +303,29 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                               textAlign: TextAlign.center,
                               keyboardType: TextInputType.number,
                               maxLength: 1,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF171212),
+                                color: AppColors.textPrimary,
                               ),
                               decoration: InputDecoration(
                                 counterText: '',
                                 filled: true,
-                                fillColor: const Color(0xFFF4F1F1),
+                                fillColor: AppColors.backgroundLight,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
+                                  borderSide:
+                                      BorderSide(color: AppColors.border),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
+                                  borderSide:
+                                      BorderSide(color: AppColors.border),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
+                                  borderSide: BorderSide(
+                                      color: AppColors.primary, width: 2),
                                 ),
                               ),
                               onChanged: (value) {
@@ -310,18 +338,20 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                         }),
                       ),
                     ],
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Sign Up Button
                     Container(
                       constraints: const BoxConstraints(maxWidth: 480),
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : (_otpSent ? _verifyOTP : _initiateSignup),
+                        onPressed: _isLoading
+                            ? null
+                            : (_otpSent ? _verifyOTP : _initiateSignup),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8B4B7),
-                          foregroundColor: const Color(0xFF171212),
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textWhite,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -329,8 +359,9 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                           elevation: 0,
                         ),
                         child: _isLoading
-                            ? const CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF171212)),
+                            ? CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.textWhite),
                               )
                             : Text(
                                 _otpSent ? 'Verify OTP' : 'Send OTP',
@@ -342,56 +373,57 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                               ),
                       ),
                     ),
-                    
+
                     if (_otpSent) ...[
                       const SizedBox(height: 12),
                       TextButton(
                         onPressed: _isLoading ? null : _initiateSignup,
-                        child: const Text(
+                        child: Text(
                           'Resend OTP',
                           style: TextStyle(
-                            color: Color(0xFF82686A),
+                            color: AppColors.primary,
                             fontSize: 14,
                             decoration: TextDecoration.underline,
                           ),
                         ),
                       ),
                     ],
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Login link
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Text(
+                      child: Text(
                         'Already have an account? Log In',
                         style: TextStyle(
-                          color: Color(0xFF82686A),
+                          color: AppColors.textSecondary,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Merchant signup link
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushReplacementNamed(context, '/merchant-signup');
+                        Navigator.pushReplacementNamed(
+                            context, '/merchant-signup');
                       },
-                      child: const Text(
+                      child: Text(
                         'Are you a merchant? Sign Up',
                         style: TextStyle(
-                          color: Color(0xFF82686A),
+                          color: AppColors.textSecondary,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -420,28 +452,29 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
         enabled: enabled,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(
-            color: Color(0xFF82686A),
+          hintStyle: TextStyle(
+            color: AppColors.textSecondary,
             fontSize: 16,
           ),
           filled: true,
-          fillColor: enabled ? const Color(0xFFF4F1F1) : const Color(0xFFE8E8E8),
+          fillColor:
+              enabled ? AppColors.backgroundLight : AppColors.backgroundDark,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: AppColors.border),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
           ),
           contentPadding: const EdgeInsets.all(16),
         ),
         style: TextStyle(
-          color: const Color(0xFF171212).withOpacity(enabled ? 1.0 : 0.5),
+          color: AppColors.textPrimary.withValues(alpha: enabled ? 1.0 : 0.5),
           fontSize: 16,
         ),
       ),

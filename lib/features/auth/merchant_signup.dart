@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:geolocator/geolocator.dart';
-import 'dart:io';
-import '../../shared/constants/api_endpoints.dart';
+import '../../shared/constants/app_colors.dart';
+import '../../shared/constants/app_constants.dart';
+import 'models/merchant_signup_data.dart';
+import 'services/merchant_signup_service.dart';
+import 'services/location_service.dart';
+import 'widgets/basic_information_section.dart';
+import 'widgets/shop_information_section.dart';
+import 'widgets/business_hours_section.dart';
+import 'widgets/categories_section.dart';
 
 class MerchantSignUpPage extends StatefulWidget {
   const MerchantSignUpPage({super.key});
@@ -23,19 +25,20 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _shopPhoneController = TextEditingController();
   final TextEditingController _shopNameController = TextEditingController();
-  final TextEditingController _streetAddressController = TextEditingController();
+  final TextEditingController _streetAddressController =
+      TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   TimeOfDay? _openTime;
   TimeOfDay? _closeTime;
   String? _location;
   List<String> _selectedCategories = [];
-  
+
   final List<String> _categories = [
     'Restaurant',
     'Cafe',
@@ -62,26 +65,20 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   }
 
   Future<void> _getCurrentLocation() async {
-    try {
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        final requestPermission = await Geolocator.requestPermission();
-        if (requestPermission == LocationPermission.denied) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permission is required')),
-          );
-          return;
-        }
-      }
-
-      final position = await Geolocator.getCurrentPosition();
+    final location = await LocationService.getCurrentLocation();
+    if (location != null) {
       setState(() {
-        _location = '${position.latitude},${position.longitude}';
+        _location = location;
       });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error getting location: $e')),
-      );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Location permission is required'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -101,17 +98,68 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
     }
   }
 
+  void _onCategoryChanged(String category, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedCategories.add(category);
+      } else {
+        _selectedCategories.remove(category);
+      }
+    });
+  }
+
+  double _getProgressPercentage() {
+    int completedSteps = 0;
+    int totalSteps = 4;
+
+    // Basic information
+    if (_nameController.text.isNotEmpty &&
+        _emailController.text.isNotEmpty &&
+        _passwordController.text.isNotEmpty &&
+        _phoneController.text.isNotEmpty) {
+      completedSteps++;
+    }
+
+    // Shop information
+    if (_shopNameController.text.isNotEmpty &&
+        _shopPhoneController.text.isNotEmpty &&
+        _streetAddressController.text.isNotEmpty &&
+        _cityController.text.isNotEmpty &&
+        _stateController.text.isNotEmpty &&
+        _countryController.text.isNotEmpty) {
+      completedSteps++;
+    }
+
+    // Business hours
+    if (_openTime != null && _closeTime != null) {
+      completedSteps++;
+    }
+
+    // Categories
+    if (_selectedCategories.isNotEmpty) {
+      completedSteps++;
+    }
+
+    return completedSteps / totalSteps;
+  }
+
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
     if (_openTime == null || _closeTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select opening and closing times')),
+        SnackBar(
+          content: const Text('Please select opening and closing times'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
     if (_selectedCategories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one category')),
+        SnackBar(
+          content: const Text('Please select at least one category'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
@@ -121,86 +169,62 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
     });
 
     try {
-      final Map<String, dynamic> requestBody = {
-        'name': _nameController.text,
-        'email': _emailController.text,
-        'password': _passwordController.text,
-        'phoneNumber': _phoneController.text,
-        'shopPhoneNumber': _shopPhoneController.text,
-        'metadata': {
-          'deviceType': Platform.isAndroid ? 'ANDROID' : 'IOS',
-          'appVersion': '1.0.0',
-          'osVersion': Platform.operatingSystemVersion,
-        },
-        'shopName': _shopNameController.text,
-        'address': {
-          'streetAddress': _streetAddressController.text,
-          'postalCode': _postalCodeController.text,
-          'city': _cityController.text,
-          'state': _stateController.text,
-          'country': _countryController.text,
-        },
-        'isOpen': false,
-        'openTime': '${_openTime!.hour.toString().padLeft(2, '0')}:${_openTime!.minute.toString().padLeft(2, '0')}',
-        'closeTime': '${_closeTime!.hour.toString().padLeft(2, '0')}:${_closeTime!.minute.toString().padLeft(2, '0')}',
-        'categories': _selectedCategories,
-        'images': [], // Empty array for now, can be implemented later
-        'shopMetadata': {
-          'rating': 0.0,
-          'ratingCount': 0,
-          'createdAt': DateTime.now().toIso8601String(),
-        },
-      };
-
-      // Add location only if it's available
-      if (_location != null) {
-        requestBody['address']['location'] = _location;
-      }
-
-      final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.merchantSignup}'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
+      final signupData = MerchantSignupData(
+        name: _nameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
+        phoneNumber: _phoneController.text,
+        shopPhoneNumber: _shopPhoneController.text,
+        shopName: _shopNameController.text,
+        streetAddress: _streetAddressController.text,
+        postalCode: _postalCodeController.text,
+        city: _cityController.text,
+        state: _stateController.text,
+        country: _countryController.text,
+        location: _location,
+        openTime: _openTime,
+        closeTime: _closeTime,
+        categories: _selectedCategories,
       );
 
-      final data = jsonDecode(response.body);
-      print('Merchant Signup Response: ${response.statusCode}');
-      print('Response Body: $data');
-      
+      final data = await MerchantSignupService.signup(signupData);
+
       if (data['success'] == true) {
-        print('Signup successful, proceeding with navigation');
         // Store token and login state
         final prefs = await SharedPreferences.getInstance();
         final token = data['data']['token'];
-        await prefs.setString('token', token);
+        await prefs.setString(AppConstants.tokenKey, token);
         await prefs.setBool('isLoggedIn', true);
 
         // Register FCM token
-        await _registerFCMToken(token);
-        
+        await MerchantSignupService.registerFCMToken(token);
+
         if (mounted) {
-          print('Widget is mounted, showing success message and navigating');
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'] ?? 'Signup successful! Please login to continue.')),
+            SnackBar(
+              content: Text(data['message'] ??
+                  'Signup successful! Please login to continue.'),
+              backgroundColor: AppColors.success,
+            ),
           );
           // Navigate to login page
           Navigator.pushReplacementNamed(context, '/login');
-        } else {
-          print('Widget is not mounted, cannot navigate');
         }
       } else {
-        print('Signup failed: ${data['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Signup failed')),
+          SnackBar(
+            content: Text(data['message'] ?? 'Signup failed'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } catch (e) {
-      print('Error during signup: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       setState(() {
@@ -209,388 +233,240 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
     }
   }
 
-  Future<void> _registerFCMToken(String jwtToken) async {
-    try {
-      final decodedToken = JwtDecoder.decode(jwtToken);
-      final userId = decodedToken['memberId'];
-      final userType = decodedToken['userType'];
-
-      final fcmToken = await FirebaseMessaging.instance.getToken();
-      if (fcmToken == null) return;
-
-      final deviceType = Platform.isAndroid ? 'ANDROID' : 'IOS';
-      final deviceModel = Platform.operatingSystemVersion;
-      final appVersion = '1.0.0';
-      final osVersion = Platform.operatingSystemVersion;
-
-      final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.registerFCMToken}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $jwtToken',
-        },
-        body: jsonEncode({
-          'userId': userId,
-          'userType': userType,
-          'fcmToken': fcmToken,
-          'deviceType': deviceType,
-          'deviceModel': deviceModel,
-          'appVersion': appVersion,
-          'osVersion': osVersion,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-      if (!data['success']) {
-        print('Failed to register FCM token: ${data['message']}');
-      }
-    } catch (e) {
-      print('Error registering FCM token: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final progress = _getProgressPercentage();
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'Merchant Sign Up',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(width: 40), // Balance the back button
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Basic Information
-                const Text(
-                  'Basic Information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildInputField(
-                  controller: _nameController,
-                  label: 'Full Name',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Name is required';
-                    }
-                    if (value.length < 2 || value.length > 100) {
-                      return 'Name must be between 2 and 100 characters';
-                    }
-                    return null;
-                  },
-                ),
-                _buildInputField(
-                  controller: _emailController,
-                  label: 'Email',
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Email is required';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                _buildInputField(
-                  controller: _passwordController,
-                  label: 'Password',
-                  obscureText: _obscurePassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Password is required';
-                    }
-                    if (value.length < 6 || value.length > 100) {
-                      return 'Password must be between 6 and 100 characters';
-                    }
-                    return null;
-                  },
-                ),
-                _buildInputField(
-                  controller: _phoneController,
-                  label: 'Phone Number',
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Phone number is required';
-                    }
-                    if (!RegExp(r'^\+?[1-9]\d{1,14}$').hasMatch(value)) {
-                      return 'Please enter a valid phone number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Shop Information
-                const Text(
-                  'Shop Information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildInputField(
-                  controller: _shopNameController,
-                  label: 'Shop Name',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Shop name is required';
-                    }
-                    return null;
-                  },
-                ),
-                _buildInputField(
-                  controller: _shopPhoneController,
-                  label: 'Shop Phone Number',
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Shop phone number is required';
-                    }
-                    if (!RegExp(r'^\+?[1-9]\d{1,14}$').hasMatch(value)) {
-                      return 'Please enter a valid phone number';
-                    }
-                    return null;
-                  },
-                ),
-                _buildInputField(
-                  controller: _streetAddressController,
-                  label: 'Street Address',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Street address is required';
-                    }
-                    return null;
-                  },
-                ),
-                _buildInputField(
-                  controller: _postalCodeController,
-                  label: 'Postal Code',
-                ),
-                _buildInputField(
-                  controller: _cityController,
-                  label: 'City',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'City is required';
-                    }
-                    return null;
-                  },
-                ),
-                _buildInputField(
-                  controller: _stateController,
-                  label: 'State',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'State is required';
-                    }
-                    return null;
-                  },
-                ),
-                _buildInputField(
-                  controller: _countryController,
-                  label: 'Country',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Country is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _getCurrentLocation,
-                        icon: const Icon(Icons.location_on),
-                        label: Text(_location ?? 'Get Location (Optional)'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE9B8BA),
-                          foregroundColor: const Color(0xFF191010),
-                        ),
-                      ),
+          child: Column(
+            children: [
+              // Header with progress
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundLight,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadowLight,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Business Hours',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _selectTime(true),
-                        icon: const Icon(Icons.access_time),
-                        label: Text(_openTime?.format(context) ?? 'Opening Time'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE9B8BA),
-                          foregroundColor: const Color(0xFF191010),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _selectTime(false),
-                        icon: const Icon(Icons.access_time),
-                        label: Text(_closeTime?.format(context) ?? 'Closing Time'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE9B8BA),
-                          foregroundColor: const Color(0xFF191010),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Categories',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: _categories.map((category) {
-                    final isSelected = _selectedCategories.contains(category);
-                    return FilterChip(
-                      label: Text(category),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedCategories.add(category);
-                          } else {
-                            _selectedCategories.remove(category);
-                          }
-                        });
-                      },
-                      backgroundColor: const Color(0xFFF4F1F1),
-                      selectedColor: const Color(0xFFE9B8BA),
-                      checkmarkColor: const Color(0xFF191010),
-                      labelStyle: TextStyle(
-                        color: isSelected ? const Color(0xFF191010) : const Color(0xFF8B5B5C),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleSignup,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE9B8BA),
-                      foregroundColor: const Color(0xFF191010),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
-                          )
-                        : const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Icon(
+                              Icons.arrow_back,
+                              color: AppColors.textPrimary,
+                              size: 20,
                             ),
                           ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Already have an account? Log in',
-                      style: TextStyle(
-                        color: Color(0xFF8B5B5C),
-                        decoration: TextDecoration.underline,
-                      ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Merchant Sign Up',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Complete your business profile',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: AppColors.border,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.primary),
+                            minHeight: 8,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${(progress * 100).toInt()}%',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      // Basic Information Section
+                      BasicInformationSection(
+                        nameController: _nameController,
+                        emailController: _emailController,
+                        passwordController: _passwordController,
+                        phoneController: _phoneController,
+                        obscurePassword: _obscurePassword,
+                        onTogglePassword: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Shop Information Section
+                      ShopInformationSection(
+                        shopNameController: _shopNameController,
+                        shopPhoneController: _shopPhoneController,
+                        streetAddressController: _streetAddressController,
+                        postalCodeController: _postalCodeController,
+                        cityController: _cityController,
+                        stateController: _stateController,
+                        countryController: _countryController,
+                        location: _location,
+                        onGetLocation: _getCurrentLocation,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Business Hours Section
+                      BusinessHoursSection(
+                        openTime: _openTime,
+                        closeTime: _closeTime,
+                        onSelectOpenTime: () => _selectTime(true),
+                        onSelectCloseTime: () => _selectTime(false),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Categories Section
+                      CategoriesSection(
+                        categories: _categories,
+                        selectedCategories: _selectedCategories,
+                        onCategoryChanged: _onCategoryChanged,
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Sign Up Button
+                      Container(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleSignup,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.textWhite,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                AppColors.textWhite),
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Creating Account...',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : const Text(
+                                  'Create Merchant Account',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Login link
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Already have an account? ',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Text(
+                              'Log in',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String label,
-    TextInputType? keyboardType,
-    bool obscureText = false,
-    Widget? suffixIcon,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF8B5B5C),
-          ),
-          filled: true,
-          fillColor: const Color(0xFFF4F1F1),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          suffixIcon: suffixIcon,
-        ),
-        validator: validator,
       ),
     );
   }
