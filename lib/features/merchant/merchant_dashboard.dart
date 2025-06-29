@@ -55,77 +55,128 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => MerchantDashboardController(),
-      child: Consumer<MerchantDashboardController>(
-        builder: (context, controller, child) {
-          return Scaffold(
+    final theme = Theme.of(context);
+    return Consumer<MerchantDashboardController>(
+      builder: (context, controller, child) {
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
             backgroundColor: AppColors.background,
-            body: SafeArea(
+            elevation: 0,
+            centerTitle: true,
+            title: Text(
+              'Merchant Dashboard',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+                fontFamily: 'Inter',
+                letterSpacing: -0.5,
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.person_outline,
+                    color: AppColors.textSecondary),
+                tooltip: 'Profile',
+                onPressed: _navigateToProfile,
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header
-                  DashboardHeader(
-                    title: 'Queue Management',
-                    onAddPressed: _showCreateQueueDialog,
-                    addButtonTooltip: 'Create Queue',
-                  ),
-
                   // Merchant Info Card
-                  MerchantInfoCard(
-                    name: controller.merchantName,
-                    email: controller.merchantEmail,
-                    inQoin: controller.merchantInQoin,
-                    totalShops: controller.totalShops,
-                    isLoading: controller.isLoadingMerchantData,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    child: MerchantInfoCard(
+                      name: controller.merchantName,
+                      email: controller.merchantEmail,
+                      inQoin: controller.merchantInQoin,
+                      totalShops: controller.totalShops,
+                      isLoading: controller.isLoadingMerchantData,
+                    ),
                   ),
-
                   // Stats Summary
                   if (controller.queues.isNotEmpty)
-                    StatsSummaryCard(
-                      totalQueues: controller.totalQueues,
-                      activeQueues: controller.activeQueues,
-                      totalCustomers: controller.totalCustomers,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 0),
+                      child: StatsSummaryCard(
+                        totalQueues: controller.totalQueues,
+                        activeQueues: controller.activeQueues,
+                        totalCustomers: controller.totalCustomers,
+                      ),
                     ),
-
                   // Queue List Header
-                  QueueListHeader(
-                    title: 'Your Queues',
-                    onRefresh: controller.loadInitialData,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Your Queues',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.refresh,
+                              color: AppColors.textSecondary),
+                          tooltip: 'Refresh',
+                          onPressed: controller.loadInitialData,
+                        ),
+                      ],
+                    ),
                   ),
-
                   // Queue List
                   Expanded(
-                    child: QueueList(
-                      isLoading: controller.isLoading,
-                      errorMessage: controller.errorMessage,
-                      queues: controller.queues,
-                      onRefresh: controller.loadInitialData,
-                      onCreateQueue: _showCreateQueueDialog,
-                      onQueueTap: _navigateToQueueDetails,
-                      onProcessNext: controller.processNextCustomer,
-                      onPause: controller.pauseQueue,
-                      onResume: controller.resumeQueue,
-                      onStop: controller.stopQueue,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: QueueList(
+                        isLoading: controller.isLoading,
+                        errorMessage: controller.errorMessage,
+                        queues: controller.queues,
+                        onRefresh: controller.loadInitialData,
+                        onCreateQueue: _showCreateQueueDialog,
+                        onQueueTap: _navigateToQueueDetails,
+                        onProcessNext: controller.processNextCustomer,
+                        onPause: controller.pauseQueue,
+                        onResume: controller.resumeQueue,
+                        onStop: controller.stopQueue,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Bottom Navigation Bar
-            bottomNavigationBar: MerchantBottomNavigation(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              onProfileTap: _navigateToProfile,
-            ),
-          );
-        },
-      ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _showCreateQueueDialog,
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.textWhite,
+            elevation: 2,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.add, size: 28),
+            tooltip: 'Create Queue',
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          bottomNavigationBar: MerchantBottomNavigation(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            onProfileTap: _navigateToProfile,
+          ),
+        );
+      },
     );
   }
 }

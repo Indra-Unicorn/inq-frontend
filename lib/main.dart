@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'config/firebase_options.dart';
 import 'features/auth/splash_screen.dart';
 import 'features/auth/login_page.dart';
@@ -16,6 +17,7 @@ import 'features/customer/pages/queue/queue_status_page.dart';
 import 'features/merchant/merchant_profile.dart';
 import 'features/merchant/queue_management.dart';
 import 'features/merchant/models/merchant_queue.dart';
+import 'features/merchant/controllers/merchant_dashboard_controller.dart';
 import 'services/notification_service.dart';
 
 void main() async {
@@ -105,7 +107,10 @@ class MyApp extends StatelessWidget {
         '/customer-signup': (context) => const CustomerSignUpPage(),
         '/merchant-signup': (context) => const MerchantSignUpPage(),
         '/customer-dashboard': (context) => const CustomerDashboard(),
-        '/merchant-dashboard': (context) => const MerchantDashboard(),
+        '/merchant-dashboard': (context) => ChangeNotifierProvider(
+              create: (_) => MerchantDashboardController(),
+              child: const MerchantDashboard(),
+            ),
         '/customer-queues': (context) => const CustomerQueuesPage(),
         '/store-profile': (context) => const StoreProfilePage(),
         '/customer-profile': (context) => const CustomerProfilePage(),
