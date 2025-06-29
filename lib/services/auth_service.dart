@@ -6,10 +6,11 @@ import '../shared/constants/app_constants.dart';
 import '../shared/constants/api_endpoints.dart';
 
 class AuthService {
-  static const String _tokenKey = 'auth_token';
-  static const String _userDataKey = 'user_data';
-  static const String _loginTimeKey = 'login_time';
-  static const String _refreshTokenKey = 'refresh_token';
+  // Use AppConstants keys for consistency
+  static const String _tokenKey = AppConstants.tokenKey;
+  static const String _userDataKey = AppConstants.userKey;
+  static const String _loginTimeKey = AppConstants.loginTimeKey;
+  static const String _refreshTokenKey = AppConstants.refreshTokenKey;
 
   // Store authentication data
   static Future<void> storeAuthData({
@@ -22,6 +23,7 @@ class AuthService {
 
       // Store token
       await prefs.setString(_tokenKey, token);
+      print('[AuthService] Saved token: $token');
 
       // Store user data
       await prefs.setString(_userDataKey, jsonEncode(userData));
@@ -46,6 +48,7 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey);
+      print('[AuthService] Read token: $token');
 
       if (token != null) {
         // Check if token is expired
@@ -53,7 +56,9 @@ class AuthService {
           // Try to refresh token
           final refreshed = await _refreshToken();
           if (refreshed) {
-            return await prefs.getString(_tokenKey);
+            final refreshedToken = await prefs.getString(_tokenKey);
+            print('[AuthService] Refreshed token: $refreshedToken');
+            return refreshedToken;
           } else {
             // Token expired and couldn't refresh, clear stored data
             await clearAuthData();

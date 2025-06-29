@@ -7,6 +7,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_colors.dart';
+import '../../shared/constants/app_constants.dart';
+import '../../../services/auth_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class MerchantLogin extends StatefulWidget {
   const MerchantLogin({super.key});
@@ -58,20 +61,34 @@ class _MerchantLoginState extends State<MerchantLogin> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == true) {
-        // Store token and login state
-        final prefs = await SharedPreferences.getInstance();
         final token = data['data']['token'];
-        await prefs.setString('token', token);
-        await prefs.setBool('isLoggedIn', true);
-        await prefs.setString('userType', data['data']['userType']);
-        await prefs.setString('memberId', data['data']['id']);
-        await prefs.setString('email', data['data']['email']);
-        await prefs.setString('name', data['data']['name']);
-        await prefs.setString('phoneNumber', data['data']['phoneNumber']);
-        await prefs.setString('status', data['data']['status']);
+        final userData = {
+          'userType': data['data']['userType'],
+          'memberId': data['data']['id'],
+          'email': data['data']['email'],
+          'name': data['data']['name'],
+          'phoneNumber': data['data']['phoneNumber'],
+          'status': data['data']['status'],
+        };
+        final refreshToken = data['data']['refreshToken'];
 
-        // Register FCM token
-        await _registerFCMToken(token);
+        // Store token and user data using AuthService
+        await AuthService.storeAuthData(
+          token: token,
+          userData: userData,
+          refreshToken: refreshToken,
+        );
+        print('[MerchantLogin] Token saved: $token');
+
+        // Debug: Read token back
+        final prefs = await SharedPreferences.getInstance();
+        print(
+            '[MerchantLogin] Token after save: ${prefs.getString(AppConstants.tokenKey)}');
+
+        // Register FCM token (only on mobile platforms)
+        if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+          await _registerFCMToken(token);
+        }
 
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/merchant-dashboard');
