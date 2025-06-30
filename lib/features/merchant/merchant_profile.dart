@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'controllers/merchant_profile_controller.dart';
 import 'components/merchant_details_card.dart';
 import 'components/store_details_card.dart';
+import 'components/shop_image_upload.dart';
 import 'services/merchant_profile_service.dart';
 
 class MerchantProfile extends StatefulWidget {
@@ -138,6 +139,15 @@ class _MerchantProfileState extends State<MerchantProfile> {
                     onOpenTimeChanged: _controller.updateOpenTime,
                     onCloseTimeChanged: _controller.updateCloseTime,
                     onCategoriesChanged: _controller.updateCategories,
+                  ),
+                  const SizedBox(height: 16),
+                  // Shop Image Upload Card
+                  ShopImageUpload(
+                    shop: _controller.currentShop,
+                    isEditMode: _controller.isEditMode,
+                    onImageUploaded: () async {
+                      await _controller.refreshProfile();
+                    },
                   ),
                   const SizedBox(height: 32),
                   // Logout Button

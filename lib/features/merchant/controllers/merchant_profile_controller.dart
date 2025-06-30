@@ -135,6 +135,10 @@ class MerchantProfileController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshProfile() async {
+    await loadProfile();
+  }
+
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();

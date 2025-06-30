@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/merchant_profile.dart';
 import 'time_selector.dart';
 import 'categories_selector.dart';
+import 'shop_image_upload.dart';
 
 class StoreDetailsCard extends StatelessWidget {
   final bool isEditMode;
@@ -16,6 +17,7 @@ class StoreDetailsCard extends StatelessWidget {
   final ValueChanged<TimeOfDay> onOpenTimeChanged;
   final ValueChanged<TimeOfDay> onCloseTimeChanged;
   final ValueChanged<List<String>> onCategoriesChanged;
+  final VoidCallback? onImageUploaded;
 
   const StoreDetailsCard({
     super.key,
@@ -31,6 +33,7 @@ class StoreDetailsCard extends StatelessWidget {
     required this.onOpenTimeChanged,
     required this.onCloseTimeChanged,
     required this.onCategoriesChanged,
+    this.onImageUploaded,
   });
 
   @override
@@ -128,6 +131,13 @@ class StoreDetailsCard extends StatelessWidget {
                 availableCategories: availableCategories,
                 onCategoriesChanged: onCategoriesChanged,
               ),
+              const SizedBox(height: 16),
+              // Shop Image Upload Section
+              ShopImageUpload(
+                shop: currentShop,
+                isEditMode: isEditMode,
+                onImageUploaded: onImageUploaded,
+              ),
             ] else ...[
               _buildReadOnlyRow('Store Name', currentShop?.shopName ?? ''),
               _buildReadOnlyRow(
@@ -141,6 +151,13 @@ class StoreDetailsCard extends StatelessWidget {
               _buildReadOnlyRow(
                   'Categories', currentShop?.categories.join(', ') ?? ''),
               _buildReadOnlyRow('Rating', currentShop?.ratingDisplay ?? ''),
+              const SizedBox(height: 16),
+              // Shop Image Upload Section (read-only view)
+              ShopImageUpload(
+                shop: currentShop,
+                isEditMode: false,
+                onImageUploaded: onImageUploaded,
+              ),
             ],
           ],
         ),
