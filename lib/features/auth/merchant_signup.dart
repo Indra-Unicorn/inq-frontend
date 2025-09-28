@@ -65,21 +65,115 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   }
 
   Future<void> _getCurrentLocation() async {
-    final location = await LocationService.getCurrentLocation();
-    if (location != null) {
+    final result = await LocationService.getCurrentLocationWithStatus();
+    
+    if (result.success) {
       setState(() {
-        _location = location;
+        _location = result.location;
       });
-    } else {
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Location permission is required'),
-            backgroundColor: AppColors.error,
+            content: const Text('Location obtained successfully!'),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 2),
           ),
         );
       }
+    } else {
+      if (mounted) {
+        _showLocationErrorDialog(result);
+      }
     }
+  }
+
+  void _showLocationErrorDialog(LocationResult result) {
+    String title = 'Location Access Required';
+    String content = result.message;
+    List<Widget> actions = [];
+
+    switch (result.error) {
+      case LocationError.serviceDisabled:
+        actions = [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await LocationService.openLocationSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ];
+        break;
+
+      case LocationError.permissionDenied:
+        actions = [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Try again after user dismissed dialog
+              Future.delayed(const Duration(milliseconds: 500), () {
+                _getCurrentLocation();
+              });
+            },
+            child: const Text('Try Again'),
+          ),
+        ];
+        break;
+
+      case LocationError.permissionDeniedForever:
+        actions = [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await LocationService.openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ];
+        break;
+
+      case LocationError.timeout:
+      case LocationError.unknown:
+      default:
+        actions = [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _getCurrentLocation();
+            },
+            child: const Text('Try Again'),
+          ),
+        ];
+        break;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: actions,
+        );
+      },
+    );
   }
 
   Future<void> _selectTime(bool isOpenTime) async {

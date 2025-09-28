@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import '../../../shared/utils/platform_utils.dart';
 
 // Model class for merchant signup data
 class MerchantSignupData {
@@ -44,11 +44,7 @@ class MerchantSignupData {
       'password': password,
       'phoneNumber': phoneNumber,
       'shopPhoneNumber': shopPhoneNumber,
-      'metadata': {
-        'deviceType': Platform.isAndroid ? 'ANDROID' : 'IOS',
-        'appVersion': '1.0.0',
-        'osVersion': Platform.operatingSystemVersion,
-      },
+      'metadata': PlatformUtils.getPlatformMetadata(),
       'shopName': shopName,
       'address': {
         'streetAddress': streetAddress,
