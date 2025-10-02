@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../shared/constants/app_colors.dart';
 import '../../shared/constants/app_constants.dart';
@@ -9,6 +10,7 @@ import 'widgets/basic_information_section.dart';
 import 'widgets/shop_information_section.dart';
 import 'widgets/business_hours_section.dart';
 import 'widgets/categories_section.dart';
+import 'widgets/shop_images_section.dart';
 
 class MerchantSignUpPage extends StatefulWidget {
   const MerchantSignUpPage({super.key});
@@ -38,6 +40,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   TimeOfDay? _closeTime;
   String? _location;
   List<String> _selectedCategories = [];
+  List<dynamic> _selectedImages = []; // Can be File or Uint8List depending on platform
 
   final List<String> _categories = [
     'Restaurant',
@@ -204,7 +207,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
 
   double _getProgressPercentage() {
     int completedSteps = 0;
-    int totalSteps = 4;
+    int totalSteps = 5;
 
     // Basic information
     if (_nameController.text.isNotEmpty &&
@@ -234,12 +237,39 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       completedSteps++;
     }
 
+    // Images (optional, always counts as completed)
+    completedSteps++;
+
     return completedSteps / totalSteps;
   }
 
   Future<void> _handleSignup() async {
-    if (!_formKey.currentState!.validate()) return;
+    print('[MerchantSignup] _handleSignup called');
+    
+    // Check form validation
+    print('[MerchantSignup] Starting form validation...');
+    print('[MerchantSignup] Form data check:');
+    print('  - Name: "${_nameController.text}"');
+    print('  - Email: "${_emailController.text}"');
+    print('  - Password: "${_passwordController.text}"');
+    print('  - Phone: "${_phoneController.text}"');
+    print('  - Shop Name: "${_shopNameController.text}"');
+    print('  - Shop Phone: "${_shopPhoneController.text}"');
+    print('  - Street Address: "${_streetAddressController.text}"');
+    print('  - Postal Code: "${_postalCodeController.text}"');
+    print('  - City: "${_cityController.text}"');
+    print('  - State: "${_stateController.text}"');
+    print('  - Country: "${_countryController.text}"');
+    
+    if (!_formKey.currentState!.validate()) {
+      print('[MerchantSignup] Form validation failed - check required fields above');
+      return;
+    }
+    print('[MerchantSignup] Form validation passed');
+    
+    // Check business hours
     if (_openTime == null || _closeTime == null) {
+      print('[MerchantSignup] Business hours not selected: openTime=$_openTime, closeTime=$_closeTime');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select opening and closing times'),
@@ -248,7 +278,11 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       );
       return;
     }
+    print('[MerchantSignup] Business hours selected: openTime=$_openTime, closeTime=$_closeTime');
+    
+    // Check categories
     if (_selectedCategories.isEmpty) {
+      print('[MerchantSignup] No categories selected');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select at least one category'),
@@ -257,12 +291,16 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       );
       return;
     }
+    print('[MerchantSignup] Categories selected: $_selectedCategories');
 
+    print('[MerchantSignup] All validations passed, starting signup process');
+    
     setState(() {
       _isLoading = true;
     });
 
     try {
+      print('[MerchantSignup] Creating signup data object');
       final signupData = MerchantSignupData(
         name: _nameController.text,
         email: _emailController.text,
@@ -281,7 +319,9 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         categories: _selectedCategories,
       );
 
-      final data = await MerchantSignupService.signup(signupData);
+      print('[MerchantSignup] Calling MerchantSignupService.signup with ${_selectedImages.length} images');
+      final data = await MerchantSignupService.signup(signupData, _selectedImages);
+      print('[MerchantSignup] Signup service returned: $data');
 
       if (data['success'] == true) {
         // Store token and login state
@@ -314,6 +354,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         );
       }
     } catch (e) {
+      print('[MerchantSignup] Error during signup: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -321,6 +362,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         ),
       );
     } finally {
+      print('[MerchantSignup] Signup process completed, setting loading to false');
       setState(() {
         _isLoading = false;
       });
@@ -473,6 +515,18 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                         categories: _categories,
                         selectedCategories: _selectedCategories,
                         onCategoryChanged: _onCategoryChanged,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Shop Images Section
+                      ShopImagesSection(
+                        selectedImages: _selectedImages,
+                        onImagesChanged: (images) {
+                          setState(() {
+                            _selectedImages = images;
+                          });
+                        },
                       ),
 
                       const SizedBox(height: 32),
