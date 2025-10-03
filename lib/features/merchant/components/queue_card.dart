@@ -324,7 +324,7 @@ class QueueCard extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: onStop,
                       icon: const Icon(Icons.stop, size: 20),
-                      label: const Text('Stop Queue'),
+                      label: const Text('Close Queue'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFF44336),
                         foregroundColor: Colors.white,
@@ -333,6 +333,59 @@ class QueueCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
+                    ),
+                  ),
+                ] else if (queue.isStopped) ...[
+                  // Closed Queue - Show Resume Button
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFE0E0E0),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: const Color(0xFF666666),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            const Expanded(
+                              child: Text(
+                                'Queue is closed',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF666666),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: onResume,
+                            icon: const Icon(Icons.play_arrow, size: 20),
+                            label: const Text('Reopen Queue'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4CAF50),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

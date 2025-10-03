@@ -9,6 +9,7 @@ import 'components/queue_list_header.dart';
 import 'components/queue_list.dart';
 import 'components/merchant_bottom_navigation.dart';
 import 'components/create_queue_dialog.dart';
+import 'components/close_queue_confirmation_dialog.dart';
 import '../../../shared/constants/app_colors.dart';
 
 class MerchantDashboard extends StatefulWidget {
@@ -51,6 +52,46 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
 
   void _navigateToProfile() {
     Navigator.pushNamed(context, '/merchant-profile');
+  }
+
+  Future<void> _showCloseQueueDialog(MerchantQueue queue) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CloseQueueConfirmationDialog(
+        queueName: queue.name,
+        currentCustomers: queue.size,
+        onConfirm: () {
+          Navigator.of(context).pop();
+          _closeQueue(queue);
+        },
+        onCancel: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
+  Future<void> _closeQueue(MerchantQueue queue) async {
+    final controller = context.read<MerchantDashboardController>();
+    try {
+      await controller.stopQueue(queue);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Queue closed successfully'),
+            backgroundColor: Color(0xFFF44336),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -147,7 +188,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                         onProcessNext: controller.processNextCustomer,
                         onPause: controller.pauseQueue,
                         onResume: controller.resumeQueue,
-                        onStop: controller.stopQueue,
+                        onStop: _showCloseQueueDialog,
                       ),
                     ),
                   ),
