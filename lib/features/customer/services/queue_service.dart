@@ -31,16 +31,19 @@ class QueueService {
       print('API Response Status: ${response.statusCode}');
       print('API Response Body: ${response.body}');
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return ShopQueueResponse.fromJson(jsonResponse);
-        }
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      
+      if (response.statusCode == 200 && jsonResponse['success'] == true) {
+        return ShopQueueResponse.fromJson(jsonResponse);
       }
-      throw Exception('Failed to load shop and queue data');
+      
+      // Extract the specific error message from API response
+      final errorMessage = jsonResponse['message'] ?? 'Failed to load shop and queue data';
+      throw Exception(errorMessage);
     } catch (e) {
       print('Error in getShopQueues: $e');
-      throw Exception('Error fetching shop and queue data: $e');
+      // Re-throw the original exception to preserve API error messages
+      rethrow;
     }
   }
 
@@ -72,16 +75,19 @@ class QueueService {
       print('Join Queue API Response Status: ${response.statusCode}');
       print('Join Queue API Response Body: ${response.body}');
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return jsonResponse['data'];
-        }
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      
+      if (response.statusCode == 200 && jsonResponse['success'] == true) {
+        return jsonResponse['data'];
       }
-      throw Exception('Failed to join queue');
+      
+      // Extract the specific error message from API response
+      final errorMessage = jsonResponse['message'] ?? 'Failed to join queue';
+      throw Exception(errorMessage);
     } catch (e) {
       print('Error in joinQueue: $e');
-      throw Exception('Error joining queue: $e');
+      // Re-throw the original exception to preserve API error messages
+      rethrow;
     }
   }
 

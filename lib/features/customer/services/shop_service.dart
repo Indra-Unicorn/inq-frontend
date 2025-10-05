@@ -34,17 +34,20 @@ class ShopService {
       print('API Response Status: ${response.statusCode}');
       print('API Response Body: ${response.body}');
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          final List<dynamic> shopsData = jsonResponse['data'];
-          return shopsData.map((shop) => Shop.fromJson(shop)).toList();
-        }
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      
+      if (response.statusCode == 200 && jsonResponse['success'] == true) {
+        final List<dynamic> shopsData = jsonResponse['data'];
+        return shopsData.map((shop) => Shop.fromJson(shop)).toList();
       }
-      throw Exception('Failed to load shops');
+      
+      // Extract the specific error message from API response
+      final errorMessage = jsonResponse['message'] ?? 'Failed to load shops';
+      throw Exception(errorMessage);
     } catch (e) {
       print('Error in getAllShops: $e');
-      throw Exception('Error fetching shops: $e');
+      // Re-throw the original exception to preserve API error messages
+      rethrow;
     }
   }
 
@@ -115,16 +118,19 @@ class ShopService {
         },
       );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return Shop.fromJson(jsonResponse['data']);
-        }
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      
+      if (response.statusCode == 200 && jsonResponse['success'] == true) {
+        return Shop.fromJson(jsonResponse['data']);
       }
-      throw Exception('Failed to load shop details');
+      
+      // Extract the specific error message from API response
+      final errorMessage = jsonResponse['message'] ?? 'Failed to load shop details';
+      throw Exception(errorMessage);
     } catch (e) {
       print('Error in getShopById: $e');
-      throw Exception('Error fetching shop details: $e');
+      // Re-throw the original exception to preserve API error messages
+      rethrow;
     }
   }
 }

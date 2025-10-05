@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/common_style.dart';
 import '../../../../shared/constants/app_colors.dart';
+import '../../../../shared/widgets/error_dialog.dart';
 import '../../models/queue.dart';
 import '../../models/queue_status.dart';
 import '../../services/queue_service.dart';
@@ -185,12 +186,10 @@ class StoreDetailsQueues extends StatefulWidget {
 class _StoreDetailsQueuesState extends State<StoreDetailsQueues> {
   final QueueService _queueService = QueueService();
   bool _isJoining = false;
-  String? _error;
 
   Future<void> _joinQueue(Queue queue) async {
     setState(() {
       _isJoining = true;
-      _error = null;
     });
 
     try {
@@ -209,9 +208,18 @@ class _StoreDetailsQueuesState extends State<StoreDetailsQueues> {
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-      });
+      
+      // Show error dialog instead of setting error state
+      ErrorDialog.show(
+        context,
+        title: 'Unable to Join Queue',
+        message: ErrorDialog.getErrorMessage(e),
+        buttonText: 'Try Again',
+        onPressed: () {
+          Navigator.of(context).pop();
+          _joinQueue(queue); // Retry joining
+        },
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -223,34 +231,21 @@ class _StoreDetailsQueuesState extends State<StoreDetailsQueues> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              _error!,
-              style: CommonStyle.errorTextStyle,
-            ),
-          ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 0),
-          itemCount: widget.queues.length,
-          itemBuilder: (context, index) {
-            final queue = widget.queues[index];
-            return StoreQueueCard(
-              queue: queue,
-              onJoin: queue.status == QueueStatus.active
-                  ? () => _joinQueue(queue)
-                  : null,
-              isJoining: _isJoining,
-            );
-          },
-        ),
-      ],
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      itemCount: widget.queues.length,
+      itemBuilder: (context, index) {
+        final queue = widget.queues[index];
+        return StoreQueueCard(
+          queue: queue,
+          onJoin: queue.status == QueueStatus.active
+              ? () => _joinQueue(queue)
+              : null,
+          isJoining: _isJoining,
+        );
+      },
     );
   }
 }

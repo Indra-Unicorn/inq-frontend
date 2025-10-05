@@ -8,6 +8,7 @@ import 'customer_dashboard_categories.dart';
 import 'customer_dashboard_store_list.dart';
 import 'customer_dashboard_bottom_nav.dart';
 import '../../../../services/notification_service.dart';
+import '../../../../shared/widgets/error_dialog.dart';
 import '../../services/profile_service.dart';
 
 class CustomerDashboard extends StatefulWidget {
@@ -138,9 +139,20 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
           _isLoading = false;
         });
+        
+        // Show error dialog for loading stores
+        ErrorDialog.show(
+          context,
+          title: 'Unable to Load Stores',
+          message: ErrorDialog.getErrorMessage(e),
+          buttonText: 'Retry',
+          onPressed: () {
+            Navigator.of(context).pop();
+            _loadStores(); // Retry loading stores
+          },
+        );
       }
     }
   }
@@ -276,14 +288,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         Expanded(
                           child: _isLoading
                               ? const Center(child: CircularProgressIndicator())
-                              : _error != null
-                                  ? Center(
-                                      child: Text(
-                                        _error!,
-                                        style: CommonStyle.errorTextStyle,
-                                      ),
-                                    )
-                                  : _buildResponsiveStoreList(isDesktop),
+                              : _buildResponsiveStoreList(isDesktop),
                         ),
                       ],
                     ),
