@@ -8,6 +8,7 @@ import '../../services/shop_service.dart';
 import 'store_details_header.dart';
 import 'store_details_info.dart';
 import 'store_details_queues.dart';
+import 'store_images_section.dart';
 import '../../models/queue_status.dart';
 
 class StoreDetailsPage extends StatefulWidget {
@@ -172,6 +173,11 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                     slivers: [
                       SliverToBoxAdapter(
                         child: StoreDetailsHeader(
+                          store: currentShop!,
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: StoreImagesSection(
                           store: currentShop!,
                         ),
                       ),

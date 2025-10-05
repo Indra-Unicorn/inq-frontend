@@ -68,8 +68,8 @@ class StoreDetailsInfo extends StatelessWidget {
           _buildInfoRow(
             icon: Icons.access_time_outlined,
             label: 'Status',
-            value: store.isOpen ? 'Open' : 'Closed',
-            valueColor: store.isOpen ? AppColors.success : AppColors.error,
+            value: store.shopStatus,
+            valueColor: store.statusColor,
           ),
           if (store.openTime != null && store.closeTime != null)
             _buildInfoRow(
