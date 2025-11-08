@@ -34,6 +34,9 @@ class AppConstants {
   // Token expiration buffer (5 minutes before actual expiration)
   static const int tokenExpirationBufferMinutes = 5;
 
+  // Search radius in kilometers
+  static const int searchRadiusKm = 50;
+
   /// Extracts the domain from the API base URL for shareable links
   static String getShareableDomain() {
     return 'https://inqueue.in';

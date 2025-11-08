@@ -55,32 +55,38 @@ class ShopService {
     required String search,
     double? latitude,
     double? longitude,
-    int radiusKm = 30,
+    int? radiusKm,
   }) async {
     try {
       final token = await _getToken();
       if (token == null) {
         throw Exception('User not authenticated');
       }
-      final body = <String, dynamic>{
+      
+      // Build query parameters
+      final queryParams = <String, String>{
         'shopName': search,
-        'radiusKm': radiusKm,
+        'radiusKm': (radiusKm ?? AppConstants.searchRadiusKm).toString(),
       };
+      
+      // Add location parameters if available
       if (latitude != null && longitude != null) {
-        body['location'] = {
-          'latitude': latitude,
-          'longitude': longitude,
-        };
+        queryParams['latitude'] = latitude.toString();
+        queryParams['longitude'] = longitude.toString();
       }
-      final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}/users/nearby'),
+      
+      // Build URI with query parameters
+      final uri = Uri.parse('${ApiEndpoints.baseUrl}/users/nearby')
+          .replace(queryParameters: queryParams);
+      
+      final response = await http.get(
+        uri,
         headers: {
           'accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
         },
-        body: jsonEncode(body),
       );
+      
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
         List<dynamic> data;

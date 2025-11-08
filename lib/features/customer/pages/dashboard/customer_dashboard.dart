@@ -69,11 +69,9 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   }
 
   void _onSearchFocusChanged() {
-    if (!_searchFocusNode.hasFocus) {
-      setState(() {
-        _showSearchTray = false;
-      });
-    } else if (_searchResults.isNotEmpty) {
+    // Only show search tray when focus is gained and there are results
+    // Don't hide it when focus is lost - let user interact with results
+    if (_searchFocusNode.hasFocus && _searchResults.isNotEmpty) {
       setState(() {
         _showSearchTray = true;
       });
@@ -478,17 +476,20 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                                           TextOverflow.ellipsis,
                                                     ),
                                                     onTap: () {
-                                                      setState(() {
-                                                        _showSearchTray = false;
-                                                        _searchController
-                                                            .clear();
-                                                        _searchFocusNode
-                                                            .unfocus();
-                                                      });
+                                                      // Navigate first, then clean up
                                                       Navigator.pushNamed(
                                                         context,
                                                         '/store/${shop.shopId}',
-                                                      );
+                                                      ).then((_) {
+                                                        // Clean up after navigation
+                                                        if (mounted) {
+                                                          setState(() {
+                                                            _showSearchTray = false;
+                                                            _searchController.clear();
+                                                            _searchFocusNode.unfocus();
+                                                          });
+                                                        }
+                                                      });
                                                     },
                                                   );
                                                 },
