@@ -113,7 +113,42 @@ class MerchantSignupService {
       print('[MerchantSignupService] Response status: ${response.statusCode}');
       print('[MerchantSignupService] Response body: ${response.body}');
 
-      return jsonDecode(response.body);
+      // Handle 201 Created response with no body
+      if (response.statusCode == 201) {
+        if (response.body.isEmpty || response.body.trim().isEmpty) {
+          print('[MerchantSignupService] 201 response with empty body - signup successful');
+          return {
+            'success': true,
+            'message': 'Signup successful! Please login to continue.',
+            'data': null,
+          };
+        }
+      }
+
+      // Handle other successful responses or responses with body
+      if (response.body.isEmpty || response.body.trim().isEmpty) {
+        print('[MerchantSignupService] Empty response body');
+        return {
+          'success': response.statusCode >= 200 && response.statusCode < 300,
+          'message': response.statusCode == 201 
+              ? 'Signup successful! Please login to continue.'
+              : 'Request completed',
+          'data': null,
+        };
+      }
+
+      try {
+        return jsonDecode(response.body);
+      } catch (e) {
+        print('[MerchantSignupService] Error decoding JSON: $e');
+        return {
+          'success': response.statusCode >= 200 && response.statusCode < 300,
+          'message': response.statusCode == 201 
+              ? 'Signup successful! Please login to continue.'
+              : 'Request completed but response could not be parsed',
+          'data': null,
+        };
+      }
     } catch (e) {
       print('[MerchantSignupService] Error in signup: $e');
       return {

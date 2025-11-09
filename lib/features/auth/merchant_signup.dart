@@ -324,14 +324,20 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       print('[MerchantSignup] Signup service returned: $data');
 
       if (data['success'] == true) {
-        // Store token and login state
+        // Store token and login state if token is provided
         final prefs = await SharedPreferences.getInstance();
-        final token = data['data']['token'];
-        await prefs.setString(AppConstants.tokenKey, token);
-        await prefs.setBool('isLoggedIn', true);
+        String? token;
+        if (data['data'] != null && data['data'] is Map) {
+          token = data['data']['token'] as String?;
+        }
+        
+        if (token != null && token.isNotEmpty) {
+          await prefs.setString(AppConstants.tokenKey, token);
+          await prefs.setBool('isLoggedIn', true);
 
-        // Register FCM token
-        await MerchantSignupService.registerFCMToken(token);
+          // Register FCM token
+          await MerchantSignupService.registerFCMToken(token);
+        }
 
         if (mounted) {
           // Show success message
