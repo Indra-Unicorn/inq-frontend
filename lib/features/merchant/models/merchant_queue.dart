@@ -91,7 +91,8 @@ class MerchantQueue {
   // Computed properties
   bool get isActive => status == 'ACTIVE';
   bool get isPaused => status == 'PAUSED';
-  bool get isStopped => status == 'STOPPED';
+  bool get isStopped => status == 'STOPPED' || status == 'CLOSED';
+  bool get isClosed => status == 'CLOSED';
 
   double get capacityPercentage => maxSize > 0 ? (size / maxSize) * 100 : 0;
   bool get isNearCapacity => capacityPercentage >= 80;
@@ -111,6 +112,8 @@ class MerchantQueue {
         return 'Paused';
       case 'STOPPED':
         return 'Stopped';
+      case 'CLOSED':
+        return 'Closed';
       default:
         return status;
     }
@@ -123,6 +126,7 @@ class MerchantQueue {
       case 'PAUSED':
         return const Color(0xFFFF9800);
       case 'STOPPED':
+      case 'CLOSED':
         return const Color(0xFFF44336);
       default:
         return const Color(0xFF9E9E9E);

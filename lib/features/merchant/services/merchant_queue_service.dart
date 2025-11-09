@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/constants/api_endpoints.dart';
 import '../../../services/auth_service.dart';
 import '../models/merchant_queue.dart';
@@ -132,74 +131,63 @@ class MerchantQueueService {
   }
 
   static Future<void> pauseQueue(String queueId) async {
-    try {
-      final token = await _getAuthToken();
-      if (token == null) {
-        throw Exception('Not authenticated');
-      }
-
-      final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}/queue-manager/$queueId/pause'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode != 200 || data['success'] != true) {
-        throw Exception(data['message'] ?? 'Failed to pause queue');
-      }
-    } catch (e) {
-      throw Exception('Failed to pause queue: $e');
-    }
+    await _updateQueueStatus(queueId, 'PAUSED');
   }
 
   static Future<void> resumeQueue(String queueId) async {
-    try {
-      final token = await _getAuthToken();
-      if (token == null) {
-        throw Exception('Not authenticated');
-      }
-
-      final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}/queue-manager/$queueId/resume'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode != 200 || data['success'] != true) {
-        throw Exception(data['message'] ?? 'Failed to resume queue');
-      }
-    } catch (e) {
-      throw Exception('Failed to resume queue: $e');
-    }
+    await _updateQueueStatus(queueId, 'ACTIVE');
   }
 
   static Future<void> stopQueue(String queueId) async {
+    await _updateQueueStatus(queueId, 'CLOSED');
+  }
+
+  /// Update queue status using the unified status endpoint
+  static Future<void> _updateQueueStatus(String queueId, String status) async {
     try {
       final token = await _getAuthToken();
       if (token == null) {
         throw Exception('Not authenticated');
       }
 
-      final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}/queue-manager/$queueId/stop'),
+      final response = await http.put(
+        Uri.parse('${ApiEndpoints.baseUrl}/queues/$queueId/status?status=$status'),
         headers: {
           'Authorization': 'Bearer $token',
+          'accept': '*/*',
         },
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode != 200 || data['success'] != true) {
-        throw Exception(data['message'] ?? 'Failed to stop queue');
+      // Handle both success response formats
+      if (response.statusCode == 200) {
+        // API might return success without JSON body or with JSON body
+        if (response.body.isNotEmpty) {
+          try {
+            final data = jsonDecode(response.body);
+            if (data['success'] == false) {
+              throw Exception(data['message'] ?? 'Failed to update queue status');
+            }
+          } catch (e) {
+            // If JSON parsing fails but status is 200, consider it successful
+            if (e is! Exception || !e.toString().contains('Failed to update')) {
+              // JSON parsing error is acceptable for 200 status
+            } else {
+              rethrow;
+            }
+          }
+        }
+      } else {
+        String errorMessage = 'Failed to update queue status';
+        try {
+          final data = jsonDecode(response.body);
+          errorMessage = data['message'] ?? errorMessage;
+        } catch (e) {
+          // Use default error message if JSON parsing fails
+        }
+        throw Exception(errorMessage);
       }
     } catch (e) {
-      throw Exception('Failed to stop queue: $e');
+      throw Exception('Failed to update queue status to $status: $e');
     }
   }
 

@@ -149,27 +149,6 @@ $deepLink
                 }).toList(),
               ),
             ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  color: AppColors.backgroundLight.withValues(alpha: 0.8),
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${store.address.streetAddress}, ${store.address.city}',
-                    style: CommonStyle.bodyMedium.copyWith(
-                      color: AppColors.backgroundLight.withValues(alpha: 0.9),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),

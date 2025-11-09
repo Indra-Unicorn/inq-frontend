@@ -4,10 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_constants.dart';
 import '../../shared/constants/app_colors.dart';
+import '../../shared/utils/platform_utils.dart';
 
 class CustomerSignUpPage extends StatefulWidget {
   const CustomerSignUpPage({super.key});
@@ -184,11 +184,10 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       if (fcmToken == null) return;
 
       // Get device information
-      final deviceType = Platform.isAndroid ? 'ANDROID' : 'IOS';
-      final deviceModel = Platform.operatingSystemVersion;
-      final appVersion =
-          '1.0.0'; // You might want to get this from your app's version
-      final osVersion = Platform.operatingSystemVersion;
+      final deviceType = PlatformUtils.getDeviceType();
+      final deviceModel = PlatformUtils.getDeviceModel();
+      final appVersion = PlatformUtils.getAppVersion();
+      final osVersion = PlatformUtils.getOSVersion();
 
       // Register FCM token
       final response = await http.post(

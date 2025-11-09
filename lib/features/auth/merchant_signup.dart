@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../shared/constants/app_colors.dart';
 import '../../shared/constants/app_constants.dart';
@@ -9,6 +10,7 @@ import 'widgets/basic_information_section.dart';
 import 'widgets/shop_information_section.dart';
 import 'widgets/business_hours_section.dart';
 import 'widgets/categories_section.dart';
+import 'widgets/shop_images_section.dart';
 
 class MerchantSignUpPage extends StatefulWidget {
   const MerchantSignUpPage({super.key});
@@ -38,6 +40,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   TimeOfDay? _closeTime;
   String? _location;
   List<String> _selectedCategories = [];
+  List<dynamic> _selectedImages = []; // Can be File or Uint8List depending on platform
 
   final List<String> _categories = [
     'Restaurant',
@@ -65,21 +68,115 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   }
 
   Future<void> _getCurrentLocation() async {
-    final location = await LocationService.getCurrentLocation();
-    if (location != null) {
+    final result = await LocationService.getCurrentLocationWithStatus();
+    
+    if (result.success) {
       setState(() {
-        _location = location;
+        _location = result.location;
       });
-    } else {
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Location permission is required'),
-            backgroundColor: AppColors.error,
+            content: const Text('Location obtained successfully!'),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 2),
           ),
         );
       }
+    } else {
+      if (mounted) {
+        _showLocationErrorDialog(result);
+      }
     }
+  }
+
+  void _showLocationErrorDialog(LocationResult result) {
+    String title = 'Location Access Required';
+    String content = result.message;
+    List<Widget> actions = [];
+
+    switch (result.error) {
+      case LocationError.serviceDisabled:
+        actions = [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await LocationService.openLocationSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ];
+        break;
+
+      case LocationError.permissionDenied:
+        actions = [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Try again after user dismissed dialog
+              Future.delayed(const Duration(milliseconds: 500), () {
+                _getCurrentLocation();
+              });
+            },
+            child: const Text('Try Again'),
+          ),
+        ];
+        break;
+
+      case LocationError.permissionDeniedForever:
+        actions = [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await LocationService.openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ];
+        break;
+
+      case LocationError.timeout:
+      case LocationError.unknown:
+      default:
+        actions = [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _getCurrentLocation();
+            },
+            child: const Text('Try Again'),
+          ),
+        ];
+        break;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: actions,
+        );
+      },
+    );
   }
 
   Future<void> _selectTime(bool isOpenTime) async {
@@ -110,7 +207,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
 
   double _getProgressPercentage() {
     int completedSteps = 0;
-    int totalSteps = 4;
+    int totalSteps = 5;
 
     // Basic information
     if (_nameController.text.isNotEmpty &&
@@ -140,12 +237,39 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       completedSteps++;
     }
 
+    // Images (optional, always counts as completed)
+    completedSteps++;
+
     return completedSteps / totalSteps;
   }
 
   Future<void> _handleSignup() async {
-    if (!_formKey.currentState!.validate()) return;
+    print('[MerchantSignup] _handleSignup called');
+    
+    // Check form validation
+    print('[MerchantSignup] Starting form validation...');
+    print('[MerchantSignup] Form data check:');
+    print('  - Name: "${_nameController.text}"');
+    print('  - Email: "${_emailController.text}"');
+    print('  - Password: "${_passwordController.text}"');
+    print('  - Phone: "${_phoneController.text}"');
+    print('  - Shop Name: "${_shopNameController.text}"');
+    print('  - Shop Phone: "${_shopPhoneController.text}"');
+    print('  - Street Address: "${_streetAddressController.text}"');
+    print('  - Postal Code: "${_postalCodeController.text}"');
+    print('  - City: "${_cityController.text}"');
+    print('  - State: "${_stateController.text}"');
+    print('  - Country: "${_countryController.text}"');
+    
+    if (!_formKey.currentState!.validate()) {
+      print('[MerchantSignup] Form validation failed - check required fields above');
+      return;
+    }
+    print('[MerchantSignup] Form validation passed');
+    
+    // Check business hours
     if (_openTime == null || _closeTime == null) {
+      print('[MerchantSignup] Business hours not selected: openTime=$_openTime, closeTime=$_closeTime');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select opening and closing times'),
@@ -154,7 +278,11 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       );
       return;
     }
+    print('[MerchantSignup] Business hours selected: openTime=$_openTime, closeTime=$_closeTime');
+    
+    // Check categories
     if (_selectedCategories.isEmpty) {
+      print('[MerchantSignup] No categories selected');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select at least one category'),
@@ -163,12 +291,16 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       );
       return;
     }
+    print('[MerchantSignup] Categories selected: $_selectedCategories');
 
+    print('[MerchantSignup] All validations passed, starting signup process');
+    
     setState(() {
       _isLoading = true;
     });
 
     try {
+      print('[MerchantSignup] Creating signup data object');
       final signupData = MerchantSignupData(
         name: _nameController.text,
         email: _emailController.text,
@@ -187,17 +319,25 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         categories: _selectedCategories,
       );
 
-      final data = await MerchantSignupService.signup(signupData);
+      print('[MerchantSignup] Calling MerchantSignupService.signup with ${_selectedImages.length} images');
+      final data = await MerchantSignupService.signup(signupData, _selectedImages);
+      print('[MerchantSignup] Signup service returned: $data');
 
       if (data['success'] == true) {
-        // Store token and login state
+        // Store token and login state if token is provided
         final prefs = await SharedPreferences.getInstance();
-        final token = data['data']['token'];
-        await prefs.setString(AppConstants.tokenKey, token);
-        await prefs.setBool('isLoggedIn', true);
+        String? token;
+        if (data['data'] != null && data['data'] is Map) {
+          token = data['data']['token'] as String?;
+        }
+        
+        if (token != null && token.isNotEmpty) {
+          await prefs.setString(AppConstants.tokenKey, token);
+          await prefs.setBool('isLoggedIn', true);
 
-        // Register FCM token
-        await MerchantSignupService.registerFCMToken(token);
+          // Register FCM token
+          await MerchantSignupService.registerFCMToken(token);
+        }
 
         if (mounted) {
           // Show success message
@@ -220,6 +360,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         );
       }
     } catch (e) {
+      print('[MerchantSignup] Error during signup: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -227,6 +368,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         ),
       );
     } finally {
+      print('[MerchantSignup] Signup process completed, setting loading to false');
       setState(() {
         _isLoading = false;
       });
@@ -379,6 +521,18 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                         categories: _categories,
                         selectedCategories: _selectedCategories,
                         onCategoryChanged: _onCategoryChanged,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Shop Images Section
+                      ShopImagesSection(
+                        selectedImages: _selectedImages,
+                        onImagesChanged: (images) {
+                          setState(() {
+                            _selectedImages = images;
+                          });
+                        },
                       ),
 
                       const SizedBox(height: 32),

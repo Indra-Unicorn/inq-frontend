@@ -8,7 +8,9 @@ import '../../services/shop_service.dart';
 import 'store_details_header.dart';
 import 'store_details_info.dart';
 import 'store_details_queues.dart';
+import 'store_images_section.dart';
 import '../../models/queue_status.dart';
+import '../../../../shared/widgets/error_dialog.dart';
 
 class StoreDetailsPage extends StatefulWidget {
   final String shopId;
@@ -52,9 +54,20 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       _loadShopAndQueues();
     } catch (e) {
       setState(() {
-        _error = e.toString();
         _isLoading = false;
       });
+      
+      if (mounted) {
+        ErrorDialog.show(
+          context,
+          title: 'Unable to Load Shop',
+          message: ErrorDialog.getErrorMessage(e),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).pop(); // Go back to previous screen
+          },
+        );
+      }
     }
   }
 
@@ -71,9 +84,21 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
         _isLoading = false;
       });
+      
+      if (mounted) {
+        ErrorDialog.show(
+          context,
+          title: 'Unable to Load Queues',
+          message: ErrorDialog.getErrorMessage(e),
+          buttonText: 'Retry',
+          onPressed: () {
+            Navigator.of(context).pop();
+            _loadShopAndQueues(); // Retry loading queues
+          },
+        );
+      }
     }
   }
 
@@ -102,48 +127,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       );
     }
 
-    if (_error != null && currentShop == null) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: AppColors.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Store not found',
-                    style: CommonStyle.heading4,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _error!,
-                    style: CommonStyle.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: CommonStyle.primaryButton,
-                    child: const Text('Go Back'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+    // Error handling is now done via dialogs, so we just show loading or content
 
     if (currentShop == null) {
       return Scaffold(
@@ -172,6 +156,11 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                     slivers: [
                       SliverToBoxAdapter(
                         child: StoreDetailsHeader(
+                          store: currentShop!,
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: StoreImagesSection(
                           store: currentShop!,
                         ),
                       ),

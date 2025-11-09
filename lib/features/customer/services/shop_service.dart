@@ -34,17 +34,20 @@ class ShopService {
       print('API Response Status: ${response.statusCode}');
       print('API Response Body: ${response.body}');
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          final List<dynamic> shopsData = jsonResponse['data'];
-          return shopsData.map((shop) => Shop.fromJson(shop)).toList();
-        }
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      
+      if (response.statusCode == 200 && jsonResponse['success'] == true) {
+        final List<dynamic> shopsData = jsonResponse['data'];
+        return shopsData.map((shop) => Shop.fromJson(shop)).toList();
       }
-      throw Exception('Failed to load shops');
+      
+      // Extract the specific error message from API response
+      final errorMessage = jsonResponse['message'] ?? 'Failed to load shops';
+      throw Exception(errorMessage);
     } catch (e) {
       print('Error in getAllShops: $e');
-      throw Exception('Error fetching shops: $e');
+      // Re-throw the original exception to preserve API error messages
+      rethrow;
     }
   }
 
@@ -52,32 +55,38 @@ class ShopService {
     required String search,
     double? latitude,
     double? longitude,
-    int radiusKm = 30,
+    int? radiusKm,
   }) async {
     try {
       final token = await _getToken();
       if (token == null) {
         throw Exception('User not authenticated');
       }
-      final body = <String, dynamic>{
+      
+      // Build query parameters
+      final queryParams = <String, String>{
         'shopName': search,
-        'radiusKm': radiusKm,
+        'radiusKm': (radiusKm ?? AppConstants.searchRadiusKm).toString(),
       };
+      
+      // Add location parameters if available
       if (latitude != null && longitude != null) {
-        body['location'] = {
-          'latitude': latitude,
-          'longitude': longitude,
-        };
+        queryParams['latitude'] = latitude.toString();
+        queryParams['longitude'] = longitude.toString();
       }
-      final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}/users/nearby'),
+      
+      // Build URI with query parameters
+      final uri = Uri.parse('${ApiEndpoints.baseUrl}/users/nearby')
+          .replace(queryParameters: queryParams);
+      
+      final response = await http.get(
+        uri,
         headers: {
           'accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
         },
-        body: jsonEncode(body),
       );
+      
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
         List<dynamic> data;
@@ -115,16 +124,19 @@ class ShopService {
         },
       );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return Shop.fromJson(jsonResponse['data']);
-        }
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      
+      if (response.statusCode == 200 && jsonResponse['success'] == true) {
+        return Shop.fromJson(jsonResponse['data']);
       }
-      throw Exception('Failed to load shop details');
+      
+      // Extract the specific error message from API response
+      final errorMessage = jsonResponse['message'] ?? 'Failed to load shop details';
+      throw Exception(errorMessage);
     } catch (e) {
       print('Error in getShopById: $e');
-      throw Exception('Error fetching shop details: $e');
+      // Re-throw the original exception to preserve API error messages
+      rethrow;
     }
   }
 }

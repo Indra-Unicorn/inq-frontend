@@ -8,6 +8,7 @@ import 'customer_dashboard_categories.dart';
 import 'customer_dashboard_store_list.dart';
 import 'customer_dashboard_bottom_nav.dart';
 import '../../../../services/notification_service.dart';
+import '../../../../shared/widgets/error_dialog.dart';
 import '../../services/profile_service.dart';
 
 class CustomerDashboard extends StatefulWidget {
@@ -68,11 +69,9 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   }
 
   void _onSearchFocusChanged() {
-    if (!_searchFocusNode.hasFocus) {
-      setState(() {
-        _showSearchTray = false;
-      });
-    } else if (_searchResults.isNotEmpty) {
+    // Only show search tray when focus is gained and there are results
+    // Don't hide it when focus is lost - let user interact with results
+    if (_searchFocusNode.hasFocus && _searchResults.isNotEmpty) {
       setState(() {
         _showSearchTray = true;
       });
@@ -138,9 +137,20 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
           _isLoading = false;
         });
+        
+        // Show error dialog for loading stores
+        ErrorDialog.show(
+          context,
+          title: 'Unable to Load Stores',
+          message: ErrorDialog.getErrorMessage(e),
+          buttonText: 'Retry',
+          onPressed: () {
+            Navigator.of(context).pop();
+            _loadStores(); // Retry loading stores
+          },
+        );
       }
     }
   }
@@ -276,14 +286,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         Expanded(
                           child: _isLoading
                               ? const Center(child: CircularProgressIndicator())
-                              : _error != null
-                                  ? Center(
-                                      child: Text(
-                                        _error!,
-                                        style: CommonStyle.errorTextStyle,
-                                      ),
-                                    )
-                                  : _buildResponsiveStoreList(isDesktop),
+                              : _buildResponsiveStoreList(isDesktop),
                         ),
                       ],
                     ),
@@ -473,17 +476,20 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                                           TextOverflow.ellipsis,
                                                     ),
                                                     onTap: () {
-                                                      setState(() {
-                                                        _showSearchTray = false;
-                                                        _searchController
-                                                            .clear();
-                                                        _searchFocusNode
-                                                            .unfocus();
-                                                      });
+                                                      // Navigate first, then clean up
                                                       Navigator.pushNamed(
                                                         context,
                                                         '/store/${shop.shopId}',
-                                                      );
+                                                      ).then((_) {
+                                                        // Clean up after navigation
+                                                        if (mounted) {
+                                                          setState(() {
+                                                            _showSearchTray = false;
+                                                            _searchController.clear();
+                                                            _searchFocusNode.unfocus();
+                                                          });
+                                                        }
+                                                      });
                                                     },
                                                   );
                                                 },

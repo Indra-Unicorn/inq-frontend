@@ -106,6 +106,8 @@ class ShopInformationSection extends StatelessWidget {
                   label: 'Postal Code',
                   hint: 'Postal code',
                   icon: Icons.pin_drop_outlined,
+                  validator: (value) =>
+                      MerchantSignupValidator.validateRequired(value, 'Postal code'),
                 ),
               ),
               const SizedBox(width: 16),

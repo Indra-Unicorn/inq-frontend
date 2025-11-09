@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/merchant_queue.dart';
 import 'services/merchant_queue_service.dart';
+import 'components/close_queue_confirmation_dialog.dart';
 
 class QueueManagement extends StatefulWidget {
   final MerchantQueue queue;
@@ -130,12 +131,30 @@ class _QueueManagementState extends State<QueueManagement> {
     }
   }
 
+  Future<void> _showCloseQueueDialog() async {
+    final queue = _queueDetails ?? widget.queue;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CloseQueueConfirmationDialog(
+        queueName: queue.name,
+        currentCustomers: queue.size,
+        onConfirm: () {
+          Navigator.of(context).pop();
+          _stopQueue();
+        },
+        onCancel: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
   Future<void> _stopQueue() async {
     try {
       await MerchantQueueService.stopQueue(widget.queue.qid);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Queue stopped successfully'),
+          content: Text('Queue closed successfully'),
           backgroundColor: Color(0xFFF44336),
         ),
       );
@@ -609,9 +628,9 @@ class _QueueManagementState extends State<QueueManagement> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: _stopQueue,
+                            onPressed: _showCloseQueueDialog,
                             icon: const Icon(Icons.stop, size: 20),
-                            label: const Text('Stop'),
+                            label: const Text('Close'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFF44336),
                               foregroundColor: Colors.white,
@@ -645,9 +664,9 @@ class _QueueManagementState extends State<QueueManagement> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _stopQueue,
+                        onPressed: _showCloseQueueDialog,
                         icon: const Icon(Icons.stop, size: 20),
-                        label: const Text('Stop Queue'),
+                        label: const Text('Close Queue'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFF44336),
                           foregroundColor: Colors.white,
@@ -656,6 +675,59 @@ class _QueueManagementState extends State<QueueManagement> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
+                      ),
+                    ),
+                  ] else if (queue.isStopped) ...[
+                    // Closed/Stopped Queue - Show Resume Button
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFE0E0E0),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: const Color(0xFF666666),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Queue is closed. You can reopen it to start accepting customers again.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF666666),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _resumeQueue,
+                              icon: const Icon(Icons.play_arrow, size: 20),
+                              label: const Text('Reopen Queue'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4CAF50),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

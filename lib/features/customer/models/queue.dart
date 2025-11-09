@@ -46,7 +46,7 @@ class Queue {
     final inQoinRate = QueueParser.parseInt(json['inQoinRate']);
     final alertNumber = QueueParser.parseInt(json['alertNumber']);
     final bufferNumber = QueueParser.parseInt(json['bufferNumber']);
-    final processingRate = QueueParser.parseInt(json['processingRate']);
+    final processingRate = QueueParser.parseInt(json['processingRate'] ?? 0); // Default to 0 if missing
     final avgTimePerCustomer = QueueParser.parseInt(json['avgTimePerCustomer']);
 
     if (!QueueValidator.validateQueueData(

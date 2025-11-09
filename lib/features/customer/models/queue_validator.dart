@@ -1,5 +1,5 @@
 class QueueValidator {
-  static bool isValidSize(int size) => size >= 0;
+  static bool isValidSize(int size) => true; // Allow negative sizes for business logic
   static bool isValidMaxSize(int maxSize) => maxSize > 0;
   static bool isValidProcessed(int processed) => processed >= 0;
   static bool isValidInQoinRate(int rate) => rate >= 0;

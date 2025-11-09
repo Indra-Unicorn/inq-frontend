@@ -23,7 +23,6 @@ class AuthService {
 
       // Store token
       await prefs.setString(_tokenKey, token);
-      print('[AuthService] Saved token: $token');
 
       // Store user data
       await prefs.setString(_userDataKey, jsonEncode(userData));
@@ -35,8 +34,6 @@ class AuthService {
       if (refreshToken != null) {
         await prefs.setString(_refreshTokenKey, refreshToken);
       }
-
-      print('Auth data stored successfully');
     } catch (e) {
       print('Error storing auth data: $e');
       throw Exception('Failed to store authentication data');
@@ -48,7 +45,6 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey);
-      print('[AuthService] Read token: $token');
 
       if (token != null) {
         // Check if token is expired
@@ -56,8 +52,7 @@ class AuthService {
           // Try to refresh token
           final refreshed = await _refreshToken();
           if (refreshed) {
-            final refreshedToken = await prefs.getString(_tokenKey);
-            print('[AuthService] Refreshed token: $refreshedToken');
+            final refreshedToken = prefs.getString(_tokenKey);
             return refreshedToken;
           } else {
             // Token expired and couldn't refresh, clear stored data
@@ -114,7 +109,7 @@ class AuthService {
           .isAfter(expirationTime.subtract(const Duration(minutes: 5)));
     } catch (e) {
       print('Error checking token expiration: $e');
-      return true; // Consider expired if we can't decode
+      return false; // If we can't decode, assume it's valid
     }
   }
 
@@ -171,20 +166,25 @@ class AuthService {
       await prefs.remove(_userDataKey);
       await prefs.remove(_loginTimeKey);
       await prefs.remove(_refreshTokenKey);
-
-      print('Auth data cleared successfully');
     } catch (e) {
       print('Error clearing auth data: $e');
     }
   }
 
-  // Get user type from stored data
+  // Get user type from stored data with JWT fallback
   static Future<String?> getUserType() async {
     try {
       final userData = await getUserData();
-      return userData?['userType'];
+      
+      // Check if userData is empty or missing userType
+      if (userData == null || userData.isEmpty || userData['userType'] == null) {
+        // Extract user type directly from JWT token
+        return await _getUserTypeFromJWT();
+      }
+      
+      return userData['userType'];
     } catch (e) {
-      print('Error getting user type: $e');
+      print('Error in getUserType: $e');
       return null;
     }
   }
@@ -200,22 +200,13 @@ class AuthService {
     }
   }
 
-  // Validate token with server
-  static Future<bool> validateTokenWithServer() async {
+  // Validate token locally (JWT-based validation only)
+  static Future<bool> isTokenValid() async {
     try {
       final token = await getToken();
-      if (token == null) return false;
-
-      final response = await http.get(
-        Uri.parse('${ApiEndpoints.baseUrl}/auth/validate'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      return response.statusCode == 200;
+      return token != null;
     } catch (e) {
-      print('Error validating token with server: $e');
+      print('Error validating token: $e');
       return false;
     }
   }
@@ -235,4 +226,26 @@ class AuthService {
       return null;
     }
   }
+
+  // Extract user type from JWT token
+  static Future<String?> _getUserTypeFromJWT() async {
+    try {
+      final token = await getToken();
+      if (token == null) return null;
+
+      final decodedToken = JwtDecoder.decode(token);
+      
+      // Try different possible keys for user type in JWT
+      final userType = decodedToken['userType'] ?? 
+                      decodedToken['user_type'] ?? 
+                      decodedToken['type'] ??
+                      decodedToken['role'];
+      
+      return userType?.toString();
+    } catch (e) {
+      print('Error extracting user type from JWT: $e');
+      return null;
+    }
+  }
+
 }

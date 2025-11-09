@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -137,5 +138,50 @@ class MerchantProfileService {
 
   static Future<void> logout() async {
     await AuthService.clearAuthData();
+  }
+
+  static Future<void> uploadShopImage({
+    required String shopId,
+    required File imageFile,
+  }) async {
+    final token = await AuthService.getToken();
+
+    if (token == null) {
+      throw Exception('Authentication required');
+    }
+
+    // Create multipart request
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.updateShopImage}'),
+    );
+
+    // Add authorization header
+    request.headers['Authorization'] = 'Bearer $token';
+
+    // Add shopId as a field
+    request.fields['shopId'] = shopId;
+
+    // Add the image file
+    final stream = http.ByteStream(imageFile.openRead());
+    final length = await imageFile.length();
+    final multipartFile = http.MultipartFile(
+      'image',
+      stream,
+      length,
+      filename: imageFile.path.split('/').last,
+    );
+    request.files.add(multipartFile);
+
+    // Send the request
+    final response = await request.send();
+    final responseData = await response.stream.bytesToString();
+    final data = jsonDecode(responseData);
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      return;
+    } else {
+      throw Exception(data['message'] ?? 'Failed to upload image');
+    }
   }
 }

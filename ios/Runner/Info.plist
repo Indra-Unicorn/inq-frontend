@@ -30,6 +30,10 @@
 		<string>This app needs access to location when in the background to get your current location for merchant registration.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>This app needs access to location when open and in the background to get your current location for merchant registration.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>This app needs access to camera to take photos of your shop for the merchant profile.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs access to photo library to select shop images for the merchant profile.</string>
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
 		<key>UIMainStoryboardFile</key>

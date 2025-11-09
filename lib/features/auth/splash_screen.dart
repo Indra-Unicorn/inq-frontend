@@ -46,27 +46,25 @@ class _SplashScreenState extends State<SplashScreen>
       final isLoggedIn = await AuthService.isLoggedIn();
 
       if (isLoggedIn) {
-        // Validate token with server
-        final isValid = await AuthService.validateTokenWithServer();
+        // Get user type from stored data or JWT token
+        final userType = await AuthService.getUserType();
 
-        if (isValid) {
-          // Get user type and navigate accordingly
-          final userType = await AuthService.getUserType();
-
+        if (userType == null) {
+          // Unknown user type, go to login
           if (mounted) {
-            if (userType == AppConstants.userTypeCustomer) {
-              Navigator.pushReplacementNamed(context, '/customer-dashboard');
-            } else if (userType == AppConstants.userTypeMerchant) {
-              Navigator.pushReplacementNamed(context, '/merchant-dashboard');
-            } else {
-              // Unknown user type, go to login
-              Navigator.pushReplacementNamed(context, '/login');
-            }
+            Navigator.pushReplacementNamed(context, '/login');
           }
-        } else {
-          // Token is invalid, clear auth data and go to login
-          await AuthService.clearAuthData();
-          if (mounted) {
+          return;
+        }
+
+        // Navigate based on user type
+        if (mounted) {
+          if (userType == AppConstants.userTypeCustomer) {
+            Navigator.pushReplacementNamed(context, '/customer-dashboard');
+          } else if (userType == AppConstants.userTypeMerchant) {
+            Navigator.pushReplacementNamed(context, '/merchant-dashboard');
+          } else {
+            // Unknown user type, go to login
             Navigator.pushReplacementNamed(context, '/login');
           }
         }

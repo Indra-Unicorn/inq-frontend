@@ -81,7 +81,7 @@ class CustomerDashboardStoreList extends StatelessWidget {
         Positioned(
           top: 12,
           right: 12,
-          child: _buildOpenStatusChip(store.isOpen),
+          child: _buildOpenStatusChip(store.shopStatus, store.statusColor),
         ),
         Positioned(
           bottom: 12,
@@ -169,17 +169,16 @@ class CustomerDashboardStoreList extends StatelessWidget {
     );
   }
 
-  Widget _buildOpenStatusChip(bool isOpen) {
+  Widget _buildOpenStatusChip(String status, Color statusColor) {
     return Chip(
       label: Text(
-        isOpen ? 'OPEN' : 'CLOSED',
+        status,
         style: CommonStyle.caption.copyWith(
           color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
       ),
-      backgroundColor: (isOpen ? AppColors.success : AppColors.error)
-          .withValues(alpha: 0.85),
+      backgroundColor: statusColor.withValues(alpha: 0.85),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       labelPadding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
