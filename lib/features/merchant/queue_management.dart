@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'models/merchant_queue.dart';
 import 'services/merchant_queue_service.dart';
 import 'components/close_queue_confirmation_dialog.dart';
+import '../../shared/constants/app_colors.dart';
 
 class QueueManagement extends StatefulWidget {
   final MerchantQueue queue;
@@ -12,16 +14,99 @@ class QueueManagement extends StatefulWidget {
   State<QueueManagement> createState() => _QueueManagementState();
 }
 
-class _QueueManagementState extends State<QueueManagement> {
+class _QueueManagementState extends State<QueueManagement>
+    with WidgetsBindingObserver {
   bool _isLoading = true;
   MerchantQueue? _queueDetails;
   List<Map<String, dynamic>> _topCustomers = [];
   String? _errorMessage;
+  Timer? _pollingTimer;
+  Timer? _countdownTimer;
+  bool _isPollingActive = false;
+  int _secondsUntilNextRefresh = 10;
 
   @override
   void initState() {
     super.initState();
-    _loadQueueDetails();
+    WidgetsBinding.instance.addObserver(this);
+    _loadQueueDetails().then((_) {
+      _startPolling();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopPolling();
+    _stopCountdown();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _startPolling();
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+        _stopPolling();
+        break;
+      case AppLifecycleState.hidden:
+        _stopPolling();
+        break;
+    }
+  }
+
+  void _startPolling() {
+    if (!_isPollingActive && mounted) {
+      _resetCountdown();
+      _startCountdown();
+      
+      _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+        if (mounted) {
+          _refreshQueueData();
+          _resetCountdown();
+        }
+      });
+      _isPollingActive = true;
+    }
+  }
+
+  void _stopPolling() {
+    if (_isPollingActive) {
+      _pollingTimer?.cancel();
+      _pollingTimer = null;
+      _isPollingActive = false;
+      _stopCountdown();
+    }
+  }
+
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_secondsUntilNextRefresh > 0) {
+            _secondsUntilNextRefresh--;
+          } else {
+            _resetCountdown();
+          }
+        });
+      }
+    });
+  }
+
+  void _stopCountdown() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
+  void _resetCountdown() {
+    setState(() {
+      _secondsUntilNextRefresh = 10;
+    });
   }
 
   Future<void> _loadQueueDetails() async {
@@ -71,6 +156,33 @@ class _QueueManagementState extends State<QueueManagement> {
     }
   }
 
+  /// Silent refresh for polling - updates queue data without loading states
+  Future<void> _refreshQueueData() async {
+    try {
+      final queueDetails =
+          await MerchantQueueService.getQueueDetails(widget.queue.qid);
+      final members =
+          await MerchantQueueService.getQueueMembers(widget.queue.qid);
+      
+      setState(() {
+        _queueDetails = queueDetails;
+        _topCustomers = members
+            .take(3)
+            .map((member) => {
+                  'name': member.customerName ?? 'Unknown',
+                  'reservationId': member.id,
+                  'imageUrl': null,
+                  'position': member.currentRank,
+                  'waitTime': member.estimatedWaitTimeDisplay,
+                })
+            .toList();
+      });
+    } catch (e) {
+      // Silent failure for polling - don't update error state
+      print('Polling refresh failed: $e');
+    }
+  }
+
   Future<void> _processNextCustomer() async {
     try {
       await MerchantQueueService.processNextCustomer(widget.queue.qid);
@@ -80,7 +192,10 @@ class _QueueManagementState extends State<QueueManagement> {
           backgroundColor: Color(0xFF4CAF50),
         ),
       );
-      _loadQueueDetails(); // Refresh queue details
+      _stopPolling();
+      _stopCountdown();
+      await _loadQueueDetails(); // Refresh queue details
+      _startPolling();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -100,7 +215,10 @@ class _QueueManagementState extends State<QueueManagement> {
           backgroundColor: Color(0xFFFF9800),
         ),
       );
-      _loadQueueDetails(); // Refresh queue details
+      _stopPolling();
+      _stopCountdown();
+      await _loadQueueDetails(); // Refresh queue details
+      _startPolling();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -120,7 +238,10 @@ class _QueueManagementState extends State<QueueManagement> {
           backgroundColor: Color(0xFF4CAF50),
         ),
       );
-      _loadQueueDetails(); // Refresh queue details
+      _stopPolling();
+      _stopCountdown();
+      await _loadQueueDetails(); // Refresh queue details
+      _startPolling();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -158,7 +279,10 @@ class _QueueManagementState extends State<QueueManagement> {
           backgroundColor: Color(0xFFF44336),
         ),
       );
-      _loadQueueDetails(); // Refresh queue details
+      _stopPolling();
+      _stopCountdown();
+      await _loadQueueDetails(); // Refresh queue details
+      _startPolling();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -203,7 +327,41 @@ class _QueueManagementState extends State<QueueManagement> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(width: 48), // Balance the back button
+                  // Auto-refresh timer display
+                  if (_isPollingActive)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 14,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${_secondsUntilNextRefresh}s',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 48), // Balance the back button
                 ],
               ),
             ),
@@ -374,16 +532,32 @@ class _QueueManagementState extends State<QueueManagement> {
             ),
 
             // Top 3 Customers Section
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
-              child: Text(
-                'Next in Line',
-                style: TextStyle(
-                  color: Color(0xFF1B0E0E),
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.015,
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+              child: Row(
+                children: [
+                  const Text(
+                    'Next in Line',
+                    style: TextStyle(
+                      color: Color(0xFF1B0E0E),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.015,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.refresh,
+                        color: Color(0xFF8B5B5C)),
+                    tooltip: 'Refresh',
+                    onPressed: () async {
+                      _stopPolling();
+                      _stopCountdown();
+                      await _loadQueueDetails();
+                      _startPolling();
+                    },
+                  ),
+                ],
               ),
             ),
 
