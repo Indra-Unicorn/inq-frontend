@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import 'controllers/merchant_dashboard_controller.dart';
 import 'models/merchant_queue.dart';
 import 'components/dashboard_header.dart';
@@ -19,15 +20,98 @@ class MerchantDashboard extends StatefulWidget {
   State<MerchantDashboard> createState() => _MerchantDashboardState();
 }
 
-class _MerchantDashboardState extends State<MerchantDashboard> {
+class _MerchantDashboardState extends State<MerchantDashboard>
+    with WidgetsBindingObserver {
   int _selectedIndex = 0;
+  Timer? _pollingTimer;
+  Timer? _countdownTimer;
+  bool _isPollingActive = false;
+  int _secondsUntilNextRefresh = 10;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Initialize the controller when the widget is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MerchantDashboardController>().loadInitialData();
+      context.read<MerchantDashboardController>().loadInitialData().then((_) {
+        _startPolling();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopPolling();
+    _stopCountdown();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _startPolling();
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+        _stopPolling();
+        break;
+      case AppLifecycleState.hidden:
+        _stopPolling();
+        break;
+    }
+  }
+
+  void _startPolling() {
+    if (!_isPollingActive && mounted) {
+      _resetCountdown();
+      _startCountdown();
+      
+      _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+        if (mounted) {
+          context.read<MerchantDashboardController>().refreshQueueData();
+          _resetCountdown();
+        }
+      });
+      _isPollingActive = true;
+    }
+  }
+
+  void _stopPolling() {
+    if (_isPollingActive) {
+      _pollingTimer?.cancel();
+      _pollingTimer = null;
+      _isPollingActive = false;
+      _stopCountdown();
+    }
+  }
+
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_secondsUntilNextRefresh > 0) {
+            _secondsUntilNextRefresh--;
+          } else {
+            _resetCountdown();
+          }
+        });
+      }
+    });
+  }
+
+  void _stopCountdown() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
+  void _resetCountdown() {
+    setState(() {
+      _secondsUntilNextRefresh = 10;
     });
   }
 
@@ -165,11 +249,49 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                           ),
                         ),
                         const Spacer(),
+                        // Auto-refresh timer display
+                        if (_isPollingActive)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.primary.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.schedule,
+                                  size: 14,
+                                  color: AppColors.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${_secondsUntilNextRefresh}s',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(width: 8),
                         IconButton(
                           icon: const Icon(Icons.refresh,
                               color: AppColors.textSecondary),
                           tooltip: 'Refresh',
-                          onPressed: controller.loadInitialData,
+                          onPressed: () async {
+                            _stopPolling();
+                            _stopCountdown();
+                            await controller.loadInitialData();
+                            _startPolling();
+                          },
                         ),
                       ],
                     ),
@@ -182,7 +304,12 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                         isLoading: controller.isLoading,
                         errorMessage: controller.errorMessage,
                         queues: controller.queues,
-                        onRefresh: controller.loadInitialData,
+                        onRefresh: () async {
+                          _stopPolling();
+                          _stopCountdown();
+                          await controller.loadInitialData();
+                          _startPolling();
+                        },
                         onCreateQueue: _showCreateQueueDialog,
                         onQueueTap: _navigateToQueueDetails,
                         onProcessNext: controller.processNextCustomer,

@@ -40,6 +40,19 @@ class MerchantDashboardController extends ChangeNotifier {
     ]);
   }
 
+  /// Refresh queue data for polling (silent refresh without loading states)
+  Future<void> refreshQueueData() async {
+    try {
+      final queues = await MerchantQueueService.getMerchantQueues();
+      _queues = queues;
+      notifyListeners();
+    } catch (e) {
+      // Silent failure for polling - don't update error state
+      // This prevents UI disruption during background polling
+      print('Polling refresh failed: $e');
+    }
+  }
+
   /// Load merchant data from the API
   Future<void> loadMerchantData() async {
     _setLoadingMerchantData(true);
