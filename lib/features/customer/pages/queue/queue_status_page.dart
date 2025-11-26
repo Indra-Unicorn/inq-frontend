@@ -248,7 +248,7 @@ class _QueueStatusPageState extends State<QueueStatusPage>
     // Refresh data first
     await _fetchQueueData();
     
-    // Switch to history tab if not already there
+    // Switch to  tab if not already there
     if (mounted && _tabController.index != 1) {
       _tabController.animateTo(1);
     }

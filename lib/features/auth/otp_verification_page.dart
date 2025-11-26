@@ -13,13 +13,11 @@ import '../../services/auth_service.dart';
 class OTPVerificationPage extends StatefulWidget {
   final String phoneNumber;
   final String sessionId;
-  final String? returnRoute;
 
   const OTPVerificationPage({
     super.key,
     required this.phoneNumber,
     required this.sessionId,
-    this.returnRoute,
   });
 
   @override
@@ -88,9 +86,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
         await _registerFCMToken(token);
 
         if (mounted) {
-          // Navigate to return route if provided, otherwise go to dashboard
-          final route = widget.returnRoute ?? '/customer-dashboard';
-          Navigator.pushReplacementNamed(context, route);
+          Navigator.pushReplacementNamed(context, '/customer-dashboard');
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
