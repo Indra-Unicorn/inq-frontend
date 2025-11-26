@@ -35,6 +35,7 @@ class CustomerQueue {
   final String? comment;
   final String? createdAt;
   final String? updatedAt;
+  final String? joinedTime;
   final String? customerName;
   final String? customerPhoneNumber;
   final String qid;
@@ -54,6 +55,7 @@ class CustomerQueue {
     this.comment,
     this.createdAt,
     this.updatedAt,
+    this.joinedTime,
     this.customerName,
     this.customerPhoneNumber,
     required this.qid,
@@ -94,6 +96,7 @@ class CustomerQueue {
       comment: json['comment'],
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
+      joinedTime: json['joinedTime'],
       customerName: json['customerName'],
       customerPhoneNumber: json['customerPhoneNumber'],
       qid: json['qid'] ?? '',

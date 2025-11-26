@@ -79,6 +79,32 @@ class Shop {
     }
   }
 
+  // Calculate minimum average time per customer from all queues (in minutes)
+  int get avgEntryTimeMinutes {
+    if (queueResponses == null || queueResponses!.isEmpty) {
+      return 0;
+    }
+
+    int? minTime;
+    for (final queue in queueResponses!) {
+      if (queue.avgTimePerCustomer != null) {
+        try {
+          final timeInMinutes = int.parse(queue.avgTimePerCustomer!);
+          if (timeInMinutes > 0) {
+            if (minTime == null || timeInMinutes < minTime) {
+              minTime = timeInMinutes;
+            }
+          }
+        } catch (e) {
+          // Skip invalid values
+          continue;
+        }
+      }
+    }
+    
+    return minTime ?? 0;
+  }
+
   factory Shop.fromJson(Map<String, dynamic> json) {
     return Shop(
       shopId: json['shopId'],

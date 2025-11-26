@@ -229,15 +229,48 @@ class _QueueCardState extends State<QueueCard> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      widget.queue.queueName ?? 'Unknown Queue',
-                      style: CommonStyle.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.queue.queueName ?? 'Unknown Queue',
+                          style: CommonStyle.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        GestureDetector(
+                          onTap: () => _navigateToShop(context),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.store,
+                                size: 12,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  widget.queue.shopResponse?.shopName ?? 'Unknown Shop',
+                                  style: CommonStyle.caption.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   if (widget.isCurrent &&
@@ -367,6 +400,28 @@ class _QueueCardState extends State<QueueCard> {
       await QueueStatusService.leaveQueue(widget.queue.qid, reason);
     } catch (e) {
       rethrow;
+    }
+  }
+
+  void _navigateToShop(BuildContext context) {
+    final shopId = widget.queue.shopResponse?.shopId;
+    if (shopId != null && shopId.isNotEmpty) {
+      Navigator.pushNamed(
+        context,
+        '/store/$shopId',
+      );
+    } else {
+      // Show error if shop ID is not available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Shop information not available',
+            style: TextStyle(color: AppColors.textWhite),
+          ),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 

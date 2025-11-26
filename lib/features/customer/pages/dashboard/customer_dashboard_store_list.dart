@@ -148,7 +148,9 @@ class CustomerDashboardStoreList extends StatelessWidget {
             Expanded(
                 child: _buildInfoIconText(
               Icons.access_time_filled,
-              '~${store.metadata['avgWaitTime'] ?? 0} min',
+              store.avgEntryTimeMinutes > 0 
+                  ? '~${store.avgEntryTimeMinutes} min'
+                  : 'No data',
               AppColors.success,
             )),
             Expanded(
