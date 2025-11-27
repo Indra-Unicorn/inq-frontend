@@ -173,50 +173,126 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                 constraints:
                     BoxConstraints(maxWidth: isDesktop ? 900 : double.infinity),
                 padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 0),
-                child: RefreshIndicator(
-                  onRefresh: _onRefresh,
-                  color: AppColors.primary,
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: StoreDetailsHeader(
-                          store: currentShop!,
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: StoreImagesSection(
-                          store: currentShop!,
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: StoreDetailsInfo(
-                          store: currentShop!,
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 4,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Available Queues',
-                                style: CommonStyle.heading3.copyWith(
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
+                  child: RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: AppColors.primary,
+                    backgroundColor: AppColors.backgroundLight,
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        // Enhanced Header
+                        SliverToBoxAdapter(
+                          child: StoreDetailsHeader(
+                            store: currentShop!,
                           ),
                         ),
-                      ),
+                        
+                        // Images Section with better spacing
+                        SliverToBoxAdapter(
+                          child: Transform.translate(
+                            offset: const Offset(0, -20),
+                            child: StoreImagesSection(
+                              store: currentShop!,
+                            ),
+                          ),
+                        ),
+                        
+                        // Enhanced Info Section
+                        SliverToBoxAdapter(
+                          child: Transform.translate(
+                            offset: const Offset(0, -20),
+                            child: StoreDetailsInfo(
+                              store: currentShop!,
+                            ),
+                          ),
+                        ),
+                        
+                        // Enhanced Queue Section Header
+                        SliverToBoxAdapter(
+                          child: Container(
+                            margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.primary.withValues(alpha: 0.05),
+                                  AppColors.primary.withValues(alpha: 0.02),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppColors.primary,
+                                        AppColors.primary.withValues(alpha: 0.8),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primary.withValues(alpha: 0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.queue_outlined,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Available Queues',
+                                        style: CommonStyle.heading3.copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Join a queue to skip the wait',
+                                        style: CommonStyle.bodySmall.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (_queues.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${_queues.length}',
+                                      style: CommonStyle.bodySmall.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
                       if (_isLoading)
                         const SliverFillRemaining(
                           child: Center(
@@ -230,35 +306,70 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                           child: Center(
                             child: Padding(
                               padding: const EdgeInsets.all(32),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    size: 64,
-                                    color: AppColors.error,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Something went wrong',
-                                    style: CommonStyle.heading4,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _error!,
-                                    style: CommonStyle.bodyMedium.copyWith(
-                                      color: AppColors.textSecondary,
+                              child: Container(
+                                padding: const EdgeInsets.all(32),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundLight,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.shadowLight.withValues(alpha: 0.1),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  ElevatedButton(
-                                    onPressed: _onRefresh,
-                                    style: CommonStyle.primaryButton,
-                                    child: const Text('Try Again'),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.error.withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.error_outline,
+                                        size: 48,
+                                        color: AppColors.error,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      'Something Went Wrong',
+                                      style: CommonStyle.heading4.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _error!,
+                                      style: CommonStyle.bodyMedium.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 24),
+                                    ElevatedButton.icon(
+                                      onPressed: _onRefresh,
+                                      icon: const Icon(Icons.refresh, size: 18),
+                                      label: const Text('Try Again'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -268,31 +379,70 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                           child: Center(
                             child: Padding(
                               padding: const EdgeInsets.all(32),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.queue_outlined,
-                                    size: 64,
-                                    color: AppColors.textTertiary,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No queues available',
-                                    style: CommonStyle.heading4.copyWith(
-                                      color: AppColors.textSecondary,
+                              child: Container(
+                                padding: const EdgeInsets.all(32),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundLight,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.shadowLight.withValues(alpha: 0.1),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'This store doesn\'t have any active queues at the moment.',
-                                    style: CommonStyle.bodyMedium.copyWith(
-                                      color: AppColors.textTertiary,
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.queue_outlined,
+                                        size: 48,
+                                        color: AppColors.primary,
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      'No Queues Available',
+                                      style: CommonStyle.heading4.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'This store doesn\'t have any active queues right now. Check back later or contact the store directly.',
+                                      style: CommonStyle.bodyMedium.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    ElevatedButton.icon(
+                                      onPressed: _onRefresh,
+                                      icon: const Icon(Icons.refresh, size: 18),
+                                      label: const Text('Refresh'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
