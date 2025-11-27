@@ -117,15 +117,10 @@ class _QueueCardState extends State<QueueCard> {
               spreadRadius: 0,
             ),
           ],
-          border: widget.isUpdating
-              ? Border.all(
-                  color: AppColors.success.withOpacity(0.4),
-                  width: 1.5,
-                )
-              : Border.all(
-                  color: AppColors.backgroundLight.withOpacity(0.1),
-                  width: 1,
-                ),
+          border: Border.all(
+            color: AppColors.backgroundLight.withOpacity(0.1),
+            width: 1,
+          ),
         ),
         child: Stack(
           children: [
@@ -153,31 +148,6 @@ class _QueueCardState extends State<QueueCard> {
                 ],
               ),
             ),
-            if (widget.isUpdating)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: AppColors.success.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.success),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
