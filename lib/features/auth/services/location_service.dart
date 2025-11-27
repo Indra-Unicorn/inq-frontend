@@ -56,7 +56,6 @@ class LocationService {
         longitude: position.longitude,
       );
     } catch (e) {
-      print('Error getting location: $e');
       return LocationResult(
         success: false,
         location: null,

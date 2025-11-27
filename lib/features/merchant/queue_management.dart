@@ -179,7 +179,6 @@ class _QueueManagementState extends State<QueueManagement>
       });
     } catch (e) {
       // Silent failure for polling - don't update error state
-      print('Polling refresh failed: $e');
     }
   }
 

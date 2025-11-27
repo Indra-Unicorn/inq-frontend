@@ -170,18 +170,17 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
           await profileService.updateCustomerLocation(
               latitude: position.latitude, longitude: position.longitude);
         } catch (e) {
-          print("Error updating location: $e");
+          // Silently handle location update error
         }
       } else {
         try {
           await profileService
               .updateCustomerLocation(); // Call with no location
         } catch (e) {
-          print("Error updating location: $e");
+          // Silently handle location update error
         }
       }
     } catch (e) {
-      print("Error in location check: $e");
       // Continue without location
     }
   }

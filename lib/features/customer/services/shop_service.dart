@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/constants/app_constants.dart';
 import '../../../shared/constants/api_endpoints.dart';
 import '../../../services/auth_service.dart';
@@ -9,8 +8,6 @@ import '../models/shop.dart';
 class ShopService {
   Future<String?> _getToken() async {
     final token = await AuthService.getToken();
-    print(
-        'Retrieved token: ${token != null ? 'Token exists' : 'No token found'}');
     return token;
   }
 
@@ -18,11 +15,9 @@ class ShopService {
     try {
       final token = await _getToken();
       if (token == null) {
-        print('Token is null, user not authenticated');
         throw Exception('User not authenticated');
       }
 
-      print('Making API call with token: ${token.substring(0, 20)}...');
       final response = await http.get(
         Uri.parse('${ApiEndpoints.baseUrl}/users/shops/get/all'),
         headers: {
@@ -31,8 +26,6 @@ class ShopService {
         },
       );
 
-      print('API Response Status: ${response.statusCode}');
-      print('API Response Body: ${response.body}');
 
       final Map<String, dynamic> jsonResponse = json.decode(response.body);
       
@@ -45,7 +38,6 @@ class ShopService {
       final errorMessage = jsonResponse['message'] ?? 'Failed to load shops';
       throw Exception(errorMessage);
     } catch (e) {
-      print('Error in getAllShops: $e');
       // Re-throw the original exception to preserve API error messages
       rethrow;
     }
@@ -134,7 +126,6 @@ class ShopService {
       final errorMessage = jsonResponse['message'] ?? 'Failed to load shop details';
       throw Exception(errorMessage);
     } catch (e) {
-      print('Error in getShopById: $e');
       // Re-throw the original exception to preserve API error messages
       rethrow;
     }

@@ -30,14 +30,12 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
   @override
   void initState() {
     super.initState();
-    print('StoreDetailsPage initState');
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
-      print('StoreDetailsPage didChangeDependencies');
       _fetchQueues();
       _fetchCustomerQueueSummary();
       _isInitialized = true;
@@ -46,13 +44,10 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
 
   Future<void> _fetchQueues() async {
     try {
-      print('Fetching queues...');
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      print('Route args: $args');
 
       if (args == null) {
-        print('Args is null');
         setState(() {
           _error = 'Invalid arguments';
           _isLoading = false;
@@ -61,10 +56,8 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       }
 
       final shopId = args['shopId'] as String?;
-      print('Shop ID: $shopId');
 
       if (shopId == null) {
-        print('Shop ID is null');
         setState(() {
           _error = 'Shop ID not found';
           _isLoading = false;
@@ -73,7 +66,6 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       }
 
       final queues = await _queueService.getShopQueuesOnly(shopId);
-      print('Fetched queues: ${queues.length}');
       if (mounted) {
         setState(() {
           _queues = queues;
@@ -81,7 +73,6 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
         });
       }
     } catch (e) {
-      print('Error in _fetchQueues: $e');
       if (mounted) {
         setState(() {
           _error = e.toString();
@@ -93,17 +84,13 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
 
   Future<void> _fetchCustomerQueueSummary() async {
     try {
-      print('Fetching customer queue summary...');
       final summary = await _queueService.getCustomerQueueSummary();
-      print(
-          'Customer queue summary: ${summary.customerQueues.length} active queues');
       if (mounted) {
         setState(() {
           _customerQueueSummary = summary;
         });
       }
     } catch (e) {
-      print('Error fetching customer queue summary: $e');
     }
   }
 

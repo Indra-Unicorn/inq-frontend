@@ -42,7 +42,6 @@ class CrossPlatformImage extends StatelessWidget {
         loadingWidget: loadingWidget,
       );
     } catch (e) {
-      print('Error displaying image: $e');
       return errorWidget ?? _buildErrorWidget();
     }
   }

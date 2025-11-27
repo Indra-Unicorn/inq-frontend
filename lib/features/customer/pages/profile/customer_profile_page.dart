@@ -46,7 +46,6 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading user data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
@@ -107,7 +106,6 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                 );
               }
             } catch (e) {
-              print('Logout error: $e');
               if (mounted) {
                 Navigator.of(context).pop();
                 Navigator.pushNamedAndRemoveUntil(

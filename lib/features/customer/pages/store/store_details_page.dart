@@ -11,7 +11,6 @@ import 'store_details_queues.dart';
 import 'store_images_section.dart';
 import '../../models/queue_status.dart';
 import '../../../../shared/widgets/error_dialog.dart';
-import '../../models/customer_queue_summary.dart';
 
 class StoreDetailsPage extends StatefulWidget {
   final String shopId;
@@ -115,7 +114,6 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
       });
     } catch (e) {
       // Silently handle error - user might not be logged in or have no queues
-      print('Could not load user queues: $e');
       setState(() {
         _userCurrentQueueIds = {};
       });

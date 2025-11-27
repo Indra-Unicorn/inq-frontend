@@ -49,7 +49,6 @@ class MerchantDashboardController extends ChangeNotifier {
     } catch (e) {
       // Silent failure for polling - don't update error state
       // This prevents UI disruption during background polling
-      print('Polling refresh failed: $e');
     }
   }
 

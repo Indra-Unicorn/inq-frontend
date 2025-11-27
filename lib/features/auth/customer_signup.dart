@@ -209,10 +209,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
       final data = jsonDecode(response.body);
       if (!data['success']) {
-        print('Failed to register FCM token: ${data['message']}');
       }
     } catch (e) {
-      print('Error registering FCM token: $e');
     }
   }
 

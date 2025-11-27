@@ -27,7 +27,6 @@ class _FCMTokenPageState extends State<FCMTokenPage> {
         _fcmToken = token;
         _tokenController.text = token ?? 'No token received';
       });
-      print('FCM Token: $token');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

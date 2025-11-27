@@ -75,7 +75,6 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
     } catch (e) {
-      print('Error during auth check: $e');
       // On error, go to login page
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');

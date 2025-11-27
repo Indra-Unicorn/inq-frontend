@@ -8,7 +8,6 @@ import '../../customer/models/customer_queue_summary.dart';
 class MerchantQueueService {
   static Future<String?> _getAuthToken() async {
     final token = await AuthService.getToken();
-    print('[MerchantQueueService] Using token: $token');
     return token;
   }
 

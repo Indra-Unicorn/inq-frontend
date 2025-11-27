@@ -318,11 +318,6 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
 
   void _saveChanges() {
     // Handle save changes logic
-    print('Saving changes...');
-    print('Store Name: ${_storeNameController.text}');
-    print('Address: ${_addressController.text}');
-    print('Phone: ${_phoneController.text}');
-    print('Email: ${_emailController.text}');
     
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
