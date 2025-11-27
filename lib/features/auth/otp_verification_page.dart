@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_constants.dart';
+import '../../shared/constants/app_colors.dart';
 import '../../services/auth_service.dart';
 
 class OTPVerificationPage extends StatefulWidget {
@@ -151,12 +152,12 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F9),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF191010)),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -166,10 +167,10 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Verify Phone Number',
                 style: TextStyle(
-                  color: Color(0xFF191010),
+                  color: AppColors.textPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -177,8 +178,8 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
               const SizedBox(height: 8),
               Text(
                 'Enter the 6-digit code sent to ${widget.phoneNumber}',
-                style: const TextStyle(
-                  color: Color(0xFF8B5B5C),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
                   fontSize: 16,
                 ),
               ),
@@ -194,31 +195,32 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       maxLength: 1,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF191010),
+                        color: AppColors.textPrimary,
                       ),
                       decoration: InputDecoration(
                         counterText: '',
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: AppColors.backgroundLight,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE3D4D4),
+                          borderSide: BorderSide(
+                            color: AppColors.border,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE3D4D4),
+                          borderSide: BorderSide(
+                            color: AppColors.border,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE9B8BA),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
                           ),
                         ),
                       ),
@@ -237,8 +239,8 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _verifyOTP,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE9B8BA),
-                    foregroundColor: const Color(0xFF191010),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.textWhite,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
@@ -246,9 +248,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(
+                      ? CircularProgressIndicator(
                           valueColor:
-                              AlwaysStoppedAnimation<Color>(Color(0xFF191010)),
+                              AlwaysStoppedAnimation<Color>(AppColors.textWhite),
                         )
                       : const Text(
                           'Verify',
@@ -266,10 +268,10 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                   onPressed: () {
                     // TODO: Implement resend OTP logic
                   },
-                  child: const Text(
+                  child: Text(
                     'Resend Code',
                     style: TextStyle(
-                      color: Color(0xFF8B5B5C),
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                       decoration: TextDecoration.underline,
                     ),

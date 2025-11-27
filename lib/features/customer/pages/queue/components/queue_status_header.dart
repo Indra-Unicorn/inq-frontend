@@ -113,13 +113,14 @@ class QueueStatusHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: TabBar(
             controller: tabController,
-            labelColor: AppColors.primary,
+            labelColor: AppColors.textWhite,
             unselectedLabelColor: AppColors.textSecondary,
             indicator: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
             ),
             indicatorSize: TabBarIndicatorSize.tab,
+            indicatorPadding: const EdgeInsets.all(4),
             labelStyle: CommonStyle.bodyMedium.copyWith(
               fontWeight: FontWeight.w600,
             ),
