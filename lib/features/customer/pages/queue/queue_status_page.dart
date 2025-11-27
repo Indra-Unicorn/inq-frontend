@@ -290,16 +290,6 @@ class _QueueStatusPageState extends State<QueueStatusPage>
         isPollingActive: _isPollingActive,
       ),
       body: _buildBody(),
-      // Add a test button for debugging
-      floatingActionButton: _currentQueues.isNotEmpty ? FloatingActionButton(
-        onPressed: () {
-          print('🧪 Test button pressed - showing completion dialog');
-          _showQueueCompletionDialog(_currentQueues.first);
-        },
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.bug_report),
-        tooltip: 'Test Completion Dialog',
-      ) : null,
     );
   }
 

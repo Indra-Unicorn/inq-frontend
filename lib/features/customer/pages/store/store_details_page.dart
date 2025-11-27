@@ -11,6 +11,7 @@ import 'store_details_queues.dart';
 import 'store_images_section.dart';
 import '../../models/queue_status.dart';
 import '../../../../shared/widgets/error_dialog.dart';
+import '../../models/customer_queue_summary.dart';
 
 class StoreDetailsPage extends StatefulWidget {
   final String shopId;
@@ -31,11 +32,13 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
   String? _error;
   List<Queue> _queues = [];
   Shop? _shop;
+  Set<String> _userCurrentQueueIds = {}; // Store user's current queue IDs
 
   @override
   void initState() {
     super.initState();
     _loadShopById();
+    _loadUserCurrentQueues();
   }
 
   Future<void> _loadShopById() async {
@@ -102,6 +105,23 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
     }
   }
 
+  Future<void> _loadUserCurrentQueues() async {
+    try {
+      final customerQueueSummary = await _queueService.getCustomerQueueSummary();
+      setState(() {
+        _userCurrentQueueIds = customerQueueSummary.customerQueues
+            .map((queue) => queue.qid)
+            .toSet();
+      });
+    } catch (e) {
+      // Silently handle error - user might not be logged in or have no queues
+      print('Could not load user queues: $e');
+      setState(() {
+        _userCurrentQueueIds = {};
+      });
+    }
+  }
+
   Future<void> _onRefresh() async {
     setState(() {
       _isLoading = true;
@@ -109,10 +129,16 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
     });
 
     await _loadShopById();
+    await _loadUserCurrentQueues();
   }
 
   // Get the current shop data
   Shop? get currentShop => _shop;
+
+  // Check if user is already in a specific queue
+  bool _isUserInQueue(String queueId) {
+    return _userCurrentQueueIds.contains(queueId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +318,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                                 }
                                 return StoreQueueCard(
                                   queue: queue,
-                                  onJoin: queue.status == QueueStatus.active
+                                  onJoin: (queue.status == QueueStatus.active && !_isUserInQueue(queue.qid))
                                       ? () async {
                                           setState(() => _isLoading = true);
                                           try {
@@ -325,6 +351,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                                         }
                                       : null,
                                   isJoining: _isLoading,
+                                  isUserInQueue: _isUserInQueue(queue.qid),
                                 );
                               },
                               childCount: _queues.length,
@@ -337,6 +364,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                           sliver: SliverToBoxAdapter(
                             child: StoreDetailsQueues(
                               queues: _queues,
+                              userCurrentQueueIds: _userCurrentQueueIds,
                             ),
                           ),
                         ),
