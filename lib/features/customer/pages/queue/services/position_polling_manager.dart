@@ -20,8 +20,7 @@ class PositionPollingManager {
     stopAllPolling();
 
     if (PollingConfig.enableLogging) {
-      print(
-          'Starting ${PollingConfig.getStrategyDescription()} for ${currentQueues.length} queues');
+      // Starting polling for queues
     }
 
     // Start polling for each current queue
@@ -33,23 +32,21 @@ class PositionPollingManager {
   void _startPollingForQueue(String queueId) {
     if (_subscriptions.containsKey(queueId)) {
       if (PollingConfig.enableLogging) {
-        print('Already polling queue: $queueId');
+        // Already polling this queue
       }
       return; // Already polling this queue
     }
 
     try {
       if (PollingConfig.enableLogging) {
-        print(
-            'Starting polling for queue: $queueId using ${PollingConfig.getStrategyDescription()}');
+        // Starting polling for queue
       }
 
       // Use unified polling method that automatically selects the configured strategy
       final subscription = QueueStatusService.pollQueuePosition(queueId).listen(
         (updatedQueue) {
           if (PollingConfig.enableLogging) {
-            print(
-                'Received update for queue: ${updatedQueue.qid}, position: ${updatedQueue.currentRank}');
+            // Received update for queue
           }
           // Update the last update time for this queue
           _lastUpdateTimes[queueId] = DateTime.now();
@@ -57,7 +54,7 @@ class PositionPollingManager {
         },
         onError: (error) {
           if (PollingConfig.enableLogging) {
-            print('Polling error for queue $queueId: $error');
+            // Error in polling
           }
           _onError(queueId, error.toString());
         },
@@ -66,7 +63,7 @@ class PositionPollingManager {
       _subscriptions[queueId] = subscription;
     } catch (e) {
       if (PollingConfig.enableLogging) {
-        print('Failed to start polling for queue $queueId: $e');
+        // Error starting polling
       }
       _onError(queueId, e.toString());
     }
@@ -76,7 +73,7 @@ class PositionPollingManager {
     final subscription = _subscriptions[queueId];
     if (subscription != null) {
       if (PollingConfig.enableLogging) {
-        print('Stopping polling for queue: $queueId');
+        // Stopping polling for queue
       }
       subscription.cancel();
       _subscriptions.remove(queueId);
@@ -86,7 +83,7 @@ class PositionPollingManager {
 
   void stopAllPolling() {
     if (PollingConfig.enableLogging) {
-      print('Stopping all polling for ${_subscriptions.length} queues');
+      // Stopping all polling
     }
     for (final subscription in _subscriptions.values) {
       subscription.cancel();

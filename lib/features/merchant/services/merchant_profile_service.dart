@@ -64,7 +64,6 @@ class MerchantProfileService {
         );
         location = '${position.latitude},${position.longitude}';
       } catch (e) {
-        print('Error getting location: $e');
       }
     }
 

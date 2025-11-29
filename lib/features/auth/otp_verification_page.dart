@@ -141,11 +141,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
       );
 
       final data = jsonDecode(response.body);
-      if (!data['success']) {
-        print('Failed to register FCM token: ${data['message']}');
-      }
+      // Silently handle FCM token registration errors
     } catch (e) {
-      print('Error registering FCM token: $e');
+      // Silently handle FCM token registration errors
     }
   }
 

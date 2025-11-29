@@ -31,15 +31,16 @@ class CustomerDashboardStoreList extends StatelessWidget {
         return GestureDetector(
           onTap: () => onStoreTap(store),
           child: Container(
-            margin: const EdgeInsets.only(bottom: 18),
+            margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.shadowLight.withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: AppColors.shadowLight.withValues(alpha: 0.1),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 0,
                 ),
               ],
             ),
@@ -48,7 +49,7 @@ class CustomerDashboardStoreList extends StatelessWidget {
               children: [
                 _buildStoreHeader(store),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
                   child: _buildStoreInfo(store),
                 ),
               ],
@@ -64,8 +65,8 @@ class CustomerDashboardStoreList extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
           ),
           child: store.images.isNotEmpty
               ? Image.network(
@@ -140,29 +141,47 @@ class CustomerDashboardStoreList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        const Divider(height: 1, color: AppColors.borderLight),
+        Container(
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.transparent,
+                AppColors.borderLight,
+                Colors.transparent,
+              ],
+            ),
+          ),
+        ),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-                child: _buildInfoIconText(
-              Icons.access_time_filled,
-              '~${store.metadata['avgWaitTime'] ?? 0} min',
-              AppColors.success,
-            )),
+              child: _buildInfoCard(
+                Icons.access_time_filled_rounded,
+                store.avgEntryTimeMinutes > 0 
+                    ? '${store.avgEntryTimeMinutes} min'
+                    : 'No data',
+                AppColors.success,
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
-                child: _buildInfoIconText(
-              Icons.people_alt,
-              '${store.metadata['activeQueues'] ?? 0} active',
-              AppColors.info,
-            )),
+              child: _buildInfoCard(
+                Icons.people_alt_rounded,
+                '${store.activeCustomerCount ?? 0}',
+                AppColors.info,
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
-                child: _buildInfoIconText(
-              Icons.category,
-              store.categories.isNotEmpty ? store.categories.first : 'General',
-              AppColors.warning,
-            )),
+              child: _buildInfoCard(
+                Icons.category_rounded,
+                store.categories.isNotEmpty ? store.categories.first : 'General',
+                AppColors.warning,
+              ),
+            ),
           ],
         ),
       ],
@@ -170,55 +189,124 @@ class CustomerDashboardStoreList extends StatelessWidget {
   }
 
   Widget _buildOpenStatusChip(String status, Color statusColor) {
-    return Chip(
-      label: Text(
-        status,
-        style: CommonStyle.caption.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: statusColor.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      backgroundColor: statusColor.withValues(alpha: 0.85),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      labelPadding: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            status,
+            style: CommonStyle.caption.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildRatingChip(double rating, int ratingCount) {
-    return Chip(
-      avatar: const Icon(Icons.star, color: Colors.white, size: 16),
-      label: Text(
-        '$rating ($ratingCount)',
-        style: CommonStyle.caption.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
+    if (rating == 0 && ratingCount == 0) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      backgroundColor: Colors.black.withValues(alpha: 0.5),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      labelPadding: const EdgeInsets.only(left: 4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.star_rounded,
+            color: Colors.amber,
+            size: 16,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${rating.toStringAsFixed(1)}',
+            style: CommonStyle.caption.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+          if (ratingCount > 0) ...[
+            Text(
+              ' ($ratingCount)',
+              style: CommonStyle.caption.copyWith(
+                color: Colors.white.withValues(alpha: 0.8),
+                fontWeight: FontWeight.w500,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
-  Widget _buildInfoIconText(IconData icon, String text, Color color) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: CommonStyle.bodySmall.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+  Widget _buildInfoCard(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1,
         ),
-      ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              style: CommonStyle.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

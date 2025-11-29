@@ -244,32 +244,15 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   }
 
   Future<void> _handleSignup() async {
-    print('[MerchantSignup] _handleSignup called');
     
     // Check form validation
-    print('[MerchantSignup] Starting form validation...');
-    print('[MerchantSignup] Form data check:');
-    print('  - Name: "${_nameController.text}"');
-    print('  - Email: "${_emailController.text}"');
-    print('  - Password: "${_passwordController.text}"');
-    print('  - Phone: "${_phoneController.text}"');
-    print('  - Shop Name: "${_shopNameController.text}"');
-    print('  - Shop Phone: "${_shopPhoneController.text}"');
-    print('  - Street Address: "${_streetAddressController.text}"');
-    print('  - Postal Code: "${_postalCodeController.text}"');
-    print('  - City: "${_cityController.text}"');
-    print('  - State: "${_stateController.text}"');
-    print('  - Country: "${_countryController.text}"');
     
     if (!_formKey.currentState!.validate()) {
-      print('[MerchantSignup] Form validation failed - check required fields above');
       return;
     }
-    print('[MerchantSignup] Form validation passed');
     
     // Check business hours
     if (_openTime == null || _closeTime == null) {
-      print('[MerchantSignup] Business hours not selected: openTime=$_openTime, closeTime=$_closeTime');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select opening and closing times'),
@@ -278,11 +261,9 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       );
       return;
     }
-    print('[MerchantSignup] Business hours selected: openTime=$_openTime, closeTime=$_closeTime');
     
     // Check categories
     if (_selectedCategories.isEmpty) {
-      print('[MerchantSignup] No categories selected');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select at least one category'),
@@ -291,16 +272,13 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       );
       return;
     }
-    print('[MerchantSignup] Categories selected: $_selectedCategories');
 
-    print('[MerchantSignup] All validations passed, starting signup process');
     
     setState(() {
       _isLoading = true;
     });
 
     try {
-      print('[MerchantSignup] Creating signup data object');
       final signupData = MerchantSignupData(
         name: _nameController.text,
         email: _emailController.text,
@@ -319,9 +297,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         categories: _selectedCategories,
       );
 
-      print('[MerchantSignup] Calling MerchantSignupService.signup with ${_selectedImages.length} images');
       final data = await MerchantSignupService.signup(signupData, _selectedImages);
-      print('[MerchantSignup] Signup service returned: $data');
 
       if (data['success'] == true) {
         // Store token and login state if token is provided
@@ -360,7 +336,6 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         );
       }
     } catch (e) {
-      print('[MerchantSignup] Error during signup: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -368,7 +343,6 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
         ),
       );
     } finally {
-      print('[MerchantSignup] Signup process completed, setting loading to false');
       setState(() {
         _isLoading = false;
       });

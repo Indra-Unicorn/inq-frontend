@@ -14,6 +14,8 @@ class Shop {
   final List<String> images;
   final Map<String, dynamic> metadata;
   final List<QueueResponse>? queueResponses;
+  final int? avgTimePerCustomer;
+  final int? activeCustomerCount;
 
   Shop({
     required this.shopId,
@@ -29,6 +31,8 @@ class Shop {
     required this.images,
     required this.metadata,
     this.queueResponses,
+    this.avgTimePerCustomer,
+    this.activeCustomerCount,
   });
 
   // Calculate shop status based on queue statuses
@@ -79,6 +83,11 @@ class Shop {
     }
   }
 
+  // Get average time per customer from API response (in minutes)
+  int get avgEntryTimeMinutes {
+    return avgTimePerCustomer ?? 0;
+  }
+
   factory Shop.fromJson(Map<String, dynamic> json) {
     return Shop(
       shopId: json['shopId'],
@@ -106,6 +115,8 @@ class Shop {
           ? List<QueueResponse>.from(
               json['queueResponses'].map((x) => QueueResponse.fromJson(x)))
           : null,
+      avgTimePerCustomer: json['avgTimePerCustomer'],
+      activeCustomerCount: json['activeCustomerCount'],
     );
   }
 }

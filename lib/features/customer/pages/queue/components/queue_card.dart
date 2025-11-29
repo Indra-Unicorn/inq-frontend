@@ -6,9 +6,7 @@ import '../../../models/customer_queue_summary.dart';
 import 'current_position_widget.dart';
 import 'queue_info_row.dart';
 import 'leave_queue_dialog.dart';
-import 'adaptive_delay_indicator.dart';
 import '../services/queue_status_service.dart';
-import '../services/polling_config.dart';
 
 class QueueCard extends StatefulWidget {
   final dynamic queue;
@@ -117,15 +115,10 @@ class _QueueCardState extends State<QueueCard> {
               spreadRadius: 0,
             ),
           ],
-          border: widget.isUpdating
-              ? Border.all(
-                  color: AppColors.success.withOpacity(0.4),
-                  width: 1.5,
-                )
-              : Border.all(
-                  color: AppColors.backgroundLight.withOpacity(0.1),
-                  width: 1,
-                ),
+          border: Border.all(
+            color: AppColors.backgroundLight.withOpacity(0.1),
+            width: 1,
+          ),
         ),
         child: Stack(
           children: [
@@ -153,31 +146,6 @@ class _QueueCardState extends State<QueueCard> {
                 ],
               ),
             ),
-            if (widget.isUpdating)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: AppColors.success.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.success),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -229,25 +197,50 @@ class _QueueCardState extends State<QueueCard> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      widget.queue.queueName ?? 'Unknown Queue',
-                      style: CommonStyle.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.queue.queueName ?? 'Unknown Queue',
+                          style: CommonStyle.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        GestureDetector(
+                          onTap: () => _navigateToShop(context),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.store,
+                                size: 12,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  widget.queue.shopResponse?.shopName ?? 'Unknown Shop',
+                                  style: CommonStyle.caption.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  if (widget.isCurrent &&
-                      PollingConfig.strategy ==
-                          PollingStrategy.adaptivePolling) ...[
-                    const SizedBox(width: 10),
-                    AdaptiveDelayIndicator(
-                      currentPosition: widget.queue.currentRank ?? 0,
-                    ),
-                  ],
                   if (widget.isCurrent && widget.lastUpdateTime != null) ...[
                     const SizedBox(width: 10),
                     Container(
@@ -367,6 +360,28 @@ class _QueueCardState extends State<QueueCard> {
       await QueueStatusService.leaveQueue(widget.queue.qid, reason);
     } catch (e) {
       rethrow;
+    }
+  }
+
+  void _navigateToShop(BuildContext context) {
+    final shopId = widget.queue.shopResponse?.shopId;
+    if (shopId != null && shopId.isNotEmpty) {
+      Navigator.pushNamed(
+        context,
+        '/store/$shopId',
+      );
+    } else {
+      // Show error if shop ID is not available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Shop information not available',
+            style: TextStyle(color: AppColors.textWhite),
+          ),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 

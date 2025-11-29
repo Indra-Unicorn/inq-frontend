@@ -7,7 +7,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_colors.dart';
-import '../../shared/constants/app_constants.dart';
 import '../../../services/auth_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -78,12 +77,7 @@ class _MerchantLoginState extends State<MerchantLogin> {
           userData: userData,
           refreshToken: refreshToken,
         );
-        print('[MerchantLogin] Token saved: $token');
 
-        // Debug: Read token back
-        final prefs = await SharedPreferences.getInstance();
-        print(
-            '[MerchantLogin] Token after save: ${prefs.getString(AppConstants.tokenKey)}');
 
         // Register FCM token (only on mobile platforms)
         if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
@@ -148,10 +142,8 @@ class _MerchantLoginState extends State<MerchantLogin> {
 
       final data = jsonDecode(response.body);
       if (!data['success']) {
-        print('Failed to register FCM token: ${data['message']}');
       }
     } catch (e) {
-      print('Error registering FCM token: $e');
     }
   }
 

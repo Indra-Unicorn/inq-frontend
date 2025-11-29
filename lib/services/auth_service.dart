@@ -35,7 +35,6 @@ class AuthService {
         await prefs.setString(_refreshTokenKey, refreshToken);
       }
     } catch (e) {
-      print('Error storing auth data: $e');
       throw Exception('Failed to store authentication data');
     }
   }
@@ -64,7 +63,6 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Error getting token: $e');
       return null;
     }
   }
@@ -80,7 +78,6 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Error getting user data: $e');
       return null;
     }
   }
@@ -91,7 +88,6 @@ class AuthService {
       final token = await getToken();
       return token != null;
     } catch (e) {
-      print('Error checking login status: $e');
       return false;
     }
   }
@@ -108,7 +104,6 @@ class AuthService {
       return currentTime
           .isAfter(expirationTime.subtract(const Duration(minutes: 5)));
     } catch (e) {
-      print('Error checking token expiration: $e');
       return false; // If we can't decode, assume it's valid
     }
   }
@@ -145,14 +140,12 @@ class AuthService {
                 _refreshTokenKey, data['data']['refreshToken']);
           }
 
-          print('Token refreshed successfully');
           return true;
         }
       }
 
       return false;
     } catch (e) {
-      print('Error refreshing token: $e');
       return false;
     }
   }
@@ -167,7 +160,6 @@ class AuthService {
       await prefs.remove(_loginTimeKey);
       await prefs.remove(_refreshTokenKey);
     } catch (e) {
-      print('Error clearing auth data: $e');
     }
   }
 
@@ -184,7 +176,6 @@ class AuthService {
       
       return userData['userType'];
     } catch (e) {
-      print('Error in getUserType: $e');
       return null;
     }
   }
@@ -195,7 +186,6 @@ class AuthService {
       final userData = await getUserData();
       return userData?['memberId']?.toString();
     } catch (e) {
-      print('Error getting user ID: $e');
       return null;
     }
   }
@@ -206,7 +196,6 @@ class AuthService {
       final token = await getToken();
       return token != null;
     } catch (e) {
-      print('Error validating token: $e');
       return false;
     }
   }
@@ -222,7 +211,6 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Error getting login time: $e');
       return null;
     }
   }
@@ -243,7 +231,6 @@ class AuthService {
       
       return userType?.toString();
     } catch (e) {
-      print('Error extracting user type from JWT: $e');
       return null;
     }
   }

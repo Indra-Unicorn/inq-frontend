@@ -10,11 +10,13 @@ class StoreQueueCard extends StatelessWidget {
   final Queue queue;
   final VoidCallback? onJoin;
   final bool isJoining;
+  final bool isUserInQueue;
 
   const StoreQueueCard({
     required this.queue,
     this.onJoin,
     this.isJoining = false,
+    this.isUserInQueue = false,
     super.key,
   });
 
@@ -77,13 +79,16 @@ class StoreQueueCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: (queue.status == QueueStatus.active &&
                         onJoin != null &&
-                        !isJoining)
+                        !isJoining &&
+                        !isUserInQueue)
                     ? onJoin
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: queue.status == QueueStatus.active
-                      ? AppColors.primary
-                      : AppColors.textTertiary,
+                  backgroundColor: isUserInQueue
+                      ? AppColors.textTertiary
+                      : (queue.status == QueueStatus.active
+                          ? AppColors.primary
+                          : AppColors.textTertiary),
                   foregroundColor: AppColors.textWhite,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -104,9 +109,11 @@ class StoreQueueCard extends StatelessWidget {
                         ),
                       )
                     : Text(
-                        queue.status == QueueStatus.active
-                            ? 'Join Queue'
-                            : 'Queue ${_getStatusText(queue.status).toLowerCase()}',
+                        isUserInQueue
+                            ? 'Already in Queue'
+                            : (queue.status == QueueStatus.active
+                                ? 'Join Queue'
+                                : 'Queue ${_getStatusText(queue.status).toLowerCase()}'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -173,10 +180,12 @@ class StoreQueueCard extends StatelessWidget {
 
 class StoreDetailsQueues extends StatefulWidget {
   final List<Queue> queues;
+  final Set<String> userCurrentQueueIds;
 
   const StoreDetailsQueues({
     super.key,
     required this.queues,
+    this.userCurrentQueueIds = const {},
   });
 
   @override
@@ -240,10 +249,11 @@ class _StoreDetailsQueuesState extends State<StoreDetailsQueues> {
         final queue = widget.queues[index];
         return StoreQueueCard(
           queue: queue,
-          onJoin: queue.status == QueueStatus.active
+          onJoin: (queue.status == QueueStatus.active && !widget.userCurrentQueueIds.contains(queue.qid))
               ? () => _joinQueue(queue)
               : null,
           isJoining: _isJoining,
+          isUserInQueue: widget.userCurrentQueueIds.contains(queue.qid),
         );
       },
     );

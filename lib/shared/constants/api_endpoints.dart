@@ -18,6 +18,7 @@ class ApiEndpoints {
 
   // User endpoints
   static const String getUserById = '/users/get';
+  static const String getCustomerInfo = '/users/customer/info';
   static const String getCustomer = '/users/customer/get';
   static const String getMerchant = '/users/merchant/get';
   static const String getAllMerchants = '/users/merchant/get/all';

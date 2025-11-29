@@ -134,7 +134,6 @@ class _QueueStatusPageState extends State<QueueStatusPage> {
               _eventController?.add(processedData);
             }
           } catch (e) {
-            print('Error parsing SSE data: $e');
           }
         }
       });
@@ -189,7 +188,6 @@ class _QueueStatusPageState extends State<QueueStatusPage> {
           }
         }
       } catch (e) {
-        print('Polling error: $e');
       }
     });
   }

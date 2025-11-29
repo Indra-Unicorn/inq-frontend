@@ -17,13 +17,9 @@ class MerchantSignupService {
     List<dynamic> imageFiles,
   ) async {
     try {
-      print('[MerchantSignupService] Starting signup process');
-      print('[MerchantSignupService] Image files count: ${imageFiles.length}');
       
       // Always use multipart request as expected by backend (even without images)
-      print('[MerchantSignupService] Creating multipart/form-data request for backend');
       final uri = Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.merchantSignup}');
-      print('[MerchantSignupService] Multipart URL: $uri');
       
       final request = http.MultipartRequest('POST', uri);
 
@@ -38,7 +34,6 @@ class MerchantSignupService {
         contentType: http_parser.MediaType('application', 'json'),
       );
       request.files.add(requestPart);
-      print('[MerchantSignupService] Added request part as JSON: $jsonString');
 
       // Add image files as 'imageFiles' (as expected by @RequestPart("imageFiles"))
       for (int i = 0; i < imageFiles.length; i++) {
@@ -81,42 +76,24 @@ class MerchantSignupService {
             }
             
             request.files.add(multipartFile);
-            print('[MerchantSignupService] Added image file $i: $filename');
           }
         } catch (e) {
-          print('[MerchantSignupService] Error adding image file $i: $e');
         }
       }
 
       // Print complete request details before sending
-      print('[MerchantSignupService] === REQUEST DETAILS ===');
-      print('[MerchantSignupService] Method: ${request.method}');
-      print('[MerchantSignupService] URL: ${request.url}');
-      print('[MerchantSignupService] Headers: ${request.headers}');
-      print('[MerchantSignupService] Fields: ${request.fields}');
-      print('[MerchantSignupService] Files count: ${request.files.length}');
       for (int i = 0; i < request.files.length; i++) {
         final file = request.files[i];
-        print('[MerchantSignupService] File $i:');
-        print('  - Field: ${file.field}');
-        print('  - Filename: ${file.filename}');
-        print('  - Content-Type: ${file.contentType}');
-        print('  - Length: ${file.length}');
       }
-      print('[MerchantSignupService] === END REQUEST DETAILS ===');
 
       // Send the multipart request
-      print('[MerchantSignupService] Sending multipart/form-data request with ${request.files.length} files');
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      print('[MerchantSignupService] Response status: ${response.statusCode}');
-      print('[MerchantSignupService] Response body: ${response.body}');
 
       // Handle 201 Created response with no body
       if (response.statusCode == 201) {
         if (response.body.isEmpty || response.body.trim().isEmpty) {
-          print('[MerchantSignupService] 201 response with empty body - signup successful');
           return {
             'success': true,
             'message': 'Signup successful! Please login to continue.',
@@ -127,7 +104,6 @@ class MerchantSignupService {
 
       // Handle other successful responses or responses with body
       if (response.body.isEmpty || response.body.trim().isEmpty) {
-        print('[MerchantSignupService] Empty response body');
         return {
           'success': response.statusCode >= 200 && response.statusCode < 300,
           'message': response.statusCode == 201 
@@ -140,7 +116,6 @@ class MerchantSignupService {
       try {
         return jsonDecode(response.body);
       } catch (e) {
-        print('[MerchantSignupService] Error decoding JSON: $e');
         return {
           'success': response.statusCode >= 200 && response.statusCode < 300,
           'message': response.statusCode == 201 
@@ -150,7 +125,6 @@ class MerchantSignupService {
         };
       }
     } catch (e) {
-      print('[MerchantSignupService] Error in signup: $e');
       return {
         'success': false,
         'message': 'Failed to create account: ${e.toString()}',
@@ -191,10 +165,8 @@ class MerchantSignupService {
 
       final data = jsonDecode(response.body);
       if (!data['success']) {
-        print('Failed to register FCM token: ${data['message']}');
       }
     } catch (e) {
-      print('Error registering FCM token: $e');
     }
   }
 }

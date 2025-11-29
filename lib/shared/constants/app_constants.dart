@@ -3,8 +3,8 @@ import 'api_endpoints.dart';
 class AppConstants {
   static const String appName = 'Queue Management';
   static const String fcmTopic = 'queue_updates';
-  static const int connectionTimeout = 30000;
-  static const int receiveTimeout = 30000;
+  static const int connectionTimeout = 10000;  // 10 seconds instead of 30
+  static const int receiveTimeout = 15000;     // 15 seconds instead of 30
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
   static const String locationKey = 'user_location';

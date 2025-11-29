@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../../services/notification_service.dart';
 import '../../shared/constants/app_constants.dart';
-import 'login_page.dart';
-import '../customer/pages/dashboard/customer_dashboard.dart';
-import '../merchant/merchant_dashboard.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -75,7 +71,6 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
     } catch (e) {
-      print('Error during auth check: $e');
       // On error, go to login page
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');
@@ -92,72 +87,243 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFF),
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App Logo/Icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF305CDE),
-                      Color(0xFF20B2AA),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFFAFBFF),
+              Color(0xFFF0F4FF),
+              Color(0xFFE8F0FF),
+            ],
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Enhanced App Logo with multiple layers
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Outer glow effect
+                      Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              const Color(0xFF305CDE).withValues(alpha: 0.1),
+                              const Color(0xFF305CDE).withValues(alpha: 0.05),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.7, 1.0],
+                          ),
+                        ),
+                      ),
+                      // Main logo container
+                      Container(
+                        width: 130,
+                        height: 130,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF305CDE),
+                              Color(0xFF4F75FF),
+                              Color(0xFF20B2AA),
+                            ],
+                            stops: [0.0, 0.5, 1.0],
+                          ),
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF305CDE).withValues(alpha: 0.4),
+                              blurRadius: 25,
+                              offset: const Offset(0, 12),
+                              spreadRadius: 2,
+                            ),
+                            BoxShadow(
+                              color: const Color(0xFF305CDE).withValues(alpha: 0.2),
+                              blurRadius: 40,
+                              offset: const Offset(0, 20),
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Background pattern
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(32),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            // Main icon with enhanced design
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Queue lines background
+                                  Positioned(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 3,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.3),
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Container(
+                                          width: 50,
+                                          height: 3,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.4),
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Container(
+                                          width: 35,
+                                          height: 3,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.3),
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Main queue icon
+                                  const Icon(
+                                    Icons.people_outline,
+                                    size: 65,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF305CDE).withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                  const SizedBox(height: 40),
+
+                  // Enhanced App Name with gradient text effect
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [
+                        Color(0xFF305CDE),
+                        Color(0xFF4F75FF),
+                      ],
+                    ).createShader(bounds),
+                    child: const Text(
+                      'INQ',
+                      style: TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 2,
+                        height: 1.1,
+                      ),
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.queue,
-                  size: 60,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 32),
+                  ),
+                  const SizedBox(height: 8),
 
-              // App Name
-              const Text(
-                'Queue Management',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1D29),
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
+                  // Subtitle
+                  const Text(
+                    'Queue Management',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1D29),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
-              // Tagline
-              const Text(
-                'Smart Queue Management System',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 48),
+                  // Enhanced Tagline
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF305CDE).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFF305CDE).withValues(alpha: 0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Text(
+                      'Smart • Fast • Efficient',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF305CDE),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 60),
 
-              // Loading indicator
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF305CDE)),
-                strokeWidth: 3,
+                  // Enhanced Loading indicator
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Outer ring
+                      SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            const Color(0xFF305CDE).withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ),
+                      // Inner ring
+                      const SizedBox(
+                        width: 35,
+                        height: 35,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF305CDE)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Loading text
+                  const Text(
+                    'Loading...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF6B7280),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

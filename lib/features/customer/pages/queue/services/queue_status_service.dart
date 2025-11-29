@@ -122,7 +122,6 @@ class QueueStatusService {
             Duration(seconds: PollingConfig.getMinDelayBetweenRequests()));
       } catch (e) {
         if (PollingConfig.enableLogging) {
-          print('Short polling error: $e');
         }
         await Future.delayed(
             Duration(seconds: PollingConfig.getErrorRetryDelay()));
@@ -169,7 +168,6 @@ class QueueStatusService {
           continue;
         } else {
           if (PollingConfig.enableLogging) {
-            print('Long polling error: $e');
           }
           await Future.delayed(
               Duration(seconds: PollingConfig.getErrorRetryDelay()));
@@ -221,7 +219,6 @@ class QueueStatusService {
               Duration(seconds: PollingConfig.getMinDelayBetweenRequests()));
         } else {
           if (PollingConfig.enableLogging) {
-            print('Hybrid polling error: $e');
           }
           // Other errors - wait longer before retry
           await Future.delayed(
@@ -272,8 +269,7 @@ class QueueStatusService {
 
             if (PollingConfig.enableLogging &&
                 currentPosition != lastPosition) {
-              print(
-                  'Queue ${queueData.qid}: Position $currentPosition -> Delay ${adaptiveDelay}s');
+              // Queue position changed, updating delay
               lastPosition = currentPosition;
             }
 
@@ -294,7 +290,6 @@ class QueueStatusService {
           await Future.delayed(Duration(seconds: 1)); // Small delay on timeout
         } else {
           if (PollingConfig.enableLogging) {
-            print('Adaptive polling error: $e');
           }
           // Other errors - wait longer before retry
           await Future.delayed(

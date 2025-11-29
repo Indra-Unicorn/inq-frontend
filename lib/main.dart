@@ -31,19 +31,16 @@ void main() async {
       );
     } catch (e) {
       if (e.toString().contains('duplicate-app')) {
-        print('Firebase already initialized, continuing...');
+        // Firebase already initialized, continuing...
       } else {
-        print('Firebase initialization error: $e');
         rethrow;
       }
     }
 
-    print('Firebase initialized successfully');
-
     // Initialize notifications on all platforms
     await NotificationService.initialize();
   } catch (e) {
-    print('Setup error: $e');
+    // Silently handle setup errors
   }
 
   runApp(const MyApp());

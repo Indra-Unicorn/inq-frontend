@@ -5,7 +5,6 @@ import 'package:geolocator/geolocator.dart';
 // Top-level function for background message handling
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('Handling a background message: ${message.messageId}');
 }
 
 class NotificationService {
@@ -26,12 +25,9 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
     } else if (settings.authorizationStatus ==
         AuthorizationStatus.provisional) {
-      print('User granted provisional permission');
     } else {
-      print('User declined or has not accepted permission');
     }
 
     // Initialize local notifications
@@ -74,27 +70,21 @@ class NotificationService {
   }
 
   static void _onNotificationTapped(NotificationResponse response) {
-    print('Notification tapped: ${response.payload}');
     // Handle notification tap
   }
 
   static Future<String?> getToken() async {
     try {
       String? token = await _messaging.getToken();
-      print('FCM Token: $token');
       return token;
     } catch (e) {
-      print('Error getting FCM token: $e');
       return null;
     }
   }
 
   static Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    print('Got a message whilst in the foreground!');
-    print('Message data: ${message.data}');
 
     if (message.notification != null) {
-      print('Message also contained a notification: ${message.notification}');
 
       // Show local notification when app is in foreground
       const AndroidNotificationDetails androidDetails =
@@ -128,8 +118,6 @@ class NotificationService {
   }
 
   static void _handleMessageOpenedApp(RemoteMessage message) {
-    print('A new onMessageOpenedApp event was published!');
-    print('Message data: ${message.data}');
 
     // Handle navigation when notification is tapped
     // You can navigate to specific screens based on message data
@@ -137,12 +125,10 @@ class NotificationService {
 
   static Future<void> subscribeToTopic(String topic) async {
     await _messaging.subscribeToTopic(topic);
-    print('Subscribed to topic: $topic');
   }
 
   static Future<void> unsubscribeFromTopic(String topic) async {
     await _messaging.unsubscribeFromTopic(topic);
-    print('Unsubscribed from topic: $topic');
   }
 
   // Method to send token to your backend
@@ -163,14 +149,10 @@ class NotificationService {
         );
         
         if (response.statusCode == 200) {
-          print('Token sent to server successfully');
         } else {
-          print('Failed to send token to server');
         }
         */
-        print('Token to send: $token for user: $userId');
       } catch (e) {
-        print('Error sending token to server: $e');
       }
     }
   }
@@ -210,7 +192,6 @@ class NotificationService {
       payload: 'test_notification',
     );
 
-    print('Test notification shown');
   }
 }
 
