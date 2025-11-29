@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../shared/common_style.dart';
 import '../../../../../shared/constants/app_colors.dart';
-import '../services/polling_config.dart';
 
 class QueueStatusHeader extends StatelessWidget implements PreferredSizeWidget {
   final TabController tabController;
@@ -63,26 +62,6 @@ class QueueStatusHeader extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                _getStrategyLabel(),
-                style: CommonStyle.caption.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 9,
-                ),
               ),
             ),
           ],
@@ -151,18 +130,5 @@ class QueueStatusHeader extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
     );
-  }
-
-  String _getStrategyLabel() {
-    switch (PollingConfig.strategy) {
-      case PollingStrategy.shortPolling:
-        return 'Short';
-      case PollingStrategy.longPolling:
-        return 'Long';
-      case PollingStrategy.hybridPolling:
-        return 'Hybrid';
-      case PollingStrategy.adaptivePolling:
-        return 'Adaptive';
-    }
   }
 }

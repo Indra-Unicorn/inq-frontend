@@ -6,9 +6,7 @@ import '../../../models/customer_queue_summary.dart';
 import 'current_position_widget.dart';
 import 'queue_info_row.dart';
 import 'leave_queue_dialog.dart';
-import 'adaptive_delay_indicator.dart';
 import '../services/queue_status_service.dart';
-import '../services/polling_config.dart';
 
 class QueueCard extends StatefulWidget {
   final dynamic queue;
@@ -243,14 +241,6 @@ class _QueueCardState extends State<QueueCard> {
                       ],
                     ),
                   ),
-                  if (widget.isCurrent &&
-                      PollingConfig.strategy ==
-                          PollingStrategy.adaptivePolling) ...[
-                    const SizedBox(width: 10),
-                    AdaptiveDelayIndicator(
-                      currentPosition: widget.queue.currentRank ?? 0,
-                    ),
-                  ],
                   if (widget.isCurrent && widget.lastUpdateTime != null) ...[
                     const SizedBox(width: 10),
                     Container(
