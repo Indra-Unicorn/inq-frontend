@@ -4,7 +4,6 @@ import '../../../../shared/constants/app_colors.dart';
 import '../../models/shop.dart';
 import '../../services/shop_service.dart';
 import 'customer_dashboard_header.dart';
-import 'customer_dashboard_categories.dart';
 import 'customer_dashboard_store_list.dart';
 import 'customer_dashboard_bottom_nav.dart';
 import '../../../../services/notification_service.dart';
@@ -232,59 +231,74 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         CustomerDashboardHeader(onProfileTap: _onProfileTap),
                         if (!_showSearchTray)
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 12),
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                             child: Container(
-                              height: 48,
                               decoration: BoxDecoration(
-                                color: AppColors.backgroundLight,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 16, right: 8),
-                                    child: Icon(
-                                      Icons.search,
-                                      color: AppColors.secondary,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _searchController,
-                                      focusNode: _searchFocusNode,
-                                      decoration: InputDecoration(
-                                        hintText: 'Search for stores',
-                                        hintStyle:
-                                            CommonStyle.bodyMedium.copyWith(
-                                          color: AppColors.secondary,
-                                        ),
-                                        border: InputBorder.none,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                                vertical: 14),
-                                      ),
-                                      style: CommonStyle.bodyLarge,
-                                    ),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowLight.withValues(alpha: 0.1),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
                                   ),
                                 ],
                               ),
+                              child: TextField(
+                                controller: _searchController,
+                                focusNode: _searchFocusNode,
+                                decoration: InputDecoration(
+                                  hintText: 'Search stores, categories...',
+                                  hintStyle: CommonStyle.bodyMedium.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  prefixIcon: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Icon(
+                                      Icons.search_rounded,
+                                      color: AppColors.primary,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                ),
+                                style: CommonStyle.bodyLarge,
+                              ),
                             ),
                           ),
-                        CustomerDashboardCategories(
-                          categories: _categories,
-                          selectedCategory: _selectedCategory,
-                          onCategorySelected: (category) {
-                            setState(() {
-                              _selectedCategory = category;
-                            });
-                          },
-                        ),
                         Expanded(
                           child: _isLoading
-                              ? const Center(child: CircularProgressIndicator())
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary.withValues(alpha: 0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            AppColors.primary,
+                                          ),
+                                          strokeWidth: 3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      Text(
+                                        'Loading stores...',
+                                        style: CommonStyle.bodyMedium.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
                               : _buildResponsiveStoreList(isDesktop),
                         ),
                       ],
@@ -292,75 +306,90 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                     if (_showSearchTray)
                       Positioned.fill(
                         child: Material(
-                          color: Colors.white.withOpacity(0.98),
+                          color: Colors.white,
                           child: Column(
                             children: [
                               // Search bar at the top of the tray (always visible)
                               SafeArea(
                                 bottom: false,
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(24, 24, 56, 12),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          height: 48,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.backgroundLight,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 16, right: 8),
-                                                child: Icon(
-                                                  Icons.search,
-                                                  color: AppColors.secondary,
-                                                  size: 24,
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: TextField(
-                                                  controller: _searchController,
-                                                  focusNode: _searchFocusNode,
-                                                  decoration: InputDecoration(
-                                                    hintText:
-                                                        'Search for stores',
-                                                    hintStyle: CommonStyle
-                                                        .bodyMedium
-                                                        .copyWith(
-                                                      color:
-                                                          AppColors.secondary,
-                                                    ),
-                                                    border: InputBorder.none,
-                                                    contentPadding:
-                                                        const EdgeInsets
-                                                            .symmetric(
-                                                            vertical: 14),
-                                                  ),
-                                                  style: CommonStyle.bodyLarge,
-                                                  autofocus: true,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.close,
-                                            size: 28, color: Colors.black87),
-                                        onPressed: () {
-                                          setState(() {
-                                            _showSearchTray = false;
-                                            _searchController.clear();
-                                            _searchFocusNode.unfocus();
-                                          });
-                                        },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.shadowLight.withValues(alpha: 0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
                                       ),
                                     ],
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(20, 20, 16, 16),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: AppColors.backgroundLight,
+                                              borderRadius: BorderRadius.circular(16),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: AppColors.shadowLight.withValues(alpha: 0.05),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: TextField(
+                                              controller: _searchController,
+                                              focusNode: _searchFocusNode,
+                                              decoration: InputDecoration(
+                                                hintText: 'Search stores, categories...',
+                                                hintStyle: CommonStyle.bodyMedium.copyWith(
+                                                  color: AppColors.textSecondary,
+                                                ),
+                                                prefixIcon: Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  child: Icon(
+                                                    Icons.search_rounded,
+                                                    color: AppColors.primary,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                border: InputBorder.none,
+                                                contentPadding: const EdgeInsets.symmetric(
+                                                  horizontal: 16,
+                                                  vertical: 16,
+                                                ),
+                                              ),
+                                              style: CommonStyle.bodyLarge,
+                                              autofocus: true,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: AppColors.backgroundLight,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: IconButton(
+                                            icon: Icon(
+                                              Icons.close_rounded,
+                                              size: 24,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                _showSearchTray = false;
+                                                _searchController.clear();
+                                                _searchFocusNode.unfocus();
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -380,16 +409,44 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                           )
                                         : _searchResults.isEmpty
                                             ? Center(
-                                                child: Text('No stores found.'))
-                                            : ListView.separated(
+                                                child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.all(24),
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.backgroundLight,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: Icon(
+                                                        Icons.search_off_rounded,
+                                                        size: 64,
+                                                        color: AppColors.textSecondary,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 16),
+                                                    Text(
+                                                      'No stores found',
+                                                      style: CommonStyle.heading4.copyWith(
+                                                        color: AppColors.textPrimary,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    Text(
+                                                      'Try different keywords',
+                                                      style: CommonStyle.bodyMedium.copyWith(
+                                                        color: AppColors.textSecondary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              )
+                                            : ListView.builder(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                        horizontal: 24,
                                                         vertical: 8),
                                                 itemCount:
                                                     _searchResults.length,
-                                                separatorBuilder: (_, __) =>
-                                                    const Divider(height: 1),
                                                 itemBuilder: (context, index) {
                                                   if (index >=
                                                       _searchResults.length) {
@@ -398,98 +455,126 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                                   }
                                                   final shop =
                                                       _searchResults[index];
-                                                  return ListTile(
-                                                    leading: shop
-                                                            .images.isNotEmpty
-                                                        ? ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        8),
-                                                            child:
-                                                                Image.network(
-                                                              shop.images.first,
-                                                              width: 40,
-                                                              height: 40,
-                                                              fit: BoxFit.cover,
-                                                              errorBuilder:
-                                                                  (context,
-                                                                          error,
-                                                                          stackTrace) =>
-                                                                      Container(
-                                                                width: 40,
-                                                                height: 40,
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: AppColors
-                                                                      .backgroundLight,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              8),
-                                                                ),
-                                                                child: const Icon(
-                                                                    Icons.store,
-                                                                    color: AppColors
-                                                                        .primary),
+                                                  return Material(
+                                                    color: Colors.transparent,
+                                                    child: InkWell(
+                                                      onTap: () {
+                                                        Navigator.pushNamed(
+                                                          context,
+                                                          '/store/${shop.shopId}',
+                                                        ).then((_) {
+                                                          if (mounted) {
+                                                            setState(() {
+                                                              _showSearchTray = false;
+                                                              _searchController.clear();
+                                                              _searchFocusNode.unfocus();
+                                                            });
+                                                          }
+                                                        });
+                                                      },
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 20,
+                                                          vertical: 16,
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            Container(
+                                                              width: 56,
+                                                              height: 56,
+                                                              decoration: BoxDecoration(
+                                                                borderRadius: BorderRadius.circular(16),
+                                                                boxShadow: [
+                                                                  BoxShadow(
+                                                                    color: AppColors.shadowLight.withValues(alpha: 0.1),
+                                                                    blurRadius: 8,
+                                                                    offset: const Offset(0, 2),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              child: ClipRRect(
+                                                                borderRadius: BorderRadius.circular(16),
+                                                                child: shop.images.isNotEmpty
+                                                                    ? Image.network(
+                                                                        shop.images.first,
+                                                                        width: 56,
+                                                                        height: 56,
+                                                                        fit: BoxFit.cover,
+                                                                        errorBuilder: (context, error, stackTrace) =>
+                                                                            Container(
+                                                                          width: 56,
+                                                                          height: 56,
+                                                                          decoration: BoxDecoration(
+                                                                            gradient: LinearGradient(
+                                                                              colors: [
+                                                                                AppColors.primary.withValues(alpha: 0.1),
+                                                                                AppColors.primaryLight.withValues(alpha: 0.1),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          child: const Icon(
+                                                                            Icons.store_rounded,
+                                                                            color: AppColors.primary,
+                                                                            size: 28,
+                                                                          ),
+                                                                        ),
+                                                                      )
+                                                                    : Container(
+                                                                        width: 56,
+                                                                        height: 56,
+                                                                        decoration: BoxDecoration(
+                                                                          gradient: LinearGradient(
+                                                                            colors: [
+                                                                              AppColors.primary.withValues(alpha: 0.1),
+                                                                              AppColors.primaryLight.withValues(alpha: 0.1),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                        child: const Icon(
+                                                                          Icons.store_rounded,
+                                                                          color: AppColors.primary,
+                                                                          size: 28,
+                                                                        ),
+                                                                      ),
                                                               ),
                                                             ),
-                                                          )
-                                                        : Container(
-                                                            width: 40,
-                                                            height: 40,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: AppColors
-                                                                  .backgroundLight,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8),
+                                                            const SizedBox(width: 16),
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text(
+                                                                    shop.shopName,
+                                                                    style: CommonStyle.bodyLarge.copyWith(
+                                                                      fontWeight: FontWeight.w600,
+                                                                      color: AppColors.textPrimary,
+                                                                    ),
+                                                                    maxLines: 1,
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                  ),
+                                                                  if (shop.categories.isNotEmpty) ...[
+                                                                    const SizedBox(height: 4),
+                                                                    Text(
+                                                                      shop.categories.join(', '),
+                                                                      style: CommonStyle.bodySmall.copyWith(
+                                                                        color: AppColors.textSecondary,
+                                                                      ),
+                                                                      maxLines: 1,
+                                                                      overflow: TextOverflow.ellipsis,
+                                                                    ),
+                                                                  ],
+                                                                ],
+                                                              ),
                                                             ),
-                                                            child: const Icon(
-                                                                Icons.store,
-                                                                color: AppColors
-                                                                    .primary),
-                                                          ),
-                                                    title: Text(
-                                                      shop.shopName,
-                                                      style:
-                                                          CommonStyle.bodyLarge,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
+                                                            Icon(
+                                                              Icons.chevron_right_rounded,
+                                                              color: AppColors.textSecondary,
+                                                              size: 24,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
                                                     ),
-                                                    subtitle: Text(
-                                                      shop.categories.isNotEmpty
-                                                          ? shop.categories
-                                                              .join(', ')
-                                                          : '',
-                                                      style: CommonStyle
-                                                          .bodySmall
-                                                          .copyWith(
-                                                              color: AppColors
-                                                                  .textSecondary),
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                    onTap: () {
-                                                      // Navigate first, then clean up
-                                                      Navigator.pushNamed(
-                                                        context,
-                                                        '/store/${shop.shopId}',
-                                                      ).then((_) {
-                                                        // Clean up after navigation
-                                                        if (mounted) {
-                                                          setState(() {
-                                                            _showSearchTray = false;
-                                                            _searchController.clear();
-                                                            _searchFocusNode.unfocus();
-                                                          });
-                                                        }
-                                                      });
-                                                    },
                                                   );
                                                 },
                                               ),
@@ -523,10 +608,38 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
 
   Widget _buildResponsiveStoreList(bool isDesktop) {
     if (_stores.isEmpty) {
-      return const Center(
-        child: Text(
-          'No stores available.',
-          style: TextStyle(color: AppColors.textSecondary),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.store_outlined,
+                size: 64,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No stores available',
+              style: CommonStyle.heading4.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Check back later for new stores',
+              style: CommonStyle.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
       );
     }

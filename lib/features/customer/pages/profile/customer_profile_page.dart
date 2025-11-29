@@ -63,9 +63,10 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
       _isSaving = true;
     });
     try {
+      final email = _emailController.text.trim();
       await _profileService.updateCustomerProfile(
         name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
+        email: email.isEmpty ? null : email,
       );
       setState(() {
         _isEditing = false;
@@ -286,7 +287,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           ),
           const SizedBox(height: 4),
           Text(
-            _userData?['email'] ?? 'user@example.com',
+            _userData?['email'] ?? 'No email provided',
             style: CommonStyle.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -311,7 +312,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
         Expanded(
           child: _buildStatCard(
             'Queues Joined',
-            '12', // TODO: Get from API
+            (_userData?['pastQueuesJoined'] ?? 0).toString(),
             Icons.queue,
             AppColors.primary,
           ),
@@ -320,7 +321,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
         Expanded(
           child: _buildStatCard(
             'Total Saved Time',
-            '2h 30m', // TODO: Calculate from API
+            _formatTimeSaved((_userData?['timeSaved'] as num?)?.toInt() ?? 0),
             Icons.access_time,
             AppColors.warning,
           ),
@@ -451,6 +452,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
             enabled: _isEditing,
             keyboardType: TextInputType.emailAddress,
             icon: Icons.email_outlined,
+            hintText: _userData?['email'] == null ? 'No email provided' : null,
           ),
           const SizedBox(height: 16),
           _buildModernField(
@@ -662,12 +664,29 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     );
   }
 
+  String _formatTimeSaved(int seconds) {
+    if (seconds < 60) {
+      return '${seconds}s';
+    } else if (seconds < 3600) {
+      final minutes = seconds ~/ 60;
+      return '${minutes}m';
+    } else {
+      final hours = seconds ~/ 3600;
+      final minutes = (seconds % 3600) ~/ 60;
+      if (minutes > 0) {
+        return '${hours}h ${minutes}m';
+      }
+      return '${hours}h';
+    }
+  }
+
   Widget _buildModernField({
     required String label,
     required TextEditingController controller,
     bool enabled = false,
     TextInputType keyboardType = TextInputType.text,
     IconData? icon,
+    String? hintText,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -688,6 +707,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
         ),
         decoration: InputDecoration(
           labelText: label,
+          hintText: hintText,
           prefixIcon: icon != null 
               ? Icon(
                   icon,

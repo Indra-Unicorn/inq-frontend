@@ -14,15 +14,8 @@ class ProfileService {
       throw Exception('Not authenticated');
     }
 
-    final decodedToken = JwtDecoder.decode(token);
-    final memberId = decodedToken['memberId'];
-
-    if (memberId == null) {
-      throw Exception('Invalid token');
-    }
-
     final response = await http.get(
-      Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.getUserById}/$memberId'),
+      Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.getCustomerInfo}'),
       headers: {
         'accept': '*/*',
         'Authorization': 'Bearer $token',
@@ -73,9 +66,16 @@ class ProfileService {
   }
 
   Future<void> updateCustomerProfile(
-      {required String name, required String email}) async {
+      {required String name, String? email}) async {
     final token = await AuthService.getToken();
     if (token == null) throw Exception('User not authenticated');
+
+    final body = <String, dynamic>{
+      'name': name,
+    };
+    if (email != null && email.isNotEmpty) {
+      body['email'] = email;
+    }
 
     final response = await http.put(
       Uri.parse('${ApiEndpoints.baseUrl}/users/customer/update'),
@@ -84,10 +84,7 @@ class ProfileService {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-      }),
+      body: jsonEncode(body),
     );
 
     final data = jsonDecode(response.body);
