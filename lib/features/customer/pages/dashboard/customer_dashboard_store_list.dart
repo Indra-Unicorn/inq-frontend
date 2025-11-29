@@ -156,7 +156,7 @@ class CustomerDashboardStoreList extends StatelessWidget {
             Expanded(
                 child: _buildInfoIconText(
               Icons.people_alt,
-              '${store.metadata['activeQueues'] ?? 0} active',
+              '${store.activeCustomerCount ?? 0} active',
               AppColors.info,
             )),
             Expanded(
