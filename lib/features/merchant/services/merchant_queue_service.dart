@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../../shared/constants/api_endpoints.dart';
 import '../../../services/auth_service.dart';
 import '../models/merchant_queue.dart';
+import '../models/queue_history_entry.dart';
 import '../../customer/models/customer_queue_summary.dart';
 
 class MerchantQueueService {
@@ -262,6 +263,36 @@ class MerchantQueueService {
       }
     } catch (e) {
       throw Exception('Failed to remove customer: $e');
+    }
+  }
+
+  static Future<List<QueueHistoryEntry>> getQueueHistory(String queueId) async {
+    try {
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}/queue-manager/$queueId/history'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': '*/*',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final List<dynamic> historyData = data['data'] ?? [];
+        return historyData
+            .map((json) => QueueHistoryEntry.fromJson(json))
+            .toList();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to load queue history');
+      }
+    } catch (e) {
+      throw Exception('Failed to load queue history: $e');
     }
   }
 }

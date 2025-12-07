@@ -11,6 +11,7 @@ import 'components/queue_list.dart';
 import 'components/merchant_bottom_navigation.dart';
 import 'components/create_queue_dialog.dart';
 import 'components/close_queue_confirmation_dialog.dart';
+import 'pages/queue_history_page.dart';
 import '../../../shared/constants/app_colors.dart';
 
 class MerchantDashboard extends StatefulWidget {
@@ -138,6 +139,18 @@ class _MerchantDashboardState extends State<MerchantDashboard>
     Navigator.pushNamed(context, '/merchant-profile');
   }
 
+  void _navigateToHistory() {
+    final controller = context.read<MerchantDashboardController>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QueueHistoryPage(
+          queues: controller.queues,
+        ),
+      ),
+    );
+  }
+
   Future<void> _showCloseQueueDialog(MerchantQueue queue) async {
     await showDialog(
       context: context,
@@ -199,6 +212,12 @@ class _MerchantDashboardState extends State<MerchantDashboard>
               ),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.history,
+                    color: AppColors.textSecondary),
+                tooltip: 'History',
+                onPressed: _navigateToHistory,
+              ),
               IconButton(
                 icon: const Icon(Icons.person_outline,
                     color: AppColors.textSecondary),
