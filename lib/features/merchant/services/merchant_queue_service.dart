@@ -64,7 +64,7 @@ class MerchantQueueService {
     }
   }
 
-  static Future<void> processNextCustomer(String queueId) async {
+  static Future<void> processNextCustomer(String queueId, String customerId) async {
     try {
       final token = await _getAuthToken();
       if (token == null) {
@@ -73,9 +73,10 @@ class MerchantQueueService {
 
       final response = await http.post(
         Uri.parse(
-            '${ApiEndpoints.baseUrl}/queue-manager/$queueId/process-next'),
+            '${ApiEndpoints.baseUrl}/queue-manager/$queueId/processCustomer/$customerId'),
         headers: {
           'Authorization': 'Bearer $token',
+          'accept': '*/*',
         },
       );
 

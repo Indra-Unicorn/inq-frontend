@@ -143,6 +143,7 @@ class _QueueManagementState extends State<QueueManagement>
             .map((member) => {
                   'name': member.customerName ?? 'Unknown',
                   'reservationId': member.id,
+                  'customerId': member.customerId,
                   'imageUrl': null, // No image in API, can use placeholder
                   'position': member.currentRank,
                   'waitTime': member.estimatedWaitTimeDisplay,
@@ -171,6 +172,7 @@ class _QueueManagementState extends State<QueueManagement>
             .map((member) => {
                   'name': member.customerName ?? 'Unknown',
                   'reservationId': member.id,
+                  'customerId': member.customerId,
                   'imageUrl': null,
                   'position': member.currentRank,
                   'waitTime': member.estimatedWaitTimeDisplay,
@@ -184,7 +186,24 @@ class _QueueManagementState extends State<QueueManagement>
 
   Future<void> _processNextCustomer() async {
     try {
-      await MerchantQueueService.processNextCustomer(widget.queue.qid);
+      // Get the top customer (position 1) from the queue
+      if (_topCustomers.isEmpty) {
+        // If we don't have the top customers loaded, fetch them first
+        await _loadQueueMembers();
+      }
+      
+      if (_topCustomers.isEmpty) {
+        throw Exception('No customers in queue to process');
+      }
+      
+      // Sort customers by position to get the top customer (position 1)
+      final sortedCustomers = List<Map<String, dynamic>>.from(_topCustomers)
+        ..sort((a, b) => (a['position'] as int).compareTo(b['position'] as int));
+      
+      final topCustomer = sortedCustomers.first;
+      final customerId = topCustomer['customerId'] as String;
+      
+      await MerchantQueueService.processNextCustomer(widget.queue.qid, customerId);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Customer processed successfully'),
