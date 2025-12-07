@@ -181,9 +181,8 @@ class StoreImagesSection extends StatelessWidget {
   Widget _buildImageGallery() {
     if (store.images.length == 1) {
       return _buildSingleImage();
-    } else if (store.images.length <= 4) {
-      return _buildGridGallery();
     } else {
+      // Always use horizontal scrollable layout for multiple images
       return _buildScrollableGallery();
     }
   }
@@ -273,10 +272,11 @@ class StoreImagesSection extends StatelessWidget {
 
   Widget _buildScrollableGallery() {
     return SizedBox(
-      height: 140,
+      height: 180,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         itemCount: store.images.length,
         itemBuilder: (context, index) {
           return Container(
@@ -284,7 +284,8 @@ class StoreImagesSection extends StatelessWidget {
             child: _buildImageContainer(
               context: context,
               index: index,
-              width: 140.0,
+              width: 180.0,
+              height: 180.0,
               child: Stack(
                 fit: StackFit.expand,
                 children: [

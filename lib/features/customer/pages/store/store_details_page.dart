@@ -187,13 +187,15 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                           ),
                         ),
                         
+                        // Spacing between header and images
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: 24),
+                        ),
+                        
                         // Images Section with better spacing
                         SliverToBoxAdapter(
-                          child: Transform.translate(
-                            offset: const Offset(0, -20),
-                            child: StoreImagesSection(
-                              store: currentShop!,
-                            ),
+                          child: StoreImagesSection(
+                            store: currentShop!,
                           ),
                         ),
                         
