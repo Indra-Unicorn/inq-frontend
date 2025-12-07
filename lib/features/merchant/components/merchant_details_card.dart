@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/merchant_profile.dart';
+import '../../../shared/constants/app_colors.dart';
 
 class MerchantDetailsCard extends StatelessWidget {
   final bool isEditMode;
@@ -21,9 +22,19 @@ class MerchantDetailsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -31,88 +42,179 @@ class MerchantDetailsCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.person, size: 24, color: Color(0xFFE9B8BA)),
-                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.primary, AppColors.primaryLight],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.person_outline,
+                    size: 20,
+                    color: AppColors.textWhite,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Text(
                   'Merchant Details',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             if (isEditMode) ...[
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Name',
-                  prefixIcon: Icon(Icons.person_outline),
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: Icon(Icons.person_outline, color: AppColors.primary),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: emailController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: phoneController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Phone',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: Icon(Icons.phone_outlined, color: AppColors.primary),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
                 ),
                 keyboardType: TextInputType.phone,
               ),
             ] else ...[
-              _buildReadOnlyRow('Name', merchantProfile?.name ?? ''),
-              _buildReadOnlyRow('Email', merchantProfile?.email ?? ''),
-              _buildReadOnlyRow('Phone', merchantProfile?.phoneNumber ?? ''),
+              _buildReadOnlyRow(Icons.person_outline, 'Name', merchantProfile?.name ?? ''),
+              _buildDivider(),
+              _buildReadOnlyRow(Icons.email_outlined, 'Email', merchantProfile?.email ?? ''),
+              _buildDivider(),
+              _buildReadOnlyRow(Icons.phone_outlined, 'Phone', merchantProfile?.phoneNumber ?? ''),
             ],
             // Status is always read-only (managed by backend)
-            _buildReadOnlyRow('Status', merchantProfile?.statusDisplay ?? ''),
-            _buildReadOnlyRow(
-              'InQoin',
-              '${merchantProfile?.formattedInQoin ?? '0.00'} Qoins',
-            ),
+            if (!isEditMode) ...[
+              _buildDivider(),
+              _buildReadOnlyRow(Icons.verified_outlined, 'Status', merchantProfile?.statusDisplay ?? ''),
+              _buildDivider(),
+              _buildReadOnlyRow(Icons.account_balance_wallet_outlined, 'InQoin', '${merchantProfile?.formattedInQoin ?? '0.00'} Qoins'),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildReadOnlyRow(String label, String value) {
+  Widget _buildReadOnlyRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF8B5B5C),
-                fontWeight: FontWeight.w500,
-              ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: AppColors.primary,
             ),
           ),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF191010),
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: AppColors.border,
     );
   }
 }

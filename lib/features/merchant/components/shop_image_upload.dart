@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import '../models/merchant_profile.dart';
 import '../services/merchant_profile_service.dart';
+import '../../../shared/constants/app_colors.dart';
 
 class ShopImageUpload extends StatefulWidget {
   final MerchantShop? shop;
@@ -21,15 +23,26 @@ class ShopImageUpload extends StatefulWidget {
 }
 
 class _ShopImageUploadState extends State<ShopImageUpload> {
-  File? _selectedImage;
+  XFile? _selectedImageFile;
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -37,41 +50,70 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
           children: [
             Row(
               children: [
-                const Icon(Icons.photo_camera,
-                    size: 24, color: Color(0xFFE9B8BA)),
-                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.info, AppColors.info.withOpacity(0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.photo_camera_outlined,
+                    size: 20,
+                    color: AppColors.textWhite,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Text(
                   'Shop Images',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // Display current images
             if (widget.shop?.images.isNotEmpty == true) ...[
-              Text(
-                'Current Images',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w500),
+              Row(
+                children: [
+                  Icon(Icons.collections_outlined, size: 18, color: AppColors.info),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Current Images',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               SizedBox(
-                height: 100,
+                height: 110,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: widget.shop!.images.length,
                   itemBuilder: (context, index) {
                     return Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      width: 100,
+                      margin: const EdgeInsets.only(right: 12),
+                      width: 110,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadowLight,
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                         image: DecorationImage(
                           image: NetworkImage(widget.shop!.images[index]),
                           fit: BoxFit.cover,
@@ -81,62 +123,92 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
             ],
 
             // Upload new image section
             if (widget.isEditMode) ...[
-              Text(
-                'Upload New Image',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w500),
+              Row(
+                children: [
+                  Icon(Icons.add_photo_alternate_outlined, size: 18, color: AppColors.info),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Upload New Image',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
               // Image preview
-              if (_selectedImage != null) ...[
+              if (_selectedImageFile != null) ...[
                 Container(
                   width: double.infinity,
                   height: 200,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: DecorationImage(
-                      image: FileImage(_selectedImage!),
-                      fit: BoxFit.cover,
-                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadowLight,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: kIsWeb
+                        ? Image.network(
+                            _selectedImageFile!.path,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.file(
+                            File(_selectedImageFile!.path),
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
               ],
 
               // Upload buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Flexible(
+                  Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _isUploading ? null : _pickImageFromCamera,
-                      icon: const Icon(Icons.camera_alt),
+                      icon: const Icon(Icons.camera_alt_outlined, size: 18),
                       label: const Text('Camera'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE9B8BA),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: AppColors.info,
+                        foregroundColor: AppColors.textWhite,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Flexible(
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _isUploading ? null : _pickImageFromGallery,
-                      icon: const Icon(Icons.photo_library),
+                      icon: const Icon(Icons.photo_library_outlined, size: 18),
                       label: const Text('Gallery'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE9B8BA),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: AppColors.info,
+                        foregroundColor: AppColors.textWhite,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
                       ),
                     ),
                   ),
@@ -144,27 +216,31 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
               ),
 
               // Upload button
-              if (_selectedImage != null) ...[
-                const SizedBox(height: 8),
+              if (_selectedImageFile != null) ...[
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: _isUploading ? null : _uploadImage,
                     icon: _isUploading
                         ? const SizedBox(
-                            width: 16,
-                            height: 16,
+                            width: 18,
+                            height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: AppColors.textWhite,
                             ),
                           )
-                        : const Icon(Icons.upload),
+                        : const Icon(Icons.upload_outlined, size: 18),
                     label: Text(_isUploading ? 'Uploading...' : 'Upload Image'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4CAF50),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      backgroundColor: AppColors.success,
+                      foregroundColor: AppColors.textWhite,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
                     ),
                   ),
                 ),
@@ -172,20 +248,53 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
             ] else ...[
               // Read-only view
               if (widget.shop?.images.isNotEmpty == true) ...[
-                Text(
-                  'Shop has ${widget.shop!.images.length} image(s)',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF8B5B5C),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.info.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline, 
+                        color: AppColors.info, 
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Shop has ${widget.shop!.images.length} image(s)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ] else ...[
-                Text(
-                  'No images uploaded yet',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF8B5B5C),
-                    fontStyle: FontStyle.italic,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.image_outlined, 
+                        color: AppColors.textSecondary, 
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'No images uploaded yet',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -207,7 +316,7 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
 
       if (image != null && mounted) {
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImageFile = image;
         });
       }
     } catch (e) {
@@ -228,7 +337,7 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
 
       if (image != null && mounted) {
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImageFile = image;
         });
       }
     } catch (e) {
@@ -239,7 +348,7 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
   }
 
   Future<void> _uploadImage() async {
-    if (_selectedImage == null || widget.shop == null) return;
+    if (_selectedImageFile == null || widget.shop == null) return;
 
     if (!mounted) return;
 
@@ -250,13 +359,13 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
     try {
       await MerchantProfileService.uploadShopImage(
         shopId: widget.shop!.shopId,
-        imageFile: _selectedImage!,
+        imageFile: _selectedImageFile!,
       );
 
       if (mounted) {
         // Clear selected image
         setState(() {
-          _selectedImage = null;
+          _selectedImageFile = null;
           _isUploading = false;
         });
 
@@ -264,7 +373,7 @@ class _ShopImageUploadState extends State<ShopImageUpload> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Image uploaded successfully'),
-            backgroundColor: Color(0xFF4CAF50),
+            backgroundColor: AppColors.success,
           ),
         );
 

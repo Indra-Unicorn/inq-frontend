@@ -128,7 +128,7 @@ class _MerchantProfileState extends State<MerchantProfile> {
 
           return SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -140,14 +140,18 @@ class _MerchantProfileState extends State<MerchantProfile> {
                     emailController: _controller.merchantEmailController,
                     phoneController: _controller.merchantPhoneController,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   // Store Details Card (includes shop images)
                   StoreDetailsCard(
                     isEditMode: _controller.isEditMode,
                     currentShop: _controller.currentShop,
                     storeNameController: _controller.storeNameController,
                     storePhoneController: _controller.storePhoneController,
-                    storeAddressController: _controller.storeAddressController,
+                    streetAddressController: _controller.streetAddressController,
+                    postalCodeController: _controller.postalCodeController,
+                    cityController: _controller.cityController,
+                    stateController: _controller.stateController,
+                    countryController: _controller.countryController,
                     openTime: _controller.openTime,
                     closeTime: _controller.closeTime,
                     selectedCategories: _controller.selectedCategories,
@@ -159,10 +163,19 @@ class _MerchantProfileState extends State<MerchantProfile> {
                       await _controller.refreshProfile();
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   // Logout Button
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.error.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: ElevatedButton(
                       onPressed: _logout,
                       style: ElevatedButton.styleFrom(
@@ -174,17 +187,24 @@ class _MerchantProfileState extends State<MerchantProfile> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Logout',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.logout_outlined, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),

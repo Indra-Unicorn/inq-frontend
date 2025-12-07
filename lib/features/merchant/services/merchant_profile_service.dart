@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../shared/constants/api_endpoints.dart';
@@ -141,7 +144,7 @@ class MerchantProfileService {
 
   static Future<void> uploadShopImage({
     required String shopId,
-    required File imageFile,
+    required XFile imageFile,
   }) async {
     final token = await AuthService.getToken();
 
@@ -149,28 +152,66 @@ class MerchantProfileService {
       throw Exception('Authentication required');
     }
 
+    // Get MIME type from file extension
+    String getMimeType(String filename) {
+      final extension = filename.toLowerCase().split('.').last;
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+          return 'image/jpeg';
+        case 'png':
+          return 'image/png';
+        case 'gif':
+          return 'image/gif';
+        case 'webp':
+          return 'image/webp';
+        default:
+          return 'image/jpeg'; // Default fallback
+      }
+    }
+
+    // Build URL with shopId as query parameter
+    final uri = Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.updateShopImage}')
+        .replace(queryParameters: {'shopId': shopId});
+
     // Create multipart request
     final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.updateShopImage}'),
+      'PATCH',
+      uri,
     );
 
     // Add authorization header
     request.headers['Authorization'] = 'Bearer $token';
 
-    // Add shopId as a field
-    request.fields['shopId'] = shopId;
+    // Get filename and MIME type
+    final filename = kIsWeb ? imageFile.name : imageFile.path.split('/').last;
+    final mimeType = getMimeType(filename);
 
-    // Add the image file
-    final stream = http.ByteStream(imageFile.openRead());
-    final length = await imageFile.length();
-    final multipartFile = http.MultipartFile(
-      'image',
-      stream,
-      length,
-      filename: imageFile.path.split('/').last,
-    );
-    request.files.add(multipartFile);
+    // Add the image file - handle web and mobile differently
+    if (kIsWeb) {
+      // For web, read bytes directly from XFile
+      final bytes = await imageFile.readAsBytes();
+      final multipartFile = http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: filename,
+        contentType: MediaType.parse(mimeType),
+      );
+      request.files.add(multipartFile);
+    } else {
+      // For mobile, use File operations
+      final file = File(imageFile.path);
+      final stream = http.ByteStream(file.openRead());
+      final length = await file.length();
+      final multipartFile = http.MultipartFile(
+        'image',
+        stream,
+        length,
+        filename: filename,
+        contentType: MediaType.parse(mimeType),
+      );
+      request.files.add(multipartFile);
+    }
 
     // Send the request
     final response = await request.send();
