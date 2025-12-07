@@ -212,68 +212,30 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                         // Enhanced Queue Section Header
                         SliverToBoxAdapter(
                           child: Container(
-                            margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                            padding: const EdgeInsets.all(20),
+                            margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppColors.primary.withValues(alpha: 0.05),
-                                  AppColors.primary.withValues(alpha: 0.02),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
+                              color: AppColors.primary.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: AppColors.primary.withValues(alpha: 0.1),
                               ),
                             ),
                             child: Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        AppColors.primary,
-                                        AppColors.primary.withValues(alpha: 0.8),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primary.withValues(alpha: 0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.queue_outlined,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
+                                Icon(
+                                  Icons.queue_outlined,
+                                  color: AppColors.primary,
+                                  size: 18,
                                 ),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: 12),
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Available Queues',
-                                        style: CommonStyle.heading3.copyWith(
-                                          color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Join a queue to skip the wait',
-                                        style: CommonStyle.bodySmall.copyWith(
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    'Available Queues',
+                                    style: CommonStyle.heading4.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                                 if (_queues.isNotEmpty)
@@ -281,7 +243,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: AppColors.primary.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       '${_queues.length}',

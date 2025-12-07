@@ -21,12 +21,12 @@ class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         children: [
           // Quick Stats Row
           _buildQuickStats(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           
           // Collapsible Main Info Card
           Container(
@@ -182,7 +182,7 @@ class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
             widget.store.statusColor,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: _buildStatCard(
             'Avg Wait',
@@ -191,7 +191,7 @@ class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
             AppColors.primary,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: _buildStatCard(
             'Queues',
@@ -206,40 +206,41 @@ class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
   
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
+          color: color.withValues(alpha: 0.15),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowLight.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.shadowLight.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(
               icon,
               color: color,
-              size: 18,
+              size: 16,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             value,
-            style: CommonStyle.bodyLarge.copyWith(
+            style: CommonStyle.bodyMedium.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
@@ -250,6 +251,7 @@ class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
             label,
             style: CommonStyle.caption.copyWith(
               color: AppColors.textSecondary,
+              fontSize: 11,
             ),
             textAlign: TextAlign.center,
           ),
