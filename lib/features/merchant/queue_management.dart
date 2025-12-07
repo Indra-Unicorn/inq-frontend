@@ -137,9 +137,9 @@ class _QueueManagementState extends State<QueueManagement>
     try {
       final members =
           await MerchantQueueService.getQueueMembers(widget.queue.qid);
+      // Show all customers in the queue
       setState(() {
         _topCustomers = members
-            .take(3)
             .map((member) => {
                   'name': member.customerName ?? 'Unknown',
                   'reservationId': member.id,
@@ -165,10 +165,10 @@ class _QueueManagementState extends State<QueueManagement>
       final members =
           await MerchantQueueService.getQueueMembers(widget.queue.qid);
       
+      // Show all customers in the queue
       setState(() {
         _queueDetails = queueDetails;
         _topCustomers = members
-            .take(3)
             .map((member) => {
                   'name': member.customerName ?? 'Unknown',
                   'reservationId': member.id,
@@ -208,6 +208,31 @@ class _QueueManagementState extends State<QueueManagement>
         const SnackBar(
           content: Text('Customer processed successfully'),
           backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+      _stopPolling();
+      _stopCountdown();
+      await _loadQueueDetails(); // Refresh queue details
+      _startPolling();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _processCustomer(String customerId, String customerName) async {
+    try {
+      final queue = _queueDetails ?? widget.queue;
+      
+      await MerchantQueueService.processNextCustomer(queue.qid, customerId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$customerName processed successfully'),
+          backgroundColor: const Color(0xFF4CAF50),
         ),
       );
       _stopPolling();
@@ -671,6 +696,10 @@ class _QueueManagementState extends State<QueueManagement>
                               itemCount: _topCustomers.length,
                               itemBuilder: (context, index) {
                                 final customer = _topCustomers[index];
+                                final queue = _queueDetails ?? widget.queue;
+                                final customerPosition = customer['position'] as int;
+                                final canProcess = customerPosition <= queue.bufferNumber;
+                                
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 12),
                                   padding: const EdgeInsets.all(16),
@@ -692,11 +721,16 @@ class _QueueManagementState extends State<QueueManagement>
                                         width: 40,
                                         height: 40,
                                         decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF4CAF50),
-                                              Color(0xFF45A049)
-                                            ],
+                                          gradient: LinearGradient(
+                                            colors: canProcess
+                                                ? const [
+                                                    Color(0xFF4CAF50),
+                                                    Color(0xFF45A049)
+                                                  ]
+                                                : const [
+                                                    Color(0xFF9E9E9E),
+                                                    Color(0xFF757575)
+                                                  ],
                                           ),
                                           borderRadius:
                                               BorderRadius.circular(20),
@@ -749,10 +783,13 @@ class _QueueManagementState extends State<QueueManagement>
                                         ),
                                       ),
 
-                                      // Action Button
-                                      if (customer['position'] == 1)
+                                      // Action Button - Show for customers up to bufferNumber
+                                      if (canProcess)
                                         ElevatedButton.icon(
-                                          onPressed: _processNextCustomer,
+                                          onPressed: () => _processCustomer(
+                                            customer['customerId'] as String,
+                                            customer['name'] as String,
+                                          ),
                                           icon: const Icon(Icons.play_arrow,
                                               size: 18),
                                           label: const Text('Process'),
