@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'controllers/merchant_profile_controller.dart';
 import 'components/merchant_details_card.dart';
 import 'components/store_details_card.dart';
-import 'components/shop_image_upload.dart';
 import 'services/merchant_profile_service.dart';
+import '../../shared/constants/app_colors.dart';
 
 class MerchantProfile extends StatefulWidget {
   const MerchantProfile({super.key});
@@ -30,7 +30,7 @@ class _MerchantProfileState extends State<MerchantProfile> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading profile: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -44,7 +44,7 @@ class _MerchantProfileState extends State<MerchantProfile> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully'),
-            backgroundColor: Color(0xFFE8B4B7),
+            backgroundColor: AppColors.success,
           ),
         );
       }
@@ -53,7 +53,7 @@ class _MerchantProfileState extends State<MerchantProfile> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating profile: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -81,20 +81,32 @@ class _MerchantProfileState extends State<MerchantProfile> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F9),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Merchant Profile'),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
+        title: Text(
+          'Merchant Profile',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+            fontFamily: 'Inter',
+            letterSpacing: -0.5,
+          ),
+        ),
+        backgroundColor: AppColors.background,
+        elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Color(0xFF191010)),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
         actions: [
           ListenableBuilder(
             listenable: _controller,
             builder: (context, child) {
               return IconButton(
-                icon: Icon(_controller.isEditMode ? Icons.close : Icons.edit),
+                icon: Icon(
+                  _controller.isEditMode ? Icons.close : Icons.edit_outlined,
+                  color: AppColors.textSecondary,
+                ),
                 onPressed: _controller.toggleEditMode,
                 tooltip:
                     _controller.isEditMode ? 'Cancel Edit' : 'Edit Profile',
@@ -107,12 +119,16 @@ class _MerchantProfileState extends State<MerchantProfile> {
         listenable: _controller,
         builder: (context, child) {
           if (_controller.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+              ),
+            );
           }
 
           return SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -125,7 +141,7 @@ class _MerchantProfileState extends State<MerchantProfile> {
                     phoneController: _controller.merchantPhoneController,
                   ),
                   const SizedBox(height: 16),
-                  // Store Details Card
+                  // Store Details Card (includes shop images)
                   StoreDetailsCard(
                     isEditMode: _controller.isEditMode,
                     currentShop: _controller.currentShop,
@@ -139,34 +155,32 @@ class _MerchantProfileState extends State<MerchantProfile> {
                     onOpenTimeChanged: _controller.updateOpenTime,
                     onCloseTimeChanged: _controller.updateCloseTime,
                     onCategoriesChanged: _controller.updateCategories,
-                  ),
-                  const SizedBox(height: 16),
-                  // Shop Image Upload Card
-                  ShopImageUpload(
-                    shop: _controller.currentShop,
-                    isEditMode: _controller.isEditMode,
                     onImageUploaded: () async {
                       await _controller.refreshProfile();
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   // Logout Button
-                  ElevatedButton(
-                    onPressed: _logout,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE9242A),
-                      foregroundColor: const Color(0xFFFCF8F8),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    child: ElevatedButton(
+                      onPressed: _logout,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: AppColors.textWhite,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
                       ),
-                    ),
-                    child: const Text(
-                      'Logout',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.015,
+                      child: const Text(
+                        'Logout',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),
@@ -184,13 +198,22 @@ class _MerchantProfileState extends State<MerchantProfile> {
               ? FloatingActionButton.extended(
                   onPressed: _controller.isUpdating ? null : _saveProfile,
                   icon: _controller.isUpdating
-                      ? const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: AppColors.textWhite,
+                            strokeWidth: 2,
+                          ),
                         )
-                      : const Icon(Icons.save),
+                      : const Icon(Icons.save_outlined),
                   label: Text(_controller.isUpdating ? 'Saving...' : 'Save'),
-                  backgroundColor: const Color(0xFFE9B8BA),
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textWhite,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 )
               : const SizedBox.shrink();
         },
