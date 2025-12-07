@@ -3,6 +3,7 @@ import '../models/merchant_queue.dart';
 import '../models/merchant_data.dart';
 import '../services/merchant_queue_service.dart';
 import '../services/merchant_data_service.dart';
+import '../../customer/models/customer_queue_summary.dart';
 
 class MerchantDashboardController extends ChangeNotifier {
   bool _isLoading = true;
@@ -109,7 +110,21 @@ class MerchantDashboardController extends ChangeNotifier {
   /// Process the next customer in a queue
   Future<void> processNextCustomer(MerchantQueue queue) async {
     try {
-      await MerchantQueueService.processNextCustomer(queue.qid);
+      // Get queue members to find the top customer
+      final members = await MerchantQueueService.getQueueMembers(queue.qid);
+      
+      if (members.isEmpty) {
+        throw Exception('No customers in queue to process');
+      }
+      
+      // Sort members by currentRank to get the top customer (rank 1)
+      final sortedMembers = List<CustomerQueue>.from(members)
+        ..sort((a, b) => a.currentRank.compareTo(b.currentRank));
+      
+      final topCustomer = sortedMembers.first;
+      
+      // Process the top customer using their customer ID
+      await MerchantQueueService.processNextCustomer(queue.qid, topCustomer.customerId);
       await loadQueues(); // Refresh the list
     } catch (e) {
       rethrow;

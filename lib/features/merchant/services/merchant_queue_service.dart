@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../../shared/constants/api_endpoints.dart';
 import '../../../services/auth_service.dart';
 import '../models/merchant_queue.dart';
+import '../models/queue_history_entry.dart';
 import '../../customer/models/customer_queue_summary.dart';
 
 class MerchantQueueService {
@@ -64,7 +65,7 @@ class MerchantQueueService {
     }
   }
 
-  static Future<void> processNextCustomer(String queueId) async {
+  static Future<void> processNextCustomer(String queueId, String customerId) async {
     try {
       final token = await _getAuthToken();
       if (token == null) {
@@ -73,9 +74,10 @@ class MerchantQueueService {
 
       final response = await http.post(
         Uri.parse(
-            '${ApiEndpoints.baseUrl}/queue-manager/$queueId/process-next'),
+            '${ApiEndpoints.baseUrl}/queue-manager/$queueId/processCustomer/$customerId'),
         headers: {
           'Authorization': 'Bearer $token',
+          'accept': '*/*',
         },
       );
 
@@ -235,6 +237,62 @@ class MerchantQueueService {
       }
     } catch (e) {
       throw Exception('Failed to load queue members: $e');
+    }
+  }
+
+  static Future<void> removeCustomer(String queueId, String customerId) async {
+    try {
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.delete(
+        Uri.parse(
+            '${ApiEndpoints.baseUrl}/queue-manager/$queueId/members/$customerId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': '*/*',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode != 200 || data['success'] != true) {
+        throw Exception(data['message'] ?? 'Failed to remove customer');
+      }
+    } catch (e) {
+      throw Exception('Failed to remove customer: $e');
+    }
+  }
+
+  static Future<List<QueueHistoryEntry>> getQueueHistory(String queueId) async {
+    try {
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}/queue-manager/$queueId/history'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': '*/*',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final List<dynamic> historyData = data['data'] ?? [];
+        return historyData
+            .map((json) => QueueHistoryEntry.fromJson(json))
+            .toList();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to load queue history');
+      }
+    } catch (e) {
+      throw Exception('Failed to load queue history: $e');
     }
   }
 }

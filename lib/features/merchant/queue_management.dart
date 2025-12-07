@@ -22,8 +22,11 @@ class _QueueManagementState extends State<QueueManagement>
   String? _errorMessage;
   Timer? _pollingTimer;
   Timer? _countdownTimer;
+  Timer? _removeTimer;
   bool _isPollingActive = false;
   int _secondsUntilNextRefresh = 10;
+  DateTime? _firstCustomerTimestamp;
+  int _secondsUntilRemoveEnabled = 30;
 
   @override
   void initState() {
@@ -39,6 +42,7 @@ class _QueueManagementState extends State<QueueManagement>
     WidgetsBinding.instance.removeObserver(this);
     _stopPolling();
     _stopCountdown();
+    _stopRemoveTimer();
     super.dispose();
   }
 
@@ -109,6 +113,32 @@ class _QueueManagementState extends State<QueueManagement>
     });
   }
 
+  void _startRemoveTimer() {
+    _stopRemoveTimer();
+    _removeTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted && _firstCustomerTimestamp != null) {
+        final elapsed = DateTime.now().difference(_firstCustomerTimestamp!);
+        final remaining = 30 - elapsed.inSeconds;
+        
+        setState(() {
+          if (remaining > 0) {
+            _secondsUntilRemoveEnabled = remaining;
+          } else {
+            _secondsUntilRemoveEnabled = 0;
+            _stopRemoveTimer();
+          }
+        });
+      } else {
+        _stopRemoveTimer();
+      }
+    });
+  }
+
+  void _stopRemoveTimer() {
+    _removeTimer?.cancel();
+    _removeTimer = null;
+  }
+
   Future<void> _loadQueueDetails() async {
     setState(() {
       _isLoading = true;
@@ -137,21 +167,58 @@ class _QueueManagementState extends State<QueueManagement>
     try {
       final members =
           await MerchantQueueService.getQueueMembers(widget.queue.qid);
+      // Show all customers in the queue
       setState(() {
+        final previousFirstCustomer = _topCustomers.firstWhere(
+          (c) => c['position'] == 1,
+          orElse: () => <String, dynamic>{},
+        );
+        final previousFirstCustomerId = previousFirstCustomer.isNotEmpty
+            ? previousFirstCustomer['customerId'] as String?
+            : null;
+        
         _topCustomers = members
-            .take(3)
             .map((member) => {
                   'name': member.customerName ?? 'Unknown',
                   'reservationId': member.id,
+                  'customerId': member.customerId,
                   'imageUrl': null, // No image in API, can use placeholder
                   'position': member.currentRank,
                   'waitTime': member.estimatedWaitTimeDisplay,
                 })
             .toList();
+        
+        // Find the customer at position 1
+        final currentFirstCustomer = _topCustomers.firstWhere(
+          (c) => c['position'] == 1,
+          orElse: () => <String, dynamic>{},
+        );
+        
+        // Track when first customer appears or changes
+        if (currentFirstCustomer.isNotEmpty) {
+          final currentFirstCustomerId = currentFirstCustomer['customerId'] as String;
+          if (previousFirstCustomerId != currentFirstCustomerId) {
+            // First customer changed, reset timer
+            _firstCustomerTimestamp = DateTime.now();
+            _secondsUntilRemoveEnabled = 30;
+            _startRemoveTimer();
+          } else if (_firstCustomerTimestamp == null) {
+            // First customer appeared for the first time
+            _firstCustomerTimestamp = DateTime.now();
+            _secondsUntilRemoveEnabled = 30;
+            _startRemoveTimer();
+          }
+        } else {
+          // No first customer, reset tracking
+          _firstCustomerTimestamp = null;
+          _stopRemoveTimer();
+        }
       });
     } catch (e) {
       setState(() {
         _topCustomers = [];
+        _firstCustomerTimestamp = null;
+        _stopRemoveTimer();
       });
     }
   }
@@ -164,18 +231,53 @@ class _QueueManagementState extends State<QueueManagement>
       final members =
           await MerchantQueueService.getQueueMembers(widget.queue.qid);
       
+      // Show all customers in the queue
       setState(() {
+        final previousFirstCustomer = _topCustomers.firstWhere(
+          (c) => c['position'] == 1,
+          orElse: () => <String, dynamic>{},
+        );
+        final previousFirstCustomerId = previousFirstCustomer.isNotEmpty
+            ? previousFirstCustomer['customerId'] as String?
+            : null;
+        
         _queueDetails = queueDetails;
         _topCustomers = members
-            .take(3)
             .map((member) => {
                   'name': member.customerName ?? 'Unknown',
                   'reservationId': member.id,
+                  'customerId': member.customerId,
                   'imageUrl': null,
                   'position': member.currentRank,
                   'waitTime': member.estimatedWaitTimeDisplay,
                 })
             .toList();
+        
+        // Find the customer at position 1
+        final currentFirstCustomer = _topCustomers.firstWhere(
+          (c) => c['position'] == 1,
+          orElse: () => <String, dynamic>{},
+        );
+        
+        // Track when first customer appears or changes
+        if (currentFirstCustomer.isNotEmpty) {
+          final currentFirstCustomerId = currentFirstCustomer['customerId'] as String;
+          if (previousFirstCustomerId != currentFirstCustomerId) {
+            // First customer changed, reset timer
+            _firstCustomerTimestamp = DateTime.now();
+            _secondsUntilRemoveEnabled = 30;
+            _startRemoveTimer();
+          } else if (_firstCustomerTimestamp == null) {
+            // First customer appeared for the first time
+            _firstCustomerTimestamp = DateTime.now();
+            _secondsUntilRemoveEnabled = 30;
+            _startRemoveTimer();
+          }
+        } else {
+          // No first customer, reset tracking
+          _firstCustomerTimestamp = null;
+          _stopRemoveTimer();
+        }
       });
     } catch (e) {
       // Silent failure for polling - don't update error state
@@ -184,7 +286,24 @@ class _QueueManagementState extends State<QueueManagement>
 
   Future<void> _processNextCustomer() async {
     try {
-      await MerchantQueueService.processNextCustomer(widget.queue.qid);
+      // Get the top customer (position 1) from the queue
+      if (_topCustomers.isEmpty) {
+        // If we don't have the top customers loaded, fetch them first
+        await _loadQueueMembers();
+      }
+      
+      if (_topCustomers.isEmpty) {
+        throw Exception('No customers in queue to process');
+      }
+      
+      // Sort customers by position to get the top customer (position 1)
+      final sortedCustomers = List<Map<String, dynamic>>.from(_topCustomers)
+        ..sort((a, b) => (a['position'] as int).compareTo(b['position'] as int));
+      
+      final topCustomer = sortedCustomers.first;
+      final customerId = topCustomer['customerId'] as String;
+      
+      await MerchantQueueService.processNextCustomer(widget.queue.qid, customerId);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Customer processed successfully'),
@@ -193,6 +312,60 @@ class _QueueManagementState extends State<QueueManagement>
       );
       _stopPolling();
       _stopCountdown();
+      await _loadQueueDetails(); // Refresh queue details
+      _startPolling();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _processCustomer(String customerId, String customerName) async {
+    try {
+      final queue = _queueDetails ?? widget.queue;
+      
+      await MerchantQueueService.processNextCustomer(queue.qid, customerId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$customerName processed successfully'),
+          backgroundColor: const Color(0xFF4CAF50),
+        ),
+      );
+      _stopPolling();
+      _stopCountdown();
+      _stopRemoveTimer();
+      _firstCustomerTimestamp = null;
+      await _loadQueueDetails(); // Refresh queue details
+      _startPolling();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _removeCustomer(String customerId, String customerName) async {
+    try {
+      final queue = _queueDetails ?? widget.queue;
+      
+      await MerchantQueueService.removeCustomer(queue.qid, customerId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$customerName marked as no show'),
+          backgroundColor: const Color(0xFFFF9800),
+        ),
+      );
+      _stopPolling();
+      _stopCountdown();
+      _stopRemoveTimer();
+      _firstCustomerTimestamp = null;
       await _loadQueueDetails(); // Refresh queue details
       _startPolling();
     } catch (e) {
@@ -652,6 +825,10 @@ class _QueueManagementState extends State<QueueManagement>
                               itemCount: _topCustomers.length,
                               itemBuilder: (context, index) {
                                 final customer = _topCustomers[index];
+                                final queue = _queueDetails ?? widget.queue;
+                                final customerPosition = customer['position'] as int;
+                                final canProcess = customerPosition <= queue.bufferNumber;
+                                
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 12),
                                   padding: const EdgeInsets.all(16),
@@ -673,11 +850,16 @@ class _QueueManagementState extends State<QueueManagement>
                                         width: 40,
                                         height: 40,
                                         decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF4CAF50),
-                                              Color(0xFF45A049)
-                                            ],
+                                          gradient: LinearGradient(
+                                            colors: canProcess
+                                                ? const [
+                                                    Color(0xFF4CAF50),
+                                                    Color(0xFF45A049)
+                                                  ]
+                                                : const [
+                                                    Color(0xFF9E9E9E),
+                                                    Color(0xFF757575)
+                                                  ],
                                           ),
                                           borderRadius:
                                               BorderRadius.circular(20),
@@ -711,14 +893,6 @@ class _QueueManagementState extends State<QueueManagement>
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              'ID: ${customer['reservationId']}',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Color(0xFF8B5B5C),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
                                               'Est. wait: ${customer['waitTime']}',
                                               style: const TextStyle(
                                                 fontSize: 14,
@@ -730,10 +904,105 @@ class _QueueManagementState extends State<QueueManagement>
                                         ),
                                       ),
 
-                                      // Action Button
-                                      if (customer['position'] == 1)
+                                      // Action Buttons
+                                      if (customerPosition == 1)
+                                        // First customer - show both Process and Remove buttons
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // Remove/No Show button (only enabled after 30 seconds) - Delete icon with timer
+                                            Tooltip(
+                                              message: _secondsUntilRemoveEnabled > 0
+                                                  ? 'Remove available in $_secondsUntilRemoveEnabled'
+                                                  : 'Remove customer (no show)',
+                                              child: Stack(
+                                                clipBehavior: Clip.none,
+                                                children: [
+                                                  IconButton(
+                                                    onPressed: _secondsUntilRemoveEnabled == 0
+                                                        ? () => _removeCustomer(
+                                                              customer['customerId'] as String,
+                                                              customer['name'] as String,
+                                                            )
+                                                        : null,
+                                                    icon: Icon(
+                                                      Icons.delete_outline,
+                                                      color: _secondsUntilRemoveEnabled == 0
+                                                          ? const Color(0xFFFF9800)
+                                                          : const Color(0xFF9E9E9E),
+                                                      size: 24,
+                                                    ),
+                                                    tooltip: _secondsUntilRemoveEnabled > 0
+                                                        ? 'Remove available in $_secondsUntilRemoveEnabled'
+                                                        : 'Remove customer',
+                                                  ),
+                                                  // Timer badge
+                                                  if (_secondsUntilRemoveEnabled > 0)
+                                                    Positioned(
+                                                      right: 0,
+                                                      top: 0,
+                                                      child: Container(
+                                                        padding: const EdgeInsets.all(2),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(0xFFFF9800),
+                                                          shape: BoxShape.circle,
+                                                          border: Border.all(
+                                                            color: Colors.white,
+                                                            width: 1.5,
+                                                          ),
+                                                        ),
+                                                        constraints: const BoxConstraints(
+                                                          minWidth: 18,
+                                                          minHeight: 18,
+                                                        ),
+                                                        child: Center(
+                                                          child: Text(
+                                                            '$_secondsUntilRemoveEnabled',
+                                                            style: const TextStyle(
+                                                              color: Colors.white,
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            // Process button
+                                            ElevatedButton.icon(
+                                              onPressed: () => _processCustomer(
+                                                customer['customerId'] as String,
+                                                customer['name'] as String,
+                                              ),
+                                              icon: const Icon(Icons.play_arrow,
+                                                  size: 18),
+                                              label: const Text('Process'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    const Color(0xFF4CAF50),
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 16,
+                                                  vertical: 8,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      else if (canProcess)
+                                        // Other processable customers - only Process button
                                         ElevatedButton.icon(
-                                          onPressed: _processNextCustomer,
+                                          onPressed: () => _processCustomer(
+                                            customer['customerId'] as String,
+                                            customer['name'] as String,
+                                          ),
                                           icon: const Icon(Icons.play_arrow,
                                               size: 18),
                                           label: const Text('Process'),

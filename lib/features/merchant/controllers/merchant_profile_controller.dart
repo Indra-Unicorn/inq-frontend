@@ -15,7 +15,12 @@ class MerchantProfileController extends ChangeNotifier {
   final TextEditingController merchantPhoneController = TextEditingController();
   final TextEditingController storeNameController = TextEditingController();
   final TextEditingController storePhoneController = TextEditingController();
-  final TextEditingController storeAddressController = TextEditingController();
+  // Address controllers
+  final TextEditingController streetAddressController = TextEditingController();
+  final TextEditingController postalCodeController = TextEditingController();
+  final TextEditingController cityController = TextEditingController();
+  final TextEditingController stateController = TextEditingController();
+  final TextEditingController countryController = TextEditingController();
 
   // State
   TimeOfDay _openTime = const TimeOfDay(hour: 9, minute: 0);
@@ -52,7 +57,11 @@ class MerchantProfileController extends ChangeNotifier {
     merchantPhoneController.dispose();
     storeNameController.dispose();
     storePhoneController.dispose();
-    storeAddressController.dispose();
+    streetAddressController.dispose();
+    postalCodeController.dispose();
+    cityController.dispose();
+    stateController.dispose();
+    countryController.dispose();
     super.dispose();
   }
 
@@ -73,7 +82,12 @@ class MerchantProfileController extends ChangeNotifier {
       if (shop != null) {
         storeNameController.text = shop.shopName;
         storePhoneController.text = shop.shopPhoneNumber;
-        storeAddressController.text = shop.address.fullAddress;
+        // Populate separate address fields
+        streetAddressController.text = shop.address.streetAddress;
+        postalCodeController.text = shop.address.postalCode;
+        cityController.text = shop.address.city;
+        stateController.text = shop.address.state;
+        countryController.text = shop.address.country;
         _openTime = shop.openTimeOfDay;
         _closeTime = shop.closeTimeOfDay;
         _selectedCategories = List<String>.from(shop.categories);
@@ -92,13 +106,23 @@ class MerchantProfileController extends ChangeNotifier {
 
     _setUpdating(true);
     try {
+      // Create updated address from separate fields
+      final updatedAddress = MerchantAddress(
+        streetAddress: streetAddressController.text.trim(),
+        postalCode: postalCodeController.text.trim(),
+        location: _currentShop!.address.location, // Keep existing location
+        city: cityController.text.trim(),
+        state: stateController.text.trim(),
+        country: countryController.text.trim(),
+      );
+
       await MerchantProfileService.updateMerchantProfile(
         name: merchantNameController.text.trim(),
         email: merchantEmailController.text.trim(),
         phoneNumber: merchantPhoneController.text.trim(),
         shopName: storeNameController.text.trim(),
         shopPhoneNumber: storePhoneController.text.trim(),
-        address: _currentShop!.address,
+        address: updatedAddress,
         isOpen: _currentShop!.isOpen,
         openTime: _openTime,
         closeTime: _closeTime,
