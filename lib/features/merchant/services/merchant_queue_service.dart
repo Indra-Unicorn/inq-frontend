@@ -238,4 +238,30 @@ class MerchantQueueService {
       throw Exception('Failed to load queue members: $e');
     }
   }
+
+  static Future<void> removeCustomer(String queueId, String customerId) async {
+    try {
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.delete(
+        Uri.parse(
+            '${ApiEndpoints.baseUrl}/queue-manager/$queueId/members/$customerId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'accept': '*/*',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode != 200 || data['success'] != true) {
+        throw Exception(data['message'] ?? 'Failed to remove customer');
+      }
+    } catch (e) {
+      throw Exception('Failed to remove customer: $e');
+    }
+  }
 }
