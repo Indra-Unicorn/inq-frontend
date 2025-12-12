@@ -41,25 +41,13 @@ class _SplashScreenState extends State<SplashScreen>
 
       // Check if user is logged in
       final isLoggedIn = await AuthService.isLoggedIn();
-      
-      if (kIsWeb) {
-        print('[SplashScreen] Web platform detected');
-        print('[SplashScreen] Is logged in: $isLoggedIn');
-      }
 
       if (isLoggedIn) {
         // Get user type from stored data or JWT token
         final userType = await AuthService.getUserType();
-        
-        if (kIsWeb) {
-          print('[SplashScreen] User type: $userType');
-        }
 
         if (userType == null) {
           // Unknown user type, go to login
-          if (kIsWeb) {
-            print('[SplashScreen] No user type found, redirecting to login');
-          }
           if (mounted) {
             Navigator.pushReplacementNamed(context, '/login');
           }
@@ -70,21 +58,17 @@ class _SplashScreenState extends State<SplashScreen>
         if (kIsWeb) {
           // Get route from URL
           final currentRoute = _getCurrentWebRoute();
-          print('[SplashScreen] Current web route: $currentRoute');
           
           // If we're on a valid route (not splash or root), preserve it
           if (currentRoute != null && 
               currentRoute != '/' && 
               currentRoute != '/splash' &&
               _isValidRoute(currentRoute)) {
-            print('[SplashScreen] Preserving route: $currentRoute');
             // Navigate to the current route to preserve it
             if (mounted) {
               Navigator.pushReplacementNamed(context, currentRoute);
             }
             return;
-          } else {
-            print('[SplashScreen] Route not preserved. Route: $currentRoute, Valid: ${currentRoute != null ? _isValidRoute(currentRoute) : false}');
           }
         }
 
@@ -96,26 +80,16 @@ class _SplashScreenState extends State<SplashScreen>
                   ? '/merchant-dashboard'
                   : '/login';
           
-          if (kIsWeb) {
-            print('[SplashScreen] Redirecting to: $targetRoute');
-          }
-          
           Navigator.pushReplacementNamed(context, targetRoute);
         }
       } else {
         // Not logged in, go to login page
-        if (kIsWeb) {
-          print('[SplashScreen] Not logged in, redirecting to login');
-        }
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/login');
         }
       }
     } catch (e) {
       // On error, go to login page
-      if (kIsWeb) {
-        print('[SplashScreen] Error during navigation: $e');
-      }
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');
       }
@@ -128,10 +102,6 @@ class _SplashScreenState extends State<SplashScreen>
     
     try {
       final uri = Uri.base;
-      
-      print('[SplashScreen] Full URI: ${uri.toString()}');
-      print('[SplashScreen] URI path: ${uri.path}');
-      print('[SplashScreen] URI fragment: ${uri.fragment}');
       
       // Flutter web uses hash-based routing by default
       // The route is in the fragment (e.g., #/store/123 -> /store/123)
@@ -154,11 +124,8 @@ class _SplashScreenState extends State<SplashScreen>
         route = '/';
       }
       
-      print('[SplashScreen] Extracted route: $route');
-      
       return route;
     } catch (e) {
-      print('[SplashScreen] Error getting web route: $e');
       return null;
     }
   }
@@ -182,22 +149,12 @@ class _SplashScreenState extends State<SplashScreen>
     
     // Check if it's a known route
     if (knownRoutes.contains(route)) {
-      if (kIsWeb) {
-        print('[SplashScreen] Route is valid (known route): $route');
-      }
       return true;
     }
     
     // Check if it's a dynamic route (e.g., /store/{shopId})
     if (route.startsWith('/store/')) {
-      if (kIsWeb) {
-        print('[SplashScreen] Route is valid (dynamic route): $route');
-      }
       return true;
-    }
-    
-    if (kIsWeb) {
-      print('[SplashScreen] Route is NOT valid: $route');
     }
     
     return false;

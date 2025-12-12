@@ -47,7 +47,6 @@ class _QueueHistoryPageState extends State<QueueHistoryPage> {
           _historyByQueue[queue.qid] = history;
         } catch (e) {
           // Continue loading other queues even if one fails
-          print('Error loading history for queue ${queue.qid}: $e');
         }
       }
 
