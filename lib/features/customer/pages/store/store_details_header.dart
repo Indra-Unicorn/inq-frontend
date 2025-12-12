@@ -95,11 +95,13 @@ $deepLink
           ),
           // Main content
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   // Navigation and actions
                   Row(
                     children: [
@@ -206,6 +208,8 @@ $deepLink
                               ),
                             ],
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       
@@ -278,6 +282,7 @@ $deepLink
                     ),
                   ],
                 ],
+                ),
               ),
             ),
           ),

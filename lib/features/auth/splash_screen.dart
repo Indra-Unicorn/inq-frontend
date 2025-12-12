@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../services/auth_service.dart';
 import '../../shared/constants/app_constants.dart';
 
@@ -13,7 +14,7 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-
+  
   @override
   void initState() {
     super.initState();
@@ -41,41 +42,122 @@ class _SplashScreenState extends State<SplashScreen>
       // Check if user is logged in
       final isLoggedIn = await AuthService.isLoggedIn();
 
+      // On web, check if we should preserve the current route
+      if (kIsWeb) {
+        // Get route from URL
+        final currentRoute = _getCurrentWebRoute();
+        
+        // If we're on a valid route (not splash or root), preserve it
+        if (currentRoute != null && 
+            currentRoute != '/' && 
+            currentRoute != '/splash' &&
+            _isValidRoute(currentRoute)) {
+          // Navigate to the current route to preserve it
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, currentRoute);
+          }
+          return;
+        }
+      }
+
       if (isLoggedIn) {
         // Get user type from stored data or JWT token
         final userType = await AuthService.getUserType();
 
         if (userType == null) {
-          // Unknown user type, go to login
+          // Unknown user type, go to customer dashboard (public access)
           if (mounted) {
-            Navigator.pushReplacementNamed(context, '/login');
+            Navigator.pushReplacementNamed(context, '/customer-dashboard');
           }
           return;
         }
 
         // Navigate based on user type
         if (mounted) {
-          if (userType == AppConstants.userTypeCustomer) {
-            Navigator.pushReplacementNamed(context, '/customer-dashboard');
-          } else if (userType == AppConstants.userTypeMerchant) {
-            Navigator.pushReplacementNamed(context, '/merchant-dashboard');
-          } else {
-            // Unknown user type, go to login
-            Navigator.pushReplacementNamed(context, '/login');
-          }
+          final targetRoute = userType == AppConstants.userTypeCustomer
+              ? '/customer-dashboard'
+              : userType == AppConstants.userTypeMerchant
+                  ? '/merchant-dashboard'
+                  : '/customer-dashboard';
+          
+          Navigator.pushReplacementNamed(context, targetRoute);
         }
       } else {
-        // Not logged in, go to login page
+        // Not logged in, go to customer dashboard (public access)
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/login');
+          Navigator.pushReplacementNamed(context, '/customer-dashboard');
         }
       }
     } catch (e) {
-      // On error, go to login page
+      // On error, go to customer dashboard (public access)
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/customer-dashboard');
       }
     }
+  }
+
+  // Get current route from web URL
+  String? _getCurrentWebRoute() {
+    if (!kIsWeb) return null;
+    
+    try {
+      final uri = Uri.base;
+      
+      // Flutter web uses hash-based routing by default
+      // The route is in the fragment (e.g., #/store/123 -> /store/123)
+      String? route;
+      
+      if (uri.fragment.isNotEmpty) {
+        // Fragment contains the route, remove leading # if present
+        route = uri.fragment.startsWith('#') 
+            ? uri.fragment.substring(1) 
+            : uri.fragment;
+        
+        // Ensure it starts with /
+        if (!route.startsWith('/')) {
+          route = '/$route';
+        }
+      } else if (uri.path.isNotEmpty && uri.path != '/') {
+        // Fallback to path if fragment is empty (for non-hash routing)
+        route = uri.path;
+      } else {
+        route = '/';
+      }
+      
+      return route;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Check if the route is valid (exists in our routes or is a dynamic route)
+  bool _isValidRoute(String route) {
+    // List of known routes
+    const knownRoutes = [
+      '/login',
+      '/customer-signup',
+      '/merchant-signup',
+      '/customer-dashboard',
+      '/merchant-dashboard',
+      '/customer-queues',
+      '/store-profile',
+      '/customer-profile',
+      '/merchant-profile',
+      '/queue-status',
+      '/queue-management',
+    ];
+    
+    // Check if it's a known route
+    if (knownRoutes.contains(route)) {
+      return true;
+    }
+    
+    // Check if it's a dynamic route (e.g., /store/{shopId})
+    if (route.startsWith('/store/')) {
+      return true;
+    }
+    
+    return false;
   }
 
   @override

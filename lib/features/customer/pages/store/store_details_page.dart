@@ -11,6 +11,8 @@ import 'store_details_queues.dart';
 import 'store_images_section.dart';
 import '../../models/queue_status.dart';
 import '../../../../shared/widgets/error_dialog.dart';
+import '../../../../services/auth_service.dart';
+import '../../../auth/login_page.dart';
 
 class StoreDetailsPage extends StatefulWidget {
   final String shopId;
@@ -106,6 +108,15 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
 
   Future<void> _loadUserCurrentQueues() async {
     try {
+      // Only try to load user queues if logged in
+      final isLoggedIn = await AuthService.isLoggedIn();
+      if (!isLoggedIn) {
+        setState(() {
+          _userCurrentQueueIds = {};
+        });
+        return;
+      }
+      
       final customerQueueSummary = await _queueService.getCustomerQueueSummary();
       setState(() {
         _userCurrentQueueIds = customerQueueSummary.customerQueues
@@ -432,6 +443,34 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                                   queue: queue,
                                   onJoin: (queue.status == QueueStatus.active && !_isUserInQueue(queue.qid))
                                       ? () async {
+                                          // Check if user is logged in before joining queue
+                                          final isLoggedIn = await AuthService.isLoggedIn();
+                                          if (!isLoggedIn) {
+                                            // Show dialog to prompt login
+                                            if (!mounted) return;
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text('Login Required'),
+                                                content: const Text('Please login to join the queue.'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop();
+                                                      Navigator.pushNamed(context, '/login');
+                                                    },
+                                                    child: const Text('Login'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                            return;
+                                          }
+                                          
                                           setState(() => _isLoading = true);
                                           try {
                                             final result = await _queueService

@@ -5,6 +5,7 @@ import '../../../../shared/widgets/error_dialog.dart';
 import '../../models/queue.dart';
 import '../../models/queue_status.dart';
 import '../../services/queue_service.dart';
+import '../../../../services/auth_service.dart';
 
 class StoreQueueCard extends StatelessWidget {
   final Queue queue;
@@ -197,6 +198,34 @@ class _StoreDetailsQueuesState extends State<StoreDetailsQueues> {
   bool _isJoining = false;
 
   Future<void> _joinQueue(Queue queue) async {
+    // Check if user is logged in before joining queue
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (!isLoggedIn) {
+      // Show dialog to prompt login
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Login Required'),
+          content: const Text('Please login to join the queue.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushNamed(context, '/login');
+              },
+              child: const Text('Login'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isJoining = true;
     });

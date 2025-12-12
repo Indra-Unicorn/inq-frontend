@@ -14,16 +14,19 @@ class QueueService {
   Future<ShopQueueResponse> getShopQueues(String shopId) async {
     try {
       final token = await _getToken();
-      if (token == null) {
-        throw Exception('User not authenticated');
+      
+      final headers = <String, String>{
+        'accept': '*/*',
+      };
+      
+      // Add auth header only if token is available (for public viewing)
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
       }
 
       final response = await http.get(
         Uri.parse('${ApiEndpoints.baseUrl}/queues/shop/$shopId'),
-        headers: {
-          'accept': '*/*',
-          'Authorization': 'Bearer $token',
-        },
+        headers: headers,
       );
 
 
