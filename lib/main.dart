@@ -19,6 +19,8 @@ import 'features/merchant/queue_management.dart';
 import 'features/merchant/models/merchant_queue.dart';
 import 'features/merchant/controllers/merchant_dashboard_controller.dart';
 import 'services/notification_service.dart';
+import 'services/auth_service.dart';
+import 'shared/constants/app_constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../services/auth_service.dart';
 import '../../shared/constants/app_constants.dart';
 
@@ -13,7 +14,7 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-
+  
   @override
   void initState() {
     super.initState();
@@ -40,42 +41,166 @@ class _SplashScreenState extends State<SplashScreen>
 
       // Check if user is logged in
       final isLoggedIn = await AuthService.isLoggedIn();
+      
+      if (kIsWeb) {
+        print('[SplashScreen] Web platform detected');
+        print('[SplashScreen] Is logged in: $isLoggedIn');
+      }
 
       if (isLoggedIn) {
         // Get user type from stored data or JWT token
         final userType = await AuthService.getUserType();
+        
+        if (kIsWeb) {
+          print('[SplashScreen] User type: $userType');
+        }
 
         if (userType == null) {
           // Unknown user type, go to login
+          if (kIsWeb) {
+            print('[SplashScreen] No user type found, redirecting to login');
+          }
           if (mounted) {
             Navigator.pushReplacementNamed(context, '/login');
           }
           return;
         }
 
-        // Navigate based on user type
-        if (mounted) {
-          if (userType == AppConstants.userTypeCustomer) {
-            Navigator.pushReplacementNamed(context, '/customer-dashboard');
-          } else if (userType == AppConstants.userTypeMerchant) {
-            Navigator.pushReplacementNamed(context, '/merchant-dashboard');
+        // On web, check if we should preserve the current route
+        if (kIsWeb) {
+          // Get route from URL
+          final currentRoute = _getCurrentWebRoute();
+          print('[SplashScreen] Current web route: $currentRoute');
+          
+          // If we're on a valid route (not splash or root), preserve it
+          if (currentRoute != null && 
+              currentRoute != '/' && 
+              currentRoute != '/splash' &&
+              _isValidRoute(currentRoute)) {
+            print('[SplashScreen] Preserving route: $currentRoute');
+            // Navigate to the current route to preserve it
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, currentRoute);
+            }
+            return;
           } else {
-            // Unknown user type, go to login
-            Navigator.pushReplacementNamed(context, '/login');
+            print('[SplashScreen] Route not preserved. Route: $currentRoute, Valid: ${currentRoute != null ? _isValidRoute(currentRoute) : false}');
           }
+        }
+
+        // Navigate based on user type (only if not preserving route)
+        if (mounted) {
+          final targetRoute = userType == AppConstants.userTypeCustomer
+              ? '/customer-dashboard'
+              : userType == AppConstants.userTypeMerchant
+                  ? '/merchant-dashboard'
+                  : '/login';
+          
+          if (kIsWeb) {
+            print('[SplashScreen] Redirecting to: $targetRoute');
+          }
+          
+          Navigator.pushReplacementNamed(context, targetRoute);
         }
       } else {
         // Not logged in, go to login page
+        if (kIsWeb) {
+          print('[SplashScreen] Not logged in, redirecting to login');
+        }
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/login');
         }
       }
     } catch (e) {
       // On error, go to login page
+      if (kIsWeb) {
+        print('[SplashScreen] Error during navigation: $e');
+      }
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');
       }
     }
+  }
+
+  // Get current route from web URL
+  String? _getCurrentWebRoute() {
+    if (!kIsWeb) return null;
+    
+    try {
+      final uri = Uri.base;
+      
+      print('[SplashScreen] Full URI: ${uri.toString()}');
+      print('[SplashScreen] URI path: ${uri.path}');
+      print('[SplashScreen] URI fragment: ${uri.fragment}');
+      
+      // Flutter web uses hash-based routing by default
+      // The route is in the fragment (e.g., #/store/123 -> /store/123)
+      String? route;
+      
+      if (uri.fragment.isNotEmpty) {
+        // Fragment contains the route, remove leading # if present
+        route = uri.fragment.startsWith('#') 
+            ? uri.fragment.substring(1) 
+            : uri.fragment;
+        
+        // Ensure it starts with /
+        if (!route.startsWith('/')) {
+          route = '/$route';
+        }
+      } else if (uri.path.isNotEmpty && uri.path != '/') {
+        // Fallback to path if fragment is empty (for non-hash routing)
+        route = uri.path;
+      } else {
+        route = '/';
+      }
+      
+      print('[SplashScreen] Extracted route: $route');
+      
+      return route;
+    } catch (e) {
+      print('[SplashScreen] Error getting web route: $e');
+      return null;
+    }
+  }
+
+  // Check if the route is valid (exists in our routes or is a dynamic route)
+  bool _isValidRoute(String route) {
+    // List of known routes
+    const knownRoutes = [
+      '/login',
+      '/customer-signup',
+      '/merchant-signup',
+      '/customer-dashboard',
+      '/merchant-dashboard',
+      '/customer-queues',
+      '/store-profile',
+      '/customer-profile',
+      '/merchant-profile',
+      '/queue-status',
+      '/queue-management',
+    ];
+    
+    // Check if it's a known route
+    if (knownRoutes.contains(route)) {
+      if (kIsWeb) {
+        print('[SplashScreen] Route is valid (known route): $route');
+      }
+      return true;
+    }
+    
+    // Check if it's a dynamic route (e.g., /store/{shopId})
+    if (route.startsWith('/store/')) {
+      if (kIsWeb) {
+        print('[SplashScreen] Route is valid (dynamic route): $route');
+      }
+      return true;
+    }
+    
+    if (kIsWeb) {
+      print('[SplashScreen] Route is NOT valid: $route');
+    }
+    
+    return false;
   }
 
   @override

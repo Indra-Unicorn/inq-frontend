@@ -12,6 +12,8 @@ import 'components/merchant_bottom_navigation.dart';
 import 'components/create_queue_dialog.dart';
 import 'components/close_queue_confirmation_dialog.dart';
 import 'pages/queue_history_page.dart';
+import 'pages/store_qr_code_page.dart';
+import 'models/merchant_data.dart';
 import '../../../shared/constants/app_colors.dart';
 
 class MerchantDashboard extends StatefulWidget {
@@ -151,6 +153,76 @@ class _MerchantDashboardState extends State<MerchantDashboard>
     );
   }
 
+  void _navigateToQRCode() {
+    final controller = context.read<MerchantDashboardController>();
+    final shops = controller.shops;
+
+    if (shops.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No shops available'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // If only one shop, navigate directly
+    if (shops.length == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => StoreQRCodePage(shop: shops.first),
+        ),
+      );
+    } else {
+      // If multiple shops, show selection dialog
+      _showShopSelectionDialog(shops);
+    }
+  }
+
+  void _showShopSelectionDialog(List<ShopData> shops) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Store'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: shops.length,
+            itemBuilder: (context, index) {
+              final shop = shops[index];
+              return ListTile(
+                title: Text(shop.shopName),
+                subtitle: Text(
+                  shop.address.city.isNotEmpty
+                      ? '${shop.address.streetAddress}, ${shop.address.city}'
+                      : shop.address.streetAddress,
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StoreQRCodePage(shop: shop),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showCloseQueueDialog(MerchantQueue queue) async {
     await showDialog(
       context: context,
@@ -212,6 +284,12 @@ class _MerchantDashboardState extends State<MerchantDashboard>
               ),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.qr_code,
+                    color: AppColors.textSecondary),
+                tooltip: 'Store QR Code',
+                onPressed: _navigateToQRCode,
+              ),
               IconButton(
                 icon: const Icon(Icons.history,
                     color: AppColors.textSecondary),

@@ -99,6 +99,7 @@ $deepLink
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Navigation and actions
                   Row(
@@ -206,6 +207,8 @@ $deepLink
                               ),
                             ],
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       
