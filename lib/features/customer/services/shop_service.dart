@@ -14,16 +14,19 @@ class ShopService {
   Future<List<Shop>> getAllShops() async {
     try {
       final token = await _getToken();
-      if (token == null) {
-        throw Exception('User not authenticated');
+      
+      final headers = <String, String>{
+        'accept': '*/*',
+      };
+      
+      // Add auth header only if token is available
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
       }
 
       final response = await http.get(
         Uri.parse('${ApiEndpoints.baseUrl}/users/shops/get/all'),
-        headers: {
-          'accept': '*/*',
-          'Authorization': 'Bearer $token',
-        },
+        headers: headers,
       );
 
 
@@ -51,9 +54,6 @@ class ShopService {
   }) async {
     try {
       final token = await _getToken();
-      if (token == null) {
-        throw Exception('User not authenticated');
-      }
       
       // Build query parameters
       final queryParams = <String, String>{
@@ -71,12 +71,18 @@ class ShopService {
       final uri = Uri.parse('${ApiEndpoints.baseUrl}/users/nearby')
           .replace(queryParameters: queryParams);
       
+      final headers = <String, String>{
+        'accept': 'application/json',
+      };
+      
+      // Add auth header only if token is available
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      
       final response = await http.get(
         uri,
-        headers: {
-          'accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        headers: headers,
       );
       
       if (response.statusCode == 200) {
@@ -104,16 +110,19 @@ class ShopService {
   Future<Shop> getShopById(String shopId) async {
     try {
       final token = await _getToken();
-      if (token == null) {
-        throw Exception('User not authenticated');
+      
+      final headers = <String, String>{
+        'accept': '*/*',
+      };
+      
+      // Add auth header only if token is available
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
       }
 
       final response = await http.get(
         Uri.parse('${ApiEndpoints.baseUrl}/queues/shop/$shopId'),
-        headers: {
-          'accept': '*/*',
-          'Authorization': 'Bearer $token',
-        },
+        headers: headers,
       );
 
       final Map<String, dynamic> jsonResponse = json.decode(response.body);

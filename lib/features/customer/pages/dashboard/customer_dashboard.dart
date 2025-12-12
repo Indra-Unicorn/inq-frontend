@@ -9,6 +9,7 @@ import 'customer_dashboard_bottom_nav.dart';
 import '../../../../services/notification_service.dart';
 import '../../../../shared/widgets/error_dialog.dart';
 import '../../services/profile_service.dart';
+import '../../../../services/auth_service.dart';
 
 class CustomerDashboard extends StatefulWidget {
   const CustomerDashboard({super.key});
@@ -203,11 +204,63 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     });
   }
 
-  void _onProfileTap() {
+  void _onProfileTap() async {
+    // Check if user is logged in before accessing profile
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (!isLoggedIn) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Login Required'),
+          content: const Text('Please login to access your profile.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushNamed(context, '/login');
+              },
+              child: const Text('Login'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     Navigator.pushNamed(context, '/customer-profile');
   }
 
-  void _onHistoryTap() {
+  void _onHistoryTap() async {
+    // Check if user is logged in before accessing queue history
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (!isLoggedIn) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Login Required'),
+          content: const Text('Please login to view your queue history.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushNamed(context, '/login');
+              },
+              child: const Text('Login'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     Navigator.pushNamed(context, '/queue-status');
   }
 

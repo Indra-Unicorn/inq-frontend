@@ -42,56 +42,56 @@ class _SplashScreenState extends State<SplashScreen>
       // Check if user is logged in
       final isLoggedIn = await AuthService.isLoggedIn();
 
+      // On web, check if we should preserve the current route
+      if (kIsWeb) {
+        // Get route from URL
+        final currentRoute = _getCurrentWebRoute();
+        
+        // If we're on a valid route (not splash or root), preserve it
+        if (currentRoute != null && 
+            currentRoute != '/' && 
+            currentRoute != '/splash' &&
+            _isValidRoute(currentRoute)) {
+          // Navigate to the current route to preserve it
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, currentRoute);
+          }
+          return;
+        }
+      }
+
       if (isLoggedIn) {
         // Get user type from stored data or JWT token
         final userType = await AuthService.getUserType();
 
         if (userType == null) {
-          // Unknown user type, go to login
+          // Unknown user type, go to customer dashboard (public access)
           if (mounted) {
-            Navigator.pushReplacementNamed(context, '/login');
+            Navigator.pushReplacementNamed(context, '/customer-dashboard');
           }
           return;
         }
 
-        // On web, check if we should preserve the current route
-        if (kIsWeb) {
-          // Get route from URL
-          final currentRoute = _getCurrentWebRoute();
-          
-          // If we're on a valid route (not splash or root), preserve it
-          if (currentRoute != null && 
-              currentRoute != '/' && 
-              currentRoute != '/splash' &&
-              _isValidRoute(currentRoute)) {
-            // Navigate to the current route to preserve it
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, currentRoute);
-            }
-            return;
-          }
-        }
-
-        // Navigate based on user type (only if not preserving route)
+        // Navigate based on user type
         if (mounted) {
           final targetRoute = userType == AppConstants.userTypeCustomer
               ? '/customer-dashboard'
               : userType == AppConstants.userTypeMerchant
                   ? '/merchant-dashboard'
-                  : '/login';
+                  : '/customer-dashboard';
           
           Navigator.pushReplacementNamed(context, targetRoute);
         }
       } else {
-        // Not logged in, go to login page
+        // Not logged in, go to customer dashboard (public access)
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/login');
+          Navigator.pushReplacementNamed(context, '/customer-dashboard');
         }
       }
     } catch (e) {
-      // On error, go to login page
+      // On error, go to customer dashboard (public access)
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/customer-dashboard');
       }
     }
   }
