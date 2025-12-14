@@ -115,7 +115,14 @@ $deepLink
                           ),
                         ),
                         child: IconButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            // Check if we can pop, if not navigate to dashboard
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            } else {
+                              Navigator.pushReplacementNamed(context, '/customer-dashboard');
+                            }
+                          },
                           icon: const Icon(
                             Icons.arrow_back_ios_new,
                             color: Colors.white,
