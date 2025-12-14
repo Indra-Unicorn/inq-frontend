@@ -58,6 +58,14 @@ class _SplashScreenState extends State<SplashScreen>
           }
           return;
         }
+        
+        // If route is root (/), navigate to dashboard
+        if (currentRoute == '/') {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/customer-dashboard');
+          }
+          return;
+        }
       }
 
       if (isLoggedIn) {
