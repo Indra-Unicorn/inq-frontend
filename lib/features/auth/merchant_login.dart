@@ -5,10 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
+import 'dart:async';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_colors.dart';
 import '../../../services/auth_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../admin/pages/admin_login_page.dart';
 
 class MerchantLogin extends StatefulWidget {
   const MerchantLogin({super.key});
@@ -22,12 +24,70 @@ class _MerchantLoginState extends State<MerchantLogin> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  
+  // Hidden admin access mechanism
+  int _loginButtonClickCount = 0;
+  DateTime? _firstClickTime;
+  Timer? _clickResetTimer;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _clickResetTimer?.cancel();
     super.dispose();
+  }
+
+  void _handleLoginButtonClick() {
+    final now = DateTime.now();
+    
+    // Reset if more than 5 seconds have passed since first click
+    if (_firstClickTime != null) {
+      final timeDifference = now.difference(_firstClickTime!);
+      if (timeDifference.inSeconds >= 5) {
+        _loginButtonClickCount = 0;
+        _firstClickTime = null;
+        _clickResetTimer?.cancel();
+      }
+    }
+    
+    // Set first click time if this is the first click
+    if (_firstClickTime == null) {
+      _firstClickTime = now;
+      
+      // Set timer to reset after 5 seconds
+      _clickResetTimer?.cancel();
+      _clickResetTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted) {
+          setState(() {
+            _loginButtonClickCount = 0;
+            _firstClickTime = null;
+          });
+        }
+      });
+    }
+    
+    // Increment click count
+    _loginButtonClickCount++;
+    
+    // Check if 5 clicks happened within 5 seconds
+    if (_loginButtonClickCount >= 5) {
+      _clickResetTimer?.cancel();
+      _loginButtonClickCount = 0;
+      _firstClickTime = null;
+      
+      // Navigate to admin login page
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const AdminLoginPage(),
+        ),
+      );
+      return;
+    }
+    
+    // Proceed with normal login only if not triggering admin access
+    _handleLogin();
   }
 
   Future<void> _handleLogin() async {
@@ -190,7 +250,7 @@ class _MerchantLoginState extends State<MerchantLogin> {
                 constraints: const BoxConstraints(maxWidth: 480),
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
+                  onPressed: _isLoading ? null : _handleLoginButtonClick,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.textWhite,

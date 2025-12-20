@@ -62,6 +62,8 @@ class ShopData {
   final List<String> categories;
   final List<String> images;
   final List<QueueResponse> queueResponses;
+  final int activeCustomerCount;
+  final int avgTimePerCustomer;
 
   ShopData({
     required this.shopId,
@@ -76,6 +78,8 @@ class ShopData {
     required this.categories,
     required this.images,
     required this.queueResponses,
+    this.activeCustomerCount = 0,
+    this.avgTimePerCustomer = 0,
   });
 
   factory ShopData.fromJson(Map<String, dynamic> json) {
@@ -95,6 +99,8 @@ class ShopData {
               ?.map((queue) => QueueResponse.fromJson(queue))
               .toList() ??
           [],
+      activeCustomerCount: json['activeCustomerCount'] ?? 0,
+      avgTimePerCustomer: json['avgTimePerCustomer'] ?? 0,
     );
   }
 
@@ -112,6 +118,8 @@ class ShopData {
       'categories': categories,
       'images': images,
       'queueResponses': queueResponses.map((queue) => queue.toJson()).toList(),
+      'activeCustomerCount': activeCustomerCount,
+      'avgTimePerCustomer': avgTimePerCustomer,
     };
   }
 }
