@@ -82,10 +82,10 @@ class Validators {
     if (value == null || value.isEmpty) {
       return 'OTP is required';
     }
-    if (value.length != 6) {
-      return 'OTP must be 6 digits';
+    if (value.length != 4) {
+      return 'OTP must be 4 digits';
     }
-    final otpRegex = RegExp(r'^\d{6}$');
+    final otpRegex = RegExp(r'^\d{4}$');
     if (!otpRegex.hasMatch(value)) {
       return 'OTP must contain only numbers';
     }

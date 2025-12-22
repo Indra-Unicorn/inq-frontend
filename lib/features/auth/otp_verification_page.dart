@@ -26,8 +26,8 @@ class OTPVerificationPage extends StatefulWidget {
 
 class _OTPVerificationPageState extends State<OTPVerificationPage> {
   final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+      List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
   bool _isLoading = false;
 
   @override
@@ -43,7 +43,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
 
   Future<void> _verifyOTP() async {
     final otp = _controllers.map((controller) => controller.text).join();
-    if (otp.length != 6) {
+    if (otp.length != 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter the complete OTP')),
       );
@@ -175,7 +175,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Enter the 6-digit code sent to ${widget.phoneNumber}',
+                'Enter the 4-digit code sent to ${widget.phoneNumber}',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 16,
@@ -184,7 +184,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
               const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) {
+                children: List.generate(4, (index) {
                   return SizedBox(
                     width: 45,
                     child: TextField(
@@ -223,7 +223,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                         ),
                       ),
                       onChanged: (value) {
-                        if (value.length == 1 && index < 5) {
+                        if (value.length == 1 && index < 3) {
                           _focusNodes[index + 1].requestFocus();
                         }
                       },

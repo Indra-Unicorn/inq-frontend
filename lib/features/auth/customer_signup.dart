@@ -20,8 +20,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final List<TextEditingController> _otpControllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
+      List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _otpFocusNodes = List.generate(4, (_) => FocusNode());
 
   bool _isLoading = false;
   bool _otpSent = false;
@@ -107,7 +107,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
   Future<void> _verifyOTP() async {
     final otp = _otpControllers.map((controller) => controller.text).join();
-    if (otp.length != 6) {
+    if (otp.length != 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please enter the complete OTP'),
@@ -291,7 +291,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(6, (index) {
+                        children: List.generate(4, (index) {
                           return SizedBox(
                             width: 45,
                             child: TextField(
@@ -326,7 +326,7 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                                 ),
                               ),
                               onChanged: (value) {
-                                if (value.length == 1 && index < 5) {
+                                if (value.length == 1 && index < 3) {
                                   _otpFocusNodes[index + 1].requestFocus();
                                 }
                               },
