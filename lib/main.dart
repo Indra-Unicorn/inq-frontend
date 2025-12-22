@@ -18,6 +18,8 @@ import 'features/merchant/merchant_profile.dart';
 import 'features/merchant/queue_management.dart';
 import 'features/merchant/models/merchant_queue.dart';
 import 'features/merchant/controllers/merchant_dashboard_controller.dart';
+import 'features/admin/pages/admin_login_page.dart';
+import 'features/admin/pages/admin_dashboard.dart';
 import 'services/notification_service.dart';
 import 'services/auth_service.dart';
 import 'shared/constants/app_constants.dart';
@@ -129,6 +131,8 @@ class MyApp extends StatelessWidget {
 
           return QueueManagement(queue: queue);
         },
+        '/admin-login': (context) => const AdminLoginPage(),
+        '/admin-dashboard': (context) => const AdminDashboard(),
       },
       onGenerateRoute: (settings) {
         // Handle store details with shop ID in URL

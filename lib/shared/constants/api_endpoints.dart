@@ -23,6 +23,7 @@ class ApiEndpoints {
   static const String getMerchant = '/users/merchant/get';
   static const String getAllMerchants = '/users/merchant/get/all';
   static const String updateMerchantStatus = '/users/merchants';
+  static String updateMerchantStatusById(String merchantId) => '/users/merchants/$merchantId/status';
   static const String updateMerchantDetails = '/users/merchant/update';
   static const String updateCustomerDetails = '/users/customer/update';
   static const String updateShopImage = '/users/shop/image/update';
