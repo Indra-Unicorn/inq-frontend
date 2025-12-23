@@ -60,4 +60,8 @@ class ApiEndpoints {
   static const String verifyOTP = '/v1/sms/verify-otp';
   static const String sendCustomSMS = '/v1/sms/send-custom';
   static const String getSMSStatus = '/v1/sms/status';
+
+  // Payment endpoints
+  static const String createPaymentOrder = '/payments/order/create';
+  static const String verifyPayment = '/payments/verify';
 }

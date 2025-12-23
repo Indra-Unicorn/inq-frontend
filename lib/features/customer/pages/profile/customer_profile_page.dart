@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'dart:convert';
+import 'dart:async';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import '../../services/profile_service.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/logout_dialog.dart';
 import '../../../../shared/constants/app_colors.dart';
 import '../../../../shared/common_style.dart';
+import '../../../../shared/constants/api_endpoints.dart';
+import '../../../../services/auth_service.dart';
 
 class CustomerProfilePage extends StatefulWidget {
   const CustomerProfilePage({super.key});
@@ -18,6 +27,9 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   bool _isSaving = false;
   Map<String, dynamic>? _userData;
   final ProfileService _profileService = ProfileService();
+  late Razorpay _razorpay;
+  String? _currentOrderRef;
+  bool _isProcessingPayment = false;
 
   late TextEditingController _nameController;
   late TextEditingController _emailController;
@@ -25,6 +37,13 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   @override
   void initState() {
     super.initState();
+    debugPrint('CustomerProfilePage initState called');
+    _razorpay = Razorpay();
+    debugPrint('Razorpay instance created: $_razorpay');
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    debugPrint('Razorpay event handlers registered');
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _loadUserData();
@@ -32,6 +51,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
   @override
   void dispose() {
+    _razorpay.clear();
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
@@ -123,6 +143,319 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     );
   }
 
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    debugPrint('Payment successful: ${response.paymentId}, order: ${response.orderId}');
+    try {
+      // Verify payment on backend
+      final verificationResponse = await _verifyPayment(
+        response.paymentId!,
+        response.orderId!,
+        response.signature!,
+      );
+
+      debugPrint('Verification response: $verificationResponse');
+
+      if (verificationResponse != null && verificationResponse['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment successful! inQoin balance updated.')),
+          );
+        }
+        // Refresh user data to show updated balance
+        await _loadUserData();
+        debugPrint('User data refreshed after successful payment');
+      } else {
+        final errorMessage = verificationResponse?['message'] ?? 'Unknown error';
+        debugPrint('Payment verification failed: $errorMessage');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Payment verification failed: $errorMessage')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error verifying payment: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment verification failed. Please contact support.')),
+        );
+      }
+    } finally {
+      // Reset loading state
+      if (mounted) {
+        setState(() {
+          _isProcessingPayment = false;
+        });
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>?> _verifyPayment(String paymentId, String orderId, String signature) async {
+    final token = await AuthService.getToken();
+    if (token == null) return null;
+
+    final response = await http.post(
+      Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.verifyPayment}'),
+      headers: {
+        'accept': '*/*',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'razorpayPaymentId': paymentId,
+        'razorpayOrderId': orderId,
+        'razorpaySignature': signature,
+        'orderRef': _currentOrderRef ?? ''
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data;
+    }
+    return null;
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Do something when payment fails
+    debugPrint('Payment failed: ${response.message}');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Payment Failed: ${response.message}')),
+    );
+    // Reset loading state
+    setState(() {
+      _isProcessingPayment = false;
+    });
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    // Do something when an external wallet is selected
+    debugPrint('External wallet selected: ${response.walletName}');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('External Wallet: ${response.walletName}')),
+    );
+    // Reset loading state
+    setState(() {
+      _isProcessingPayment = false;
+    });
+  }
+
+  Future<void> _openCheckout(int amount, int inQoinAmount) async {
+    debugPrint('Starting payment checkout for amount: $amount, inQoin: $inQoinAmount');
+
+    // Check if user data is loaded
+    if (_userData == null) {
+      debugPrint('User data not loaded yet');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please wait, loading user data...')),
+        );
+      }
+      return;
+    }
+
+    // Check if user is logged in
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (!isLoggedIn) {
+      debugPrint('User is not logged in');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to make payments')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isProcessingPayment = true;
+    });
+
+    try {
+      // First create order on backend
+      final orderResponse = await _createPaymentOrder(amount, inQoinAmount);
+      debugPrint('Order response: $orderResponse');
+
+      if (orderResponse == null) {
+        debugPrint('Order response is null, returning early');
+        if (mounted) {
+          setState(() {
+            _isProcessingPayment = false;
+          });
+        }
+        return;
+      }
+
+      final orderId = orderResponse['data']['razorpayOrderId'];
+      final orderRef = orderResponse['data']['orderRef'];
+      final razorpayKey = orderResponse['data']['key'];
+
+      if (orderId == null || orderRef == null || razorpayKey == null) {
+        debugPrint('Missing orderId, orderRef, or key in response');
+        if (mounted) {
+          setState(() {
+            _isProcessingPayment = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid order response from server')),
+          );
+        }
+        return;
+      }
+
+      debugPrint('Order ID: $orderId, Order Ref: $orderRef, Key: $razorpayKey');
+
+      // Check platform compatibility
+      debugPrint('Platform check:');
+      debugPrint('- isWeb: ${kIsWeb}');
+
+      if (kIsWeb) {
+        debugPrint('ERROR: Razorpay does not support web platform!');
+        if (mounted) {
+          setState(() {
+            _isProcessingPayment = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payments are not supported on web. Please use mobile app.')),
+          );
+        }
+        return;
+      }
+
+      // Only check platform-specific properties after confirming not web
+      debugPrint('- Platform.isAndroid: ${Platform.isAndroid}');
+      debugPrint('- Platform.isIOS: ${Platform.isIOS}');
+
+      var options = {
+        'key': razorpayKey, // Use key from backend response
+        'amount': amount * 100, // amount in paise
+        'name': 'inQoin Purchase',
+        'description': 'Buy $inQoinAmount inQoin',
+        'order_id': orderId,
+        'prefill': {
+          'contact': _userData?['phone'] ?? '8888888888',
+          'email': _userData?['email'] ?? 'test@example.com'
+        },
+        'theme': {
+          'color': '#3399cc'
+        }
+      };
+
+      debugPrint('Opening Razorpay with options: $options');
+      debugPrint('Options validation:');
+      debugPrint('- key: ${options['key'] != null ? "present (${options['key'].length} chars)" : "null"}');
+      debugPrint('- amount: ${options['amount']}');
+      debugPrint('- order_id: ${options['order_id'] != null ? "present (${options['order_id'].length} chars)" : "null"}');
+
+      try {
+        debugPrint('About to call _razorpay.open()...');
+        _razorpay!.open(options);
+        debugPrint('Razorpay.open() called successfully - payment page should open now');
+      } catch (razorpayError) {
+        debugPrint('CRITICAL ERROR: Razorpay.open() threw exception: $razorpayError');
+        debugPrint('Exception type: ${razorpayError.runtimeType}');
+        if (mounted) {
+          setState(() {
+            _isProcessingPayment = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to open payment gateway: $razorpayError')),
+          );
+        }
+        return;
+      }
+
+      // Reset loading state after opening Razorpay
+      if (mounted) {
+        setState(() {
+          _isProcessingPayment = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error creating order: $e');
+      if (mounted) {
+        setState(() {
+          _isProcessingPayment = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to initiate payment: $e')),
+        );
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>?> _createPaymentOrder(int amount, int inQoinAmount) async {
+    final token = await AuthService.getToken();
+    if (token == null) {
+      debugPrint('No auth token found');
+      if (mounted) {
+        setState(() {
+          _isProcessingPayment = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication required')),
+        );
+      }
+      return null;
+    }
+
+    debugPrint('Auth token exists, length: ${token.length}');
+
+    // Get customer ID from JWT token
+    final decodedToken = JwtDecoder.decode(token);
+    final customerId = decodedToken['memberId'];
+    debugPrint('Decoded token memberId: $customerId');
+    debugPrint('Full decoded token: $decodedToken');
+
+    _currentOrderRef = 'INQOIN_${DateTime.now().millisecondsSinceEpoch}';
+
+    debugPrint('Creating payment order with customerId: $customerId, amount: $amount');
+    debugPrint('API URL: ${ApiEndpoints.baseUrl}${ApiEndpoints.createPaymentOrder}');
+
+    final response = await http.post(
+      Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.createPaymentOrder}'),
+      headers: {
+        'accept': '*/*',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'amount': amount,
+        'currency': 'INR',
+        'customerId': customerId,
+        'orderRef': _currentOrderRef
+      }),
+    ).timeout(const Duration(seconds: 10), onTimeout: () {
+      debugPrint('API request timed out');
+      throw Exception('Request timeout');
+    });
+
+    debugPrint('Request body: ${jsonEncode({
+      'amount': amount,
+      'currency': 'INR',
+      'customerId': customerId,
+      'orderRef': _currentOrderRef
+    })}');
+
+    debugPrint('Payment order API response status: ${response.statusCode}');
+    debugPrint('Payment order API response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      debugPrint('Payment order created successfully: $data');
+      return data;
+    } else {
+      debugPrint('Payment order API failed with status ${response.statusCode}');
+      debugPrint('Error response: ${response.body}');
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create payment order')),
+      );
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,6 +486,12 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                           child: _buildStatsCards(),
+                        ),
+                        
+                        // Buy inQoin Card
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          child: _buildBuyInQoinCard(),
                         ),
                         
                         // Personal Information Card
@@ -304,7 +643,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           child: _buildStatCard(
             'inQoin Balance',
             (_userData?['inQoin'] ?? 0).toString(),
-            Icons.account_balance_wallet,
+            Icons.monetization_on,
             AppColors.success,
           ),
         ),
@@ -383,6 +722,127 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     );
   }
 
+  Widget _buildBuyInQoinCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight.withValues(alpha: 0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.add_shopping_cart,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Buy inQoin',
+                style: CommonStyle.heading4.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Purchase inQoin to join queues faster',
+            style: CommonStyle.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInQoinOption(5, 5, '5 inQoin'),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInQoinOption(10, 10, '10 inQoin'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInQoinOption(int amount, int inQoinAmount, String title) {
+    final isDisabled = _isProcessingPayment || _userData == null;
+    return InkWell(
+      onTap: isDisabled ? null : () => _openCheckout(amount, inQoinAmount),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDisabled
+              ? AppColors.primary.withValues(alpha: 0.02)
+              : AppColors.primary.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            if (_isProcessingPayment)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+                ),
+              )
+            else
+              Text(
+                '₹$amount',
+                style: CommonStyle.heading4.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: isDisabled ? AppColors.textSecondary : AppColors.primary,
+                ),
+              ),
+            const SizedBox(height: 8),
+            Icon(
+              Icons.monetization_on,
+              color: isDisabled ? AppColors.textSecondary : AppColors.primary,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: CommonStyle.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPersonalInfoCard() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -415,14 +875,16 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                'Personal Information',
-                style: CommonStyle.heading4.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Text(
+                  'Personal Information',
+                  style: CommonStyle.heading4.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
               if (!_isEditing)
                 IconButton(
                   onPressed: () {
