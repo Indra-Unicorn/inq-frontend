@@ -4,6 +4,7 @@ import '../../../services/auth_service.dart';
 import '../services/admin_merchant_service.dart';
 import '../../merchant/models/merchant_data.dart';
 import 'admin_merchant_detail_page.dart';
+import 'generate_merchant_qr_page.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -141,6 +142,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.qr_code),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GenerateMerchantQRPage()),
+              );
+            },
+            tooltip: 'Generate QR',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _handleLogout,
             tooltip: 'Logout',
@@ -270,6 +281,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       newStatus = 'APPROVED';
                                     } else if (merchant.status == 'APPROVED') {
                                       newStatus = 'BLOCKED';
+                                    } else if (merchant.status == 'BLOCKED') {
+                                      newStatus = 'APPROVED';
                                     } else {
                                       return;
                                     }
@@ -448,13 +461,13 @@ class _MerchantCard extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Action Button
-              if (merchant.status == 'CREATED' || merchant.status == 'APPROVED')
+              if (merchant.status == 'CREATED' || merchant.status == 'APPROVED' || merchant.status == 'BLOCKED')
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => onActionTap(merchant),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: merchant.status == 'CREATED'
+                      backgroundColor: merchant.status == 'CREATED' || merchant.status == 'BLOCKED'
                           ? AppColors.success
                           : AppColors.error,
                       foregroundColor: AppColors.textWhite,
