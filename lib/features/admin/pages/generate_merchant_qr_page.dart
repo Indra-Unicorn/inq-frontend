@@ -26,6 +26,41 @@ class PosterSize {
   String get dimensions => '${width.toInt()}×${height.toInt()} px';
 }
 
+/// QR generation target
+class QRTarget {
+  final bool isMainSite;
+  final MerchantData? merchant;
+  final ShopData? shop;
+
+  const QRTarget.mainSite()
+      : isMainSite = true,
+        merchant = null,
+        shop = null;
+
+  const QRTarget.merchant(this.merchant, this.shop)
+      : isMainSite = false;
+
+  String get displayName {
+    if (isMainSite) return 'InQueue.in Poster';
+    return '${merchant!.name} - ${shop!.shopName}';
+  }
+
+  String get qrData {
+    if (isMainSite) return 'https://inqueue.in';
+    return 'https://inqueue.in/#/store/${shop!.shopId}';
+  }
+
+  String get posterTitle {
+    if (isMainSite) return 'InQueue.in';
+    return shop!.shopName;
+  }
+
+  String? get address {
+    if (isMainSite) return null;
+    return '${shop!.address.streetAddress}';
+  }
+}
+
 // Custom painter for decorative circle pattern
 class _CirclePatternPainter extends CustomPainter {
   @override
@@ -90,10 +125,10 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
   ];
 
   List<MerchantData> _activeMerchants = [];
+  List<QRTarget> _qrTargets = [];
   bool _isLoading = true;
   String? _errorMessage;
-  MerchantData? _selectedMerchant;
-  ShopData? _selectedShop;
+  QRTarget? _selectedTarget;
   PosterSize _selectedSize = _posterSizes[0]; // Default to A4
   final ScreenshotController _screenshotController = ScreenshotController();
 
@@ -111,8 +146,16 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
 
     try {
       final merchants = await AdminMerchantService.getAllMerchants('APPROVED');
+      final targets = <QRTarget>[];
+      targets.add(const QRTarget.mainSite());
+      for (final merchant in merchants) {
+        for (final shop in merchant.shops) {
+          targets.add(QRTarget.merchant(merchant, shop));
+        }
+      }
       setState(() {
         _activeMerchants = merchants;
+        _qrTargets = targets;
         _isLoading = false;
       });
     } catch (e) {
@@ -121,10 +164,6 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
         _isLoading = false;
       });
     }
-  }
-
-  String _getShopLink(ShopData shop) {
-    return 'https://inqueue.in/#/store/${shop.shopId}';
   }
 
   Widget _buildPreview() {
@@ -186,8 +225,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
             painter: _CirclePatternPainter(),
           ),
           // Content
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+          Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
@@ -195,7 +233,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
                 // Shop Name
                 Flexible(
                   child: Text(
-                    _selectedShop!.shopName.toUpperCase(),
+                    _selectedTarget!.posterTitle.toUpperCase(),
                     style: const TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
@@ -216,26 +254,27 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
                 ),
                 const SizedBox(height: 6),
                 // Address
-                if (_selectedShop!.address.city.isNotEmpty)
-                  Flexible(
-                    child: Text(
-                      _selectedShop!.address.streetAddress,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textWhite.withOpacity(0.95),
-                        shadows: [
-                          Shadow(
-                            offset: const Offset(0, 1),
-                            blurRadius: 2,
-                            color: Colors.black.withOpacity(0.3),
-                          ),
-                        ],
+                _selectedTarget!.address != null
+                  ? Flexible(
+                      child: Text(
+                        _selectedTarget!.address!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textWhite.withOpacity(0.95),
+                          shadows: [
+                            Shadow(
+                              offset: const Offset(0, 1),
+                              blurRadius: 2,
+                              color: Colors.black.withOpacity(0.3),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                    )
+                  : const SizedBox.shrink(),
                 const SizedBox(height: 10),
                 // Scan instruction with better styling
                 Container(
@@ -315,7 +354,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
                           const SizedBox(height: 4),
                           Flexible(
                             child: Text(
-                              _selectedShop!.shopName.toUpperCase(),
+                              _selectedTarget!.posterTitle.toUpperCase(),
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -364,7 +403,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
                             ],
                           ),
                           child: QrImageView(
-                            data: _getShopLink(_selectedShop!),
+                            data: _selectedTarget!.qrData,
                             version: QrVersions.auto,
                             size: 160.0,
                             backgroundColor: AppColors.backgroundLight,
@@ -729,7 +768,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
   }
 
   Widget _buildPoster() {
-    if (_selectedShop == null) return const SizedBox.shrink();
+    if (_selectedTarget == null) return const SizedBox.shrink();
 
     // Use different template for A4 size
     if (_selectedSize.name == 'A4') {
@@ -800,7 +839,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
         children: [
           // Shop Name
           Text(
-            _selectedShop!.shopName,
+            _selectedTarget!.posterTitle,
             style: TextStyle(
               fontSize: 32 * scaleFactor,
               fontWeight: FontWeight.bold,
@@ -813,17 +852,18 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
           ),
           SizedBox(height: 5 * scaleFactor),
           // Shop Address
-          if (_selectedShop!.address.city.isNotEmpty)
-            Text(
-              '${_selectedShop!.address.streetAddress}',
-              style: TextStyle(
-                fontSize: 14 * scaleFactor,
-                color: AppColors.textWhite.withOpacity(0.9),
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+          _selectedTarget!.address != null
+            ? Text(
+                _selectedTarget!.address!,
+                style: TextStyle(
+                  fontSize: 14 * scaleFactor,
+                  color: AppColors.textWhite.withOpacity(0.9),
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              )
+            : const SizedBox.shrink(),
           SizedBox(height: 10 * scaleFactor),
           // Tagline
           Container(
@@ -904,7 +944,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
               ],
             ),
             child: QrImageView(
-              data: _getShopLink(_selectedShop!),
+              data: _selectedTarget!.qrData,
               version: QrVersions.auto,
               size: 180.0 * scaleFactor,
               backgroundColor: AppColors.backgroundLight,
@@ -1181,7 +1221,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
           final jpgBytes = img.encodeJpg(pngImage, quality: 95);
           
           // Create filename with shop name and size
-          final shopName = _selectedShop!.shopName
+          final shopName = _selectedTarget!.posterTitle
               .replaceAll(RegExp(r'[^\w\s]'), '')
               .replaceAll(RegExp(r'\s+'), '_');
           final fileName = 'InQ_${shopName}_QR_Poster_${_selectedSize.name}';
@@ -1234,56 +1274,29 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Select Merchant:',
+                        'Select QR Target:',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
-                      DropdownButtonFormField<MerchantData>(
-                        value: _selectedMerchant,
-                        items: _activeMerchants.map((merchant) {
+                      DropdownButtonFormField<QRTarget>(
+                        value: _selectedTarget,
+                        items: _qrTargets.map((target) {
                           return DropdownMenuItem(
-                            value: merchant,
-                            child: Text(merchant.name),
+                            value: target,
+                            child: Text(target.displayName),
                           );
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            _selectedMerchant = value;
-                            _selectedShop = value?.shops.isNotEmpty == true ? value!.shops.first : null;
+                            _selectedTarget = value;
                           });
                         },
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          hintText: 'Choose a merchant',
+                          hintText: 'Choose a target',
                         ),
                       ),
-                      if (_selectedMerchant != null && _selectedMerchant!.shops.length > 1) ...[
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Select Shop:',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<ShopData>(
-                          value: _selectedShop,
-                          items: _selectedMerchant!.shops.map((shop) {
-                            return DropdownMenuItem(
-                              value: shop,
-                              child: Text(shop.shopName),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedShop = value;
-                            });
-                          },
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            hintText: 'Choose a shop',
-                          ),
-                        ),
-                      ],
-                      if (_selectedShop != null) ...[
+                      if (_selectedTarget != null) ...[
                         const SizedBox(height: 24),
                         const Text(
                           'Select Poster Size:',
