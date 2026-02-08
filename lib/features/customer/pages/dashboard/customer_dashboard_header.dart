@@ -70,14 +70,35 @@ class CustomerDashboardHeader extends StatelessWidget {
                     width: 1,
                   ),
                 ),
-                child: IconButton(
-                  onPressed: onProfileTap,
-                  icon: const Icon(
-                    Icons.person_outline,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: onProfileTap,
+                      icon: const Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      padding: const EdgeInsets.all(12),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/about-us');
+                      },
+                      icon: const Icon(
+                        Icons.info_outline,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      tooltip: 'About inQueue',
+                    ),
+                  ],
                 ),
               ),
             ],
