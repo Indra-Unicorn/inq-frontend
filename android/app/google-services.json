@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:42201685589:android:17b8ef9d354aaf17b77edc",
+        "mobilesdk_app_id": "1:42201685589:android:a1944e74b098ef1cb77edc",
         "android_client_info": {
-          "package_name": "com.example.inq"
+          "package_name": "com.indra.inq"
         }
       },
       "oauth_client": [],

@@ -8,8 +8,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+import java.io.FileInputStream
+
 android {
-    namespace = "com.example.inq"
+    namespace = "com.indra.inq"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -23,17 +26,32 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    val keystoreProperties = Properties()
+    val keystorePropertiesFile = rootProject.file("../key.properties")
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(keystorePropertiesFile.inputStream())
+    }
+
     defaultConfig {
-        applicationId = "com.example.inq"
+        applicationId = "com.indra.inq"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("/Users/amangupta/key_new.jks")
+            storePassword = "12345678"
+            keyAlias = "upload"
+            keyPassword = "12345678"
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

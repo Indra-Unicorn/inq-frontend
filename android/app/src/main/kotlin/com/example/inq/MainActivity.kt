@@ -1,4 +1,4 @@
-package com.example.inq
+package com.indra.inq
 
 import io.flutter.embedding.android.FlutterActivity
 

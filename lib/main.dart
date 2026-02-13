@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'config/firebase_options.dart';
 import 'features/auth/splash_screen.dart';
@@ -44,6 +45,14 @@ void main() async {
 
     // Initialize notifications on all platforms
     await NotificationService.initialize();
+
+    // Get and print FCM token
+    String? fcmToken = await FirebaseMessaging.instance.getToken();
+    if (kDebugMode) {
+      print('========================================');
+      print('FCM Token: $fcmToken');
+      print('========================================');
+    }
   } catch (e) {
     // Silently handle setup errors
   }

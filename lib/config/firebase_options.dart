@@ -67,7 +67,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: 'YOUR_SENDER_ID',
     projectId: 'get-inq-3544b',
     storageBucket: 'get-inq-3544b.appspot.com',
-    iosBundleId: 'com.example.inq',
+    iosBundleId: 'com.indra.inq',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -76,6 +76,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: 'YOUR_SENDER_ID',
     projectId: 'get-inq-3544b',
     storageBucket: 'get-inq-3544b.appspot.com',
-    iosBundleId: 'com.example.inq',
+    iosBundleId: 'com.indra.inq',
   );
 }
