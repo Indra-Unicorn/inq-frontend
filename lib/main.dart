@@ -9,6 +9,7 @@ import 'features/auth/login_page.dart';
 import 'features/auth/customer_signup.dart';
 import 'features/auth/merchant_signup.dart';
 import 'features/auth/about_us_page.dart';
+import 'features/auth/privacy_policy_page.dart';
 import 'features/customer/pages/dashboard/customer_dashboard.dart';
 import 'features/customer/pages/profile/customer_profile_page.dart';
 import 'features/merchant/merchant_dashboard.dart';
@@ -118,6 +119,7 @@ class MyApp extends StatelessWidget {
         '/customer-signup': (context) => const CustomerSignUpPage(),
         '/merchant-signup': (context) => const MerchantSignUpPage(),
         '/about-us': (context) => const AboutUsPage(),
+        '/privacy-policy': (context) => const PrivacyPolicyPage(),
         '/customer-dashboard': (context) => const CustomerDashboard(),
         '/merchant-dashboard': (context) => ChangeNotifierProvider(
               create: (_) => MerchantDashboardController(),
