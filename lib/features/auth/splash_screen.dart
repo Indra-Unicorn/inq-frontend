@@ -145,6 +145,8 @@ class _SplashScreenState extends State<SplashScreen>
       '/login',
       '/customer-signup',
       '/merchant-signup',
+      '/about-us',
+      '/privacy-policy',
       '/customer-dashboard',
       '/merchant-dashboard',
       '/customer-queues',
