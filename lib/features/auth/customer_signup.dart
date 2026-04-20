@@ -10,6 +10,7 @@ import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_constants.dart';
 import '../../shared/constants/app_colors.dart';
 import '../../shared/utils/platform_utils.dart';
+import '../../shared/widgets/otp_input_row.dart';
 import '../../services/auth_service.dart';
 
 class CustomerSignUpPage extends StatefulWidget {
@@ -352,50 +353,9 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(4, (index) {
-                          return SizedBox(
-                            width: 45,
-                            child: TextField(
-                              controller: _otpControllers[index],
-                              focusNode: _otpFocusNodes[index],
-                              textAlign: TextAlign.center,
-                              keyboardType: TextInputType.number,
-                              maxLength: 1,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                              decoration: InputDecoration(
-                                counterText: '',
-                                filled: true,
-                                fillColor: AppColors.backgroundLight,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      BorderSide(color: AppColors.border),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      BorderSide(color: AppColors.border),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                      color: AppColors.primary, width: 2),
-                                ),
-                              ),
-                              onChanged: (value) {
-                                if (value.length == 1 && index < 3) {
-                                  _otpFocusNodes[index + 1].requestFocus();
-                                }
-                              },
-                            ),
-                          );
-                        }),
+                      OtpInputRow(
+                        controllers: _otpControllers,
+                        focusNodes: _otpFocusNodes,
                       ),
                     ],
 

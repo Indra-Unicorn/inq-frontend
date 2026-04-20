@@ -11,6 +11,7 @@ import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_constants.dart';
 import '../../shared/constants/app_colors.dart';
+import '../../shared/widgets/otp_input_row.dart';
 import '../../services/auth_service.dart';
 
 class OTPVerificationPage extends StatefulWidget {
@@ -275,54 +276,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
                 ),
               ),
               const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(4, (index) {
-                  return SizedBox(
-                    width: 45,
-                    child: TextField(
-                      controller: _controllers[index],
-                      focusNode: _focusNodes[index],
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      maxLength: 1,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        filled: true,
-                        fillColor: AppColors.backgroundLight,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: AppColors.border,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: AppColors.border,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: AppColors.primary,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        if (value.length == 1 && index < 3) {
-                          _focusNodes[index + 1].requestFocus();
-                        }
-                      },
-                    ),
-                  );
-                }),
+              OtpInputRow(
+                controllers: _controllers,
+                focusNodes: _focusNodes,
               ),
               const SizedBox(height: 32),
               SizedBox(
