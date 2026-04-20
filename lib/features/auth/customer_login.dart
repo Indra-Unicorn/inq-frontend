@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_colors.dart';
 import 'otp_verification_page.dart';
+import 'customer_signup.dart';
 
 class CustomerLogin extends StatefulWidget {
   const CustomerLogin({super.key});
@@ -60,6 +61,28 @@ class _CustomerLoginState extends State<CustomerLogin> {
             ),
           );
         }
+      } else if (_isUserNotFound(response.statusCode, data['message'])) {
+        if (mounted) {
+          final phone = _phoneController.text;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'No account found. Redirecting you to sign up...'),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          await Future.delayed(const Duration(seconds: 2));
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    CustomerSignUpPage(prefillPhone: phone),
+              ),
+            );
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -80,6 +103,17 @@ class _CustomerLoginState extends State<CustomerLogin> {
         _isLoading = false;
       });
     }
+  }
+
+  bool _isUserNotFound(int statusCode, String? message) {
+    if (statusCode == 404) return true;
+    if (message == null) return false;
+    final lower = message.toLowerCase();
+    return lower.contains('not found') ||
+        lower.contains('not registered') ||
+        lower.contains('does not exist') ||
+        lower.contains('no account') ||
+        lower.contains('user not exist');
   }
 
   @override

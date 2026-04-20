@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 import 'dart:io';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_constants.dart';
@@ -24,14 +27,41 @@ class OTPVerificationPage extends StatefulWidget {
   State<OTPVerificationPage> createState() => _OTPVerificationPageState();
 }
 
-class _OTPVerificationPageState extends State<OTPVerificationPage> {
+class _OTPVerificationPageState extends State<OTPVerificationPage>
+    with CodeAutoFill {
   final List<TextEditingController> _controllers =
       List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
   bool _isLoading = false;
+  late String _currentSessionId;
+  int _resendCooldown = 0;
+  Timer? _resendTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentSessionId = widget.sessionId;
+    _startResendTimer();
+    if (!kIsWeb) {
+      listenForCode();
+    }
+  }
+
+  @override
+  void codeUpdated() {
+    final incoming = code ?? '';
+    if (incoming.length == 4) {
+      for (int i = 0; i < 4; i++) {
+        _controllers[i].text = incoming[i];
+      }
+      _verifyOTP();
+    }
+  }
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
+    if (!kIsWeb) cancel();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -39,6 +69,66 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
       node.dispose();
     }
     super.dispose();
+  }
+
+  void _startResendTimer() {
+    _resendTimer?.cancel();
+    setState(() => _resendCooldown = 30);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCooldown <= 1) {
+        timer.cancel();
+        setState(() => _resendCooldown = 0);
+      } else {
+        setState(() => _resendCooldown--);
+      }
+    });
+  }
+
+  Future<void> _resendOTP() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+            '${ApiEndpoints.baseUrl}${ApiEndpoints.customerLoginInitiate}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'phoneNumber': widget.phoneNumber}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        _currentSessionId = data['data']['session_id'];
+        for (var c in _controllers) {
+          c.clear();
+        }
+        _startResendTimer();
+        if (!kIsWeb) {
+          listenForCode();
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('OTP resent successfully')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text(data['message'] ?? 'Failed to resend OTP')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _verifyOTP() async {
@@ -62,7 +152,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
         },
         body: jsonEncode({
           'phoneNumber': widget.phoneNumber,
-          'sessionId': widget.sessionId,
+          'sessionId': _currentSessionId,
           'otp': otp,
         }),
       );
@@ -263,15 +353,21 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
               const SizedBox(height: 16),
               Center(
                 child: TextButton(
-                  onPressed: () {
-                    // TODO: Implement resend OTP logic
-                  },
+                  onPressed: (_isLoading || _resendCooldown > 0)
+                      ? null
+                      : _resendOTP,
                   child: Text(
-                    'Resend Code',
+                    _resendCooldown > 0
+                        ? 'Resend Code in ${_resendCooldown}s'
+                        : 'Resend Code',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: _resendCooldown > 0
+                          ? AppColors.textSecondary
+                          : AppColors.primary,
                       fontSize: 14,
-                      decoration: TextDecoration.underline,
+                      decoration: _resendCooldown > 0
+                          ? TextDecoration.none
+                          : TextDecoration.underline,
                     ),
                   ),
                 ),

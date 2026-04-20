@@ -43,22 +43,24 @@ void main() async {
         rethrow;
       }
     }
-
-    // Initialize notifications on all platforms
-    await NotificationService.initialize();
-
-    // Get and print FCM token
-    String? fcmToken = await FirebaseMessaging.instance.getToken();
-    if (kDebugMode) {
-      print('========================================');
-      print('FCM Token: $fcmToken');
-      print('========================================');
-    }
   } catch (e) {
     // Silently handle setup errors
   }
 
   runApp(const MyApp());
+
+  // Initialize notifications after the app starts so it never blocks the UI.
+  // On web this skips the browser permission dialog at startup entirely.
+  NotificationService.initialize().then((_) async {
+    if (kDebugMode) {
+      try {
+        String? fcmToken = await FirebaseMessaging.instance.getToken();
+        print('========================================');
+        print('FCM Token: $fcmToken');
+        print('========================================');
+      } catch (_) {}
+    }
+  }).catchError((_) {});
 }
 
 class MyApp extends StatelessWidget {

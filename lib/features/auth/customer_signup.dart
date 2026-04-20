@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_constants.dart';
 import '../../shared/constants/app_colors.dart';
 import '../../shared/utils/platform_utils.dart';
+import '../../services/auth_service.dart';
 
 class CustomerSignUpPage extends StatefulWidget {
-  const CustomerSignUpPage({super.key});
+  final String? prefillPhone;
+
+  const CustomerSignUpPage({super.key, this.prefillPhone});
 
   @override
   State<CustomerSignUpPage> createState() => _CustomerSignUpPageState();
 }
 
-class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
+class _CustomerSignUpPageState extends State<CustomerSignUpPage>
+    with CodeAutoFill {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final List<TextEditingController> _otpControllers =
@@ -27,9 +33,32 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
   bool _otpSent = false;
   String? _sessionId;
   bool _isPhoneEnabled = true;
+  int _resendCooldown = 0;
+  Timer? _resendTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.prefillPhone != null && widget.prefillPhone!.isNotEmpty) {
+      _phoneController.text = widget.prefillPhone!;
+    }
+  }
+
+  @override
+  void codeUpdated() {
+    final incoming = code ?? '';
+    if (incoming.length == 4) {
+      for (int i = 0; i < 4; i++) {
+        _otpControllers[i].text = incoming[i];
+      }
+      _verifyOTP();
+    }
+  }
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
+    if (!kIsWeb) cancel();
     _fullNameController.dispose();
     _phoneController.dispose();
     for (var controller in _otpControllers) {
@@ -39,6 +68,19 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       node.dispose();
     }
     super.dispose();
+  }
+
+  void _startResendTimer() {
+    _resendTimer?.cancel();
+    setState(() => _resendCooldown = 30);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCooldown <= 1) {
+        timer.cancel();
+        setState(() => _resendCooldown = 0);
+      } else {
+        setState(() => _resendCooldown--);
+      }
+    });
   }
 
   Future<void> _initiateSignup() async {
@@ -72,17 +114,26 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == true) {
+        for (var c in _otpControllers) {
+          c.clear();
+        }
         setState(() {
           _otpSent = true;
           _sessionId = data['data']['session_id'];
           _isPhoneEnabled = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('OTP sent successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        _startResendTimer();
+        if (!kIsWeb) {
+          listenForCode();
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('OTP sent successfully'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -137,14 +188,24 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        // Store token and login state
-        final prefs = await SharedPreferences.getInstance();
-        final token = data['data']['token'];
-        await prefs.setString(AppConstants.tokenKey, token);
-        await prefs.setBool('isLoggedIn', true);
+      final isSuccess = data['success'] == true &&
+          (response.statusCode == 200 || response.statusCode == 201);
 
-        // Register FCM token
+      if (isSuccess) {
+        final responseData = Map<String, dynamic>.from(data['data'] ?? {});
+        final token = responseData['token'] as String;
+
+        // User fields are flat inside data — exclude the token itself
+        final Map<String, dynamic> userData = {
+          ...responseData,
+        }..remove('token');
+
+        await AuthService.storeAuthData(
+          token: token,
+          userData: userData,
+          refreshToken: responseData['refreshToken'],
+        );
+
         await _registerFCMToken(token);
 
         if (mounted) {
@@ -374,13 +435,21 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage> {
                     if (_otpSent) ...[
                       const SizedBox(height: 12),
                       TextButton(
-                        onPressed: _isLoading ? null : _initiateSignup,
+                        onPressed: (_isLoading || _resendCooldown > 0)
+                            ? null
+                            : _initiateSignup,
                         child: Text(
-                          'Resend OTP',
+                          _resendCooldown > 0
+                              ? 'Resend OTP in ${_resendCooldown}s'
+                              : 'Resend OTP',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: _resendCooldown > 0
+                                ? AppColors.textSecondary
+                                : AppColors.primary,
                             fontSize: 14,
-                            decoration: TextDecoration.underline,
+                            decoration: _resendCooldown > 0
+                                ? TextDecoration.none
+                                : TextDecoration.underline,
                           ),
                         ),
                       ),
