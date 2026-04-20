@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../shared/constants/app_colors.dart';
 import '../../shared/constants/app_constants.dart';
+import '../../services/auth_service.dart';
 import 'models/merchant_signup_data.dart';
 import 'services/merchant_signup_service.dart';
 import 'services/location_service.dart';
@@ -300,23 +300,23 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
       final data = await MerchantSignupService.signup(signupData, _selectedImages);
 
       if (data['success'] == true) {
-        // Store token and login state if token is provided
-        final prefs = await SharedPreferences.getInstance();
-        String? token;
-        if (data['data'] != null && data['data'] is Map) {
-          token = data['data']['token'] as String?;
-        }
-        
-        if (token != null && token.isNotEmpty) {
-          await prefs.setString(AppConstants.tokenKey, token);
-          await prefs.setBool('isLoggedIn', true);
+        final responseData =
+            (data['data'] != null && data['data'] is Map)
+                ? Map<String, dynamic>.from(data['data'] as Map)
+                : <String, dynamic>{};
+        final token = responseData['token'] as String?;
 
-          // Register FCM token
+        if (token != null && token.isNotEmpty) {
+          final userData = {...responseData}..remove('token');
+          await AuthService.storeAuthData(
+            token: token,
+            userData: userData,
+            refreshToken: responseData['refreshToken'] as String?,
+          );
           await MerchantSignupService.registerFCMToken(token);
         }
 
         if (mounted) {
-          // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(data['message'] ??
@@ -324,7 +324,6 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
               backgroundColor: AppColors.success,
             ),
           );
-          // Navigate to login page
           Navigator.pushReplacementNamed(context, '/login');
         }
       } else {

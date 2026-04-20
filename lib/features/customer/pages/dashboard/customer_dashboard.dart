@@ -222,7 +222,11 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.pushNamed(context, '/login');
+                Navigator.pushNamed(
+                  context,
+                  '/login',
+                  arguments: {'returnTo': '/customer-profile'},
+                );
               },
               child: const Text('Login'),
             ),
@@ -252,7 +256,11 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.pushNamed(context, '/login');
+                Navigator.pushNamed(
+                  context,
+                  '/login',
+                  arguments: {'returnTo': '/queue-status'},
+                );
               },
               child: const Text('Login'),
             ),

@@ -79,9 +79,13 @@ class _LoginPageState extends State<LoginPage>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [
-                  CustomerLogin(),
-                  MerchantLogin(),
+                children: [
+                  CustomerLogin(
+                    returnTo: (ModalRoute.of(context)?.settings.arguments
+                            as Map<String, dynamic>?)?['returnTo']
+                        as String?,
+                  ),
+                  const MerchantLogin(),
                 ],
               ),
             ),

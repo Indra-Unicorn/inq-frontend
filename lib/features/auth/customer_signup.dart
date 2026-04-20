@@ -14,8 +14,9 @@ import '../../services/auth_service.dart';
 
 class CustomerSignUpPage extends StatefulWidget {
   final String? prefillPhone;
+  final String? returnTo;
 
-  const CustomerSignUpPage({super.key, this.prefillPhone});
+  const CustomerSignUpPage({super.key, this.prefillPhone, this.returnTo});
 
   @override
   State<CustomerSignUpPage> createState() => _CustomerSignUpPageState();
@@ -209,7 +210,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
         await _registerFCMToken(token);
 
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/customer-dashboard');
+          final destination = widget.returnTo ?? '/customer-dashboard';
+          Navigator.pushReplacementNamed(context, destination);
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

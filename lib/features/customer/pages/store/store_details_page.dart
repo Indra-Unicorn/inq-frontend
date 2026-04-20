@@ -461,7 +461,11 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                                                   ElevatedButton(
                                                     onPressed: () {
                                                       Navigator.of(context).pop();
-                                                      Navigator.pushNamed(context, '/login');
+                                                      Navigator.pushNamed(
+                                                        context,
+                                                        '/login',
+                                                        arguments: {'returnTo': '/store/${widget.shopId}'},
+                                                      );
                                                     },
                                                     child: const Text('Login'),
                                                   ),
@@ -516,6 +520,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                             child: StoreDetailsQueues(
                               queues: _queues,
                               userCurrentQueueIds: _userCurrentQueueIds,
+                              shopId: widget.shopId,
                             ),
                           ),
                         ),

@@ -34,70 +34,66 @@ class _SplashScreenState extends State<SplashScreen>
     _checkAuthAndNavigate();
   }
 
+  // Routes that require a logged-in session to access
+  static const _protectedRoutes = {
+    '/merchant-dashboard',
+    '/customer-profile',
+    '/merchant-profile',
+    '/store-profile',
+    '/customer-queues',
+    '/queue-status',
+    '/queue-management',
+    '/admin-dashboard',
+  };
+
   Future<void> _checkAuthAndNavigate() async {
     try {
-      // Add a minimum delay to show splash screen
       await Future.delayed(const Duration(seconds: 2));
 
-      // Check if user is logged in
       final isLoggedIn = await AuthService.isLoggedIn();
 
-      // On web, check if we should preserve the current route
+      // On web, honour the current URL path when it is meaningful
       if (kIsWeb) {
-        // Get route from URL
         final currentRoute = _getCurrentWebRoute();
-        
-        // If we're on a valid route (not splash or root), preserve it
-        if (currentRoute != null && 
-            currentRoute != '/' && 
+
+        if (currentRoute != null &&
+            currentRoute != '/' &&
             currentRoute != '/splash' &&
             _isValidRoute(currentRoute)) {
-          // Navigate to the current route to preserve it
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, currentRoute);
+          // If the target route needs auth and the user isn't logged in,
+          // send them to login instead of the protected page.
+          if (_protectedRoutes.contains(currentRoute) && !isLoggedIn) {
+            final loginRoute = currentRoute == '/admin-dashboard'
+                ? '/admin-login'
+                : '/login';
+            if (mounted) Navigator.pushReplacementNamed(context, loginRoute);
+            return;
           }
+          if (mounted) Navigator.pushReplacementNamed(context, currentRoute);
           return;
         }
-        
-        // If route is root (/), navigate to dashboard
-        if (currentRoute == '/') {
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, '/customer-dashboard');
-          }
-          return;
-        }
+
+        // Root URL → fall through to role-based logic below
       }
 
       if (isLoggedIn) {
-        // Get user type from stored data or JWT token
         final userType = await AuthService.getUserType();
 
-        if (userType == null) {
-          // Unknown user type, go to customer dashboard (public access)
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, '/customer-dashboard');
-          }
-          return;
-        }
+        final targetRoute = userType == AppConstants.userTypeCustomer
+            ? '/customer-dashboard'
+            : userType == AppConstants.userTypeMerchant
+                ? '/merchant-dashboard'
+                : userType == AppConstants.userTypeAdmin
+                    ? '/admin-dashboard'
+                    : '/customer-dashboard';
 
-        // Navigate based on user type
-        if (mounted) {
-          final targetRoute = userType == AppConstants.userTypeCustomer
-              ? '/customer-dashboard'
-              : userType == AppConstants.userTypeMerchant
-                  ? '/merchant-dashboard'
-                  : '/customer-dashboard';
-          
-          Navigator.pushReplacementNamed(context, targetRoute);
-        }
+        if (mounted) Navigator.pushReplacementNamed(context, targetRoute);
       } else {
-        // Not logged in, go to customer dashboard (public access)
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/customer-dashboard');
         }
       }
     } catch (e) {
-      // On error, go to customer dashboard (public access)
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/customer-dashboard');
       }
@@ -140,8 +136,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   // Check if the route is valid (exists in our routes or is a dynamic route)
   bool _isValidRoute(String route) {
-    // List of known routes
-    const knownRoutes = [
+    const knownRoutes = {
       '/login',
       '/customer-signup',
       '/merchant-signup',
@@ -155,18 +150,12 @@ class _SplashScreenState extends State<SplashScreen>
       '/merchant-profile',
       '/queue-status',
       '/queue-management',
-    ];
-    
-    // Check if it's a known route
-    if (knownRoutes.contains(route)) {
-      return true;
-    }
-    
-    // Check if it's a dynamic route (e.g., /store/{shopId})
-    if (route.startsWith('/store/')) {
-      return true;
-    }
-    
+      '/admin-login',
+      '/admin-dashboard',
+    };
+
+    if (knownRoutes.contains(route)) return true;
+    if (route.startsWith('/store/')) return true;
     return false;
   }
 

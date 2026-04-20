@@ -7,7 +7,9 @@ import 'otp_verification_page.dart';
 import 'customer_signup.dart';
 
 class CustomerLogin extends StatefulWidget {
-  const CustomerLogin({super.key});
+  final String? returnTo;
+
+  const CustomerLogin({super.key, this.returnTo});
 
   @override
   State<CustomerLogin> createState() => _CustomerLoginState();
@@ -57,6 +59,7 @@ class _CustomerLoginState extends State<CustomerLogin> {
               builder: (context) => OTPVerificationPage(
                 phoneNumber: _phoneController.text,
                 sessionId: data['data']['session_id'],
+                returnTo: widget.returnTo,
               ),
             ),
           );
@@ -77,8 +80,10 @@ class _CustomerLoginState extends State<CustomerLogin> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    CustomerSignUpPage(prefillPhone: phone),
+                builder: (context) => CustomerSignUpPage(
+                  prefillPhone: phone,
+                  returnTo: widget.returnTo,
+                ),
               ),
             );
           }

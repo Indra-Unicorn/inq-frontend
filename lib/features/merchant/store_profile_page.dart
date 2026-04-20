@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 
 class StoreProfilePage extends StatefulWidget {
   const StoreProfilePage({super.key});
@@ -358,14 +359,16 @@ class _StoreProfilePageState extends State<StoreProfilePage> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
-                // Navigate to login page and clear all previous routes
-                Navigator.pushNamedAndRemoveUntil(
-                  context, 
-                  '/', 
-                  (route) => false,
-                );
+                await AuthService.clearAuthData();
+                if (context.mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                    (route) => false,
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE82630),

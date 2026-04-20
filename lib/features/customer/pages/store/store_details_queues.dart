@@ -182,11 +182,13 @@ class StoreQueueCard extends StatelessWidget {
 class StoreDetailsQueues extends StatefulWidget {
   final List<Queue> queues;
   final Set<String> userCurrentQueueIds;
+  final String? shopId;
 
   const StoreDetailsQueues({
     super.key,
     required this.queues,
     this.userCurrentQueueIds = const {},
+    this.shopId,
   });
 
   @override
@@ -201,8 +203,8 @@ class _StoreDetailsQueuesState extends State<StoreDetailsQueues> {
     // Check if user is logged in before joining queue
     final isLoggedIn = await AuthService.isLoggedIn();
     if (!isLoggedIn) {
-      // Show dialog to prompt login
       if (!mounted) return;
+      final returnTo = widget.shopId != null ? '/store/${widget.shopId}' : null;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -216,7 +218,11 @@ class _StoreDetailsQueuesState extends State<StoreDetailsQueues> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.pushNamed(context, '/login');
+                Navigator.pushNamed(
+                  context,
+                  '/login',
+                  arguments: returnTo != null ? {'returnTo': returnTo} : null,
+                );
               },
               child: const Text('Login'),
             ),
