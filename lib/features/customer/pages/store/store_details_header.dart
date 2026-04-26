@@ -24,7 +24,6 @@ class _StoreDetailsHeaderState extends State<StoreDetailsHeader> {
     try {
       final domain = AppConstants.getShareableDomain();
       final shareableUrl = '$domain/store/${widget.store.shopId}';
-      final deepLink = 'inqueue.in/store/${widget.store.shopId}';
 
       final shareText = '''
 Check out ${widget.store.shopName} on InQ!
@@ -35,7 +34,6 @@ ${widget.store.categories.isNotEmpty ? '🏷️ ${widget.store.categories.take(3
 Join queues and skip the wait! 🚀
 
 $shareableUrl
-$deepLink
 '''
           .trim();
 

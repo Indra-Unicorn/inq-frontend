@@ -54,6 +54,9 @@ class ApiEndpoints {
   static const String getMyDevices = '/v1/tokens/my-devices';
   static const String getMyTokens = '/v1/tokens/my-tokens';
 
+  // Category endpoints
+  static const String getAllCategories = '/categories/get/all';
+
   // SMS endpoints
   static const String sendOTPPublic = '/v1/sms/public/otp';
   static const String sendOTPProtected = '/v1/sms/protected/otp';

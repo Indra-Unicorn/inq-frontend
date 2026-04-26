@@ -386,7 +386,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(18),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: AppColors.backgroundLight,
                             borderRadius: BorderRadius.circular(16),
@@ -406,6 +406,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
                             data: _selectedTarget!.qrData,
                             version: QrVersions.auto,
                             size: 160.0,
+                            padding: EdgeInsets.zero,
                             backgroundColor: AppColors.backgroundLight,
                             dataModuleStyle: const QrDataModuleStyle(
                               dataModuleShape: QrDataModuleShape.square,
@@ -927,7 +928,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
           SizedBox(height: 14 * scaleFactor),
           // QR Code with enhanced styling
           Container(
-            padding: EdgeInsets.all(16 * scaleFactor),
+            padding: EdgeInsets.all(8 * scaleFactor),
             decoration: BoxDecoration(
               color: AppColors.backgroundLight,
               borderRadius: BorderRadius.circular(20 * scaleFactor),
@@ -947,6 +948,7 @@ class _GenerateMerchantQRPageState extends State<GenerateMerchantQRPage> {
               data: _selectedTarget!.qrData,
               version: QrVersions.auto,
               size: 180.0 * scaleFactor,
+              padding: EdgeInsets.zero,
               backgroundColor: AppColors.backgroundLight,
               dataModuleStyle: const QrDataModuleStyle(
                 dataModuleShape: QrDataModuleShape.square,

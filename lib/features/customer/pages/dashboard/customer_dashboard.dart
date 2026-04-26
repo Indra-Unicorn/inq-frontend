@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../shared/common_style.dart';
 import '../../../../shared/constants/app_colors.dart';
 import '../../models/shop.dart';
+import '../../models/category.dart';
 import '../../services/shop_service.dart';
+import '../../services/category_service.dart';
 import 'customer_dashboard_header.dart';
 import 'customer_dashboard_store_list.dart';
 import 'customer_dashboard_bottom_nav.dart';
@@ -23,12 +25,16 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ShopService _shopService = ShopService();
+  final CategoryService _categoryService = CategoryService();
   int _currentIndex = 0;
   String _selectedCategory = 'All';
   bool _isLoading = true;
   String? _error;
   List<Shop> _stores = [];
   bool _locationChecked = false;
+
+  // Categories — null while loading from API
+  List<Category>? _apiCategories;
 
   // Search state
   List<Shop> _searchResults = [];
@@ -39,21 +45,28 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   double? _userLong;
   DateTime? _lastSearchTime;
 
-  final List<String> _categories = [
-    'All',
-    'Food',
-    'Shopping',
-    'Services',
-    'Entertainment',
-  ];
-
   @override
   void initState() {
     super.initState();
     _loadStores();
+    _loadCategories();
     _checkAndUpdateLocation();
     _searchController.addListener(_onSearchChanged);
     _searchFocusNode.addListener(_onSearchFocusChanged);
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await _categoryService.getAllCategories();
+      if (mounted) {
+        setState(() => _apiCategories = categories);
+      }
+    } catch (_) {
+      // Silently fall back — the widget shows "All" only when list is empty
+      if (mounted) {
+        setState(() => _apiCategories = []);
+      }
+    }
   }
 
   void _onSearchChanged() {
@@ -250,7 +263,11 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
 
   List<Shop> get _filteredStores {
     if (_selectedCategory == 'All') return _stores;
-    return _stores.where((store) => store.categories.contains(_selectedCategory)).toList();
+    final selected = _selectedCategory.toLowerCase();
+    return _stores
+        .where((store) =>
+            store.categories.any((c) => c.toLowerCase() == selected))
+        .toList();
   }
 
   @override
@@ -319,7 +336,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         // Categories
                         if (!_showSearchTray)
                           CustomerDashboardCategories(
-                            categories: _categories,
+                            categories: _apiCategories,
                             selectedCategory: _selectedCategory,
                             onCategorySelected: (cat) {
                               setState(() {
