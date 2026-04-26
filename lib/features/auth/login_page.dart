@@ -226,9 +226,8 @@ class _LoginPageState extends State<LoginPage>
                 ),
 
                 // Main Content Card overlapping the header
-                Expanded(
-                  child: Container(
-                    transform: Matrix4.translationValues(0.0, -30.0, 0.0),
+                Container(
+                  transform: Matrix4.translationValues(0.0, -30.0, 0.0),
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -288,7 +287,7 @@ class _LoginPageState extends State<LoginPage>
 
                         // Tab Content
                         SizedBox(
-                          height: 400,
+                          height: 450,
                           child: TabBarView(
                             controller: _tabController,
                             children: [
@@ -305,7 +304,6 @@ class _LoginPageState extends State<LoginPage>
                       ],
                     ),
                   ),
-                ),
 
                 // Continue as Guest — visually distinct ghost button
                 Padding(

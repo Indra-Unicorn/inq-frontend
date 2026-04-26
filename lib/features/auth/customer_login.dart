@@ -136,10 +136,11 @@ class _CustomerLoginState extends State<CustomerLogin> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
             'Customer Sign In',
@@ -234,6 +235,7 @@ class _CustomerLoginState extends State<CustomerLogin> {
             ],
           ),
         ],
+        ),
       ),
     );
   }

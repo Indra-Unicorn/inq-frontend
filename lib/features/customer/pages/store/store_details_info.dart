@@ -4,13 +4,20 @@ import '../../../../shared/common_style.dart';
 import '../../../../shared/constants/app_colors.dart';
 import '../../models/shop.dart';
 
-class StoreDetailsInfo extends StatelessWidget {
+class StoreDetailsInfo extends StatefulWidget {
   final Shop store;
 
   const StoreDetailsInfo({
     super.key,
     required this.store,
   });
+
+  @override
+  State<StoreDetailsInfo> createState() => _StoreDetailsInfoState();
+}
+
+class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
+  bool _isExpanded = false;
 
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
@@ -21,15 +28,15 @@ class StoreDetailsInfo extends StatelessWidget {
 
   void _openMap() {
     final query = Uri.encodeComponent(
-      '${store.shopName}, ${_formatAddress(store.address)}',
+      '${widget.store.shopName}, ${_formatAddress(widget.store.address)}',
     );
     final url = 'https://www.google.com/maps/search/?api=1&query=$query';
     _launchUrl(url);
   }
 
   void _callShop() {
-    if (store.shopPhoneNumber != null) {
-      _launchUrl('tel:${store.shopPhoneNumber}');
+    if (widget.store.shopPhoneNumber != null) {
+      _launchUrl('tel:${widget.store.shopPhoneNumber}');
     }
   }
 
@@ -47,14 +54,14 @@ class StoreDetailsInfo extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  store.shopName,
+                  widget.store.shopName,
                   style: CommonStyle.heading2.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
               ),
-              if (store.rating > 0)
+              if (widget.store.rating > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
@@ -67,14 +74,14 @@ class StoreDetailsInfo extends StatelessWidget {
                       const Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        store.rating.toStringAsFixed(1),
+                        widget.store.rating.toStringAsFixed(1),
                         style: CommonStyle.bodyMedium.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
-                        ' (${store.ratingCount})',
+                        ' (${widget.store.ratingCount})',
                         style: CommonStyle.caption.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -87,11 +94,11 @@ class StoreDetailsInfo extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Categories
-          if (store.categories.isNotEmpty)
+          if (widget.store.categories.isNotEmpty)
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: store.categories.map((category) {
+              children: widget.store.categories.map((category) {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -116,7 +123,7 @@ class StoreDetailsInfo extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              if (store.shopPhoneNumber != null && store.shopPhoneNumber!.isNotEmpty)
+              if (widget.store.shopPhoneNumber != null && widget.store.shopPhoneNumber!.isNotEmpty)
                 _buildActionButton(
                   icon: Icons.phone_outlined,
                   label: 'Call',
@@ -128,39 +135,51 @@ class StoreDetailsInfo extends StatelessWidget {
                 onTap: _openMap,
               ),
               _buildActionButton(
-                icon: Icons.info_outline,
+                icon: _isExpanded ? Icons.info : Icons.info_outline,
                 label: 'Details',
                 onTap: () {
-                  // Scrolling/more details
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
                 },
               ),
             ],
           ),
 
-          const SizedBox(height: 24),
-          const Divider(height: 1, thickness: 1),
-          const SizedBox(height: 24),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isExpanded
+                ? Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      const Divider(height: 1, thickness: 1),
+                      const SizedBox(height: 24),
 
-          // Quick Stats Row
-          _buildQuickStats(),
-          
-          const SizedBox(height: 24),
-          
-          // Address & Hours
-          _buildModernInfoItem(
-            icon: Icons.location_on_outlined,
-            label: 'Address',
-            value: _formatAddress(store.address),
-            color: AppColors.primary,
-          ),
-          const SizedBox(height: 16),
-          _buildModernInfoItem(
-            icon: Icons.schedule_outlined,
-            label: 'Business Hours',
-            value: store.openTime != null && store.closeTime != null
-                ? '${store.openTime} - ${store.closeTime}'
-                : 'Not specified',
-            color: AppColors.success,
+                      // Quick Stats Row
+                      _buildQuickStats(),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Address & Hours
+                      _buildModernInfoItem(
+                        icon: Icons.location_on_outlined,
+                        label: 'Address',
+                        value: _formatAddress(widget.store.address),
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildModernInfoItem(
+                        icon: Icons.schedule_outlined,
+                        label: 'Business Hours',
+                        value: widget.store.openTime != null && widget.store.closeTime != null
+                            ? '${widget.store.openTime} - ${widget.store.closeTime}'
+                            : 'Not specified',
+                        color: AppColors.success,
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -204,16 +223,16 @@ class StoreDetailsInfo extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             'Status',
-            store.shopStatus,
+            widget.store.shopStatus,
             Icons.storefront_outlined,
-            store.statusColor,
+            widget.store.statusColor,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: _buildStatCard(
             'Avg Wait',
-            store.avgEntryTimeMinutes > 0 ? '${store.avgEntryTimeMinutes}m' : '--',
+            widget.store.avgEntryTimeMinutes > 0 ? '${widget.store.avgEntryTimeMinutes}m' : '--',
             Icons.timer_outlined,
             AppColors.primary,
           ),
@@ -222,7 +241,7 @@ class StoreDetailsInfo extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             'Queues',
-            '${store.queueResponses?.length ?? 0}',
+            '${widget.store.queueResponses?.length ?? 0}',
             Icons.people_outline,
             AppColors.success,
           ),

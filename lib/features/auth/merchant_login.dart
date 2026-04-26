@@ -222,10 +222,11 @@ class _MerchantLoginState extends State<MerchantLogin> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
             'Merchant Sign In',
@@ -342,6 +343,7 @@ class _MerchantLoginState extends State<MerchantLogin> {
             ],
           ),
         ],
+        ),
       ),
     );
   }

@@ -1,17 +1,66 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../../shared/constants/app_colors.dart';
+import '../../../shared/constants/api_endpoints.dart';
 
-class CategoriesSection extends StatelessWidget {
-  final List<String> categories;
+class CategoriesSection extends StatefulWidget {
   final List<String> selectedCategories;
   final Function(String, bool) onCategoryChanged;
 
   const CategoriesSection({
     super.key,
-    required this.categories,
     required this.selectedCategories,
     required this.onCategoryChanged,
   });
+
+  @override
+  State<CategoriesSection> createState() => _CategoriesSectionState();
+}
+
+class _CategoriesSectionState extends State<CategoriesSection> {
+  List<String> _categories = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.getAllCategories}'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final list = data['data'] as List<dynamic>;
+        
+        setState(() {
+          _categories = list.map((json) {
+            final name = json['name'] as String;
+            return name.isEmpty ? name : '${name[0].toUpperCase()}${name.substring(1)}';
+          }).toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = data['message'] ?? 'Failed to load categories';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to fetch categories';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,15 +115,28 @@ class CategoriesSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: categories.map((category) {
-              final isSelected = selectedCategories.contains(category);
-              return _buildCategoryChip(category, isSelected);
-            }).toList(),
-          ),
-          if (selectedCategories.isNotEmpty) ...[
+          if (_isLoading)
+            const Center(child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator()))
+          else if (_error != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  _error!,
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _categories.map((category) {
+                final isSelected = widget.selectedCategories.contains(category);
+                return _buildCategoryChip(category, isSelected);
+              }).toList(),
+            ),
+          if (widget.selectedCategories.isNotEmpty) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -93,7 +155,7 @@ class CategoriesSection extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${selectedCategories.length} categor${selectedCategories.length == 1 ? 'y' : 'ies'} selected',
+                      '${widget.selectedCategories.length} categor${widget.selectedCategories.length == 1 ? 'y' : 'ies'} selected',
                       style: TextStyle(
                         color: AppColors.success,
                         fontSize: 14,
@@ -133,7 +195,7 @@ class CategoriesSection extends StatelessWidget {
     final icon = categoryIcons[category] ?? Icons.category;
 
     return GestureDetector(
-      onTap: () => onCategoryChanged(category, !isSelected),
+      onTap: () => widget.onCategoryChanged(category, !isSelected),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

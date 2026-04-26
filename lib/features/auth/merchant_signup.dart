@@ -42,15 +42,6 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   List<String> _selectedCategories = [];
   List<dynamic> _selectedImages = []; // Can be File or Uint8List depending on platform
 
-  final List<String> _categories = [
-    'Restaurant',
-    'Cafe',
-    'Retail',
-    'Salon',
-    'Gym',
-    'Clinic',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -512,7 +503,6 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
 
                       // Categories Section
                       CategoriesSection(
-                        categories: _categories,
                         selectedCategories: _selectedCategories,
                         onCategoryChanged: _onCategoryChanged,
                       ),
