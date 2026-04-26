@@ -136,116 +136,153 @@ class _CustomerLoginState extends State<CustomerLogin> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Spacer(),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Customer Sign In',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Enter your phone number to continue',
+            style: TextStyle(
+              fontSize: 15,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
 
-        // Phone Input Section
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            children: [
-              // Phone Number Input
-              _buildInputField(
-                controller: _phoneController,
-                label: 'Phone Number',
-                keyboardType: TextInputType.phone,
+          // Phone Input Section
+          _buildInputField(
+            controller: _phoneController,
+            label: 'Phone Number',
+            hintText: 'e.g. 2374756789',
+            icon: Icons.phone_android_rounded,
+            keyboardType: TextInputType.phone,
+          ),
+
+          const SizedBox(height: 24),
+
+          // Continue with Phone Button
+          ElevatedButton(
+            onPressed: _isLoading ? null : _handleLogin,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              elevation: 8,
+              shadowColor: AppColors.primary.withOpacity(0.4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-
-              const SizedBox(height: 12),
-
-              // Continue with Phone Button
-              Container(
-                constraints: const BoxConstraints(maxWidth: 480),
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.textWhite,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
-                    elevation: 0,
+                  )
+                : const Text(
+                    'Continue with Phone',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                  child: _isLoading
-                      ? CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.textWhite),
-                        )
-                      : const Text(
-                          'Continue with Phone',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.015,
-                          ),
-                        ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Sign up link
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'New user? ',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-
-              const SizedBox(height: 12),
-
-              // Sign up link
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, '/customer-signup');
                 },
                 child: Text(
-                  'New user? Sign up as a Customer',
+                  'Sign up as a Customer',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: AppColors.primary,
                     fontSize: 14,
-                    decoration: TextDecoration.underline,
+                    fontWeight: FontWeight.bold,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
             ],
           ),
-        ),
-
-        const Spacer(),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
+    String? hintText,
+    required IconData icon,
     TextInputType? keyboardType,
   }) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 480),
-      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.border.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           labelText: label,
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: AppColors.textSecondary.withOpacity(0.5),
+            fontSize: 15,
+          ),
           labelStyle: TextStyle(
             color: AppColors.textSecondary,
-            fontSize: 16,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
           ),
-          filled: true,
-          fillColor: AppColors.backgroundLight,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
+          prefixIcon: Icon(
+            icon,
+            color: AppColors.primary,
+            size: 22,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primary, width: 2),
-          ),
-        ),
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 16,
         ),
       ),
     );

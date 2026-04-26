@@ -296,28 +296,46 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
             // Header with back button
             Container(
               padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundLight,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.border.withOpacity(0.5),
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      child: Icon(
-                        Icons.arrow_back,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
                         color: AppColors.textPrimary,
-                        size: 24,
+                        size: 20,
                       ),
                     ),
                   ),
                   Expanded(
                     child: Text(
-                      'Sign Up',
+                      'Customer Sign Up',
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: -0.015,
+                        letterSpacing: -0.5,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -330,34 +348,56 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
             // Form fields
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 12),
+                    const Text(
+                      'Create an Account',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please fill in your details to continue',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
 
                     // Full Name
                     _buildInputField(
                       controller: _fullNameController,
                       placeholder: 'Full Name',
+                      icon: Icons.person_outline_rounded,
                       enabled: !_otpSent,
                     ),
+
+                    const SizedBox(height: 16),
 
                     // Phone
                     _buildInputField(
                       controller: _phoneController,
-                      placeholder: 'Phone',
+                      placeholder: 'Phone Number',
+                      icon: Icons.phone_android_rounded,
                       keyboardType: TextInputType.phone,
                       enabled: _isPhoneEnabled,
                     ),
 
                     if (_otpSent) ...[
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       Text(
-                        'Enter OTP',
+                        'Enter Verification Code',
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -367,47 +407,51 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
                       ),
                     ],
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Sign Up Button
-                    Container(
-                      constraints: const BoxConstraints(maxWidth: 480),
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : (_otpSent ? _verifyOTP : _initiateSignup),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.textWhite,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
+                    ElevatedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : (_otpSent ? _verifyOTP : _initiateSignup),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 8,
+                        shadowColor: AppColors.primary.withOpacity(0.4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: _isLoading
-                            ? CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.textWhite),
-                              )
-                            : Text(
-                                _otpSent ? 'Verify OTP' : 'Send OTP',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.015,
-                                ),
-                              ),
                       ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Text(
+                              _otpSent ? 'Verify OTP' : 'Send OTP',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                     ),
 
                     if (_otpSent) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       TextButton(
                         onPressed: (_isLoading || _resendCooldown > 0)
                             ? null
                             : _initiateSignup,
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                        ),
                         child: Text(
                           _resendCooldown > 0
                               ? 'Resend OTP in ${_resendCooldown}s'
@@ -416,47 +460,103 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
                             color: _resendCooldown > 0
                                 ? AppColors.textSecondary
                                 : AppColors.primary,
-                            fontSize: 14,
-                            decoration: _resendCooldown > 0
-                                ? TextDecoration.none
-                                : TextDecoration.underline,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ],
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 32),
 
                     // Login link
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Text(
-                        'Already have an account? Log In',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          decoration: TextDecoration.underline,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account? ',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Text(
+                            'Log In',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
 
                     // Merchant signup link
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacementNamed(
-                            context, '/merchant-signup');
-                      },
-                      child: Text(
-                        'Are you a merchant? Sign Up',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          decoration: TextDecoration.underline,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Are you a merchant? ',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacementNamed(
+                                context, '/merchant-signup');
+                          },
+                          child: Text(
+                            'Sign Up Here',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Continue as Guest Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/customer-dashboard');
+                        },
+                        icon: Icon(
+                          Icons.person_outline_rounded,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        label: Text(
+                          'Continue as Guest',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: AppColors.primary.withOpacity(0.5), width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
                       ),
                     ),
 
@@ -474,44 +574,47 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
   Widget _buildInputField({
     required TextEditingController controller,
     required String placeholder,
+    required IconData icon,
     TextInputType? keyboardType,
     bool obscureText = false,
     bool enabled = true,
   }) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 480),
-      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: enabled ? AppColors.backgroundLight : AppColors.backgroundDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.border.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
         enabled: enabled,
-        decoration: InputDecoration(
-          hintText: placeholder,
-          hintStyle: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 16,
-          ),
-          filled: true,
-          fillColor:
-              enabled ? AppColors.backgroundLight : AppColors.backgroundDark,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primary, width: 2),
-          ),
-          contentPadding: const EdgeInsets.all(16),
-        ),
         style: TextStyle(
-          color: AppColors.textPrimary.withValues(alpha: enabled ? 1.0 : 0.5),
+          color: AppColors.textPrimary.withOpacity(enabled ? 1.0 : 0.5),
           fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          labelText: placeholder,
+          labelStyle: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: Icon(
+            icon,
+            color: enabled ? AppColors.primary : AppColors.textSecondary,
+            size: 22,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
         ),
       ),
     );

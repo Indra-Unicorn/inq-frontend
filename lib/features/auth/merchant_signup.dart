@@ -373,32 +373,36 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
             children: [
               // Header with progress
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
                 decoration: BoxDecoration(
                   color: AppColors.backgroundLight,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.shadowLight,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppColors.border.withOpacity(0.5),
+                      width: 1,
                     ),
-                  ],
+                  ),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Icon(
-                              Icons.arrow_back,
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(
+                              Icons.arrow_back_ios_new_rounded,
                               color: AppColors.textPrimary,
                               size: 20,
                             ),
@@ -412,9 +416,10 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                               Text(
                                 'Merchant Sign Up',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -423,6 +428,7 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -430,24 +436,26 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
                         Expanded(
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            backgroundColor: AppColors.border,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.primary),
-                            minHeight: 8,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              backgroundColor: AppColors.border.withOpacity(0.5),
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                              minHeight: 8,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Text(
                           '${(progress * 100).toInt()}%',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             color: AppColors.primary,
                           ),
                         ),
@@ -460,8 +468,9 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
               // Content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Basic Information Section
                       BasicInformationSection(
@@ -520,57 +529,55 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                         },
                       ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 40),
 
                       // Sign Up Button
-                      Container(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleSignup,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.textWhite,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _handleSignup,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 8,
+                          shadowColor: AppColors.primary.withOpacity(0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: _isLoading
-                              ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                AppColors.textWhite),
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Creating Account...',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : const Text(
-                                  'Create Merchant Account',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                         ),
+                        child: _isLoading
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      strokeWidth: 2.5,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Creating Account...',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Text(
+                                'Create Merchant Account',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 32),
 
                       // Login link
                       Row(
@@ -581,24 +588,58 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           GestureDetector(
                             onTap: () => Navigator.pop(context),
                             child: Text(
-                              'Log in',
+                              'Log In',
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
+
+                      // Continue as Guest Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pushReplacementNamed(context, '/customer-dashboard');
+                          },
+                          icon: Icon(
+                            Icons.person_outline_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          label: Text(
+                            'Continue as Guest',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: BorderSide(color: AppColors.primary.withOpacity(0.5), width: 1.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
