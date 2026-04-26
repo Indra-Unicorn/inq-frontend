@@ -52,6 +52,18 @@ class _MerchantSignUpPageState extends State<MerchantSignUpPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _redirectIfLoggedIn();
+  }
+
+  Future<void> _redirectIfLoggedIn() async {
+    final route = await AuthService.dashboardRouteForCurrentUser();
+    if (!mounted || route == null) return;
+    Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();

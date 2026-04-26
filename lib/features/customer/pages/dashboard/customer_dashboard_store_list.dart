@@ -287,10 +287,12 @@ class CustomerDashboardStoreList extends StatelessWidget {
         // Stats Footer
         Row(
           children: [
-            _buildFooterStat(
-              icon: Icons.access_time_rounded,
-              text: store.avgEntryTimeMinutes > 0 ? '${store.avgEntryTimeMinutes} min wait' : 'No wait time',
-              color: AppColors.success,
+            Flexible(
+              child: _buildFooterStat(
+                icon: Icons.access_time_rounded,
+                text: store.avgEntryTimeMinutes > 0 ? '${store.avgEntryTimeMinutes} min wait' : 'No wait time',
+                color: AppColors.success,
+              ),
             ),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -301,10 +303,12 @@ class CustomerDashboardStoreList extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
-            _buildFooterStat(
-              icon: Icons.people_alt_rounded,
-              text: '${store.activeCustomerCount ?? 0} in queue',
-              color: AppColors.info,
+            Flexible(
+              child: _buildFooterStat(
+                icon: Icons.people_alt_rounded,
+                text: '${store.activeCustomerCount ?? 0} in queue',
+                color: AppColors.info,
+              ),
             ),
           ],
         ),
@@ -318,11 +322,15 @@ class CustomerDashboardStoreList extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 6),
-        Text(
-          text,
-          style: CommonStyle.caption.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
+        Flexible(
+          child: Text(
+            text,
+            style: CommonStyle.caption.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

@@ -23,6 +23,18 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    _redirectIfLoggedIn();
+  }
+
+  Future<void> _redirectIfLoggedIn() async {
+    final route = await AuthService.dashboardRouteForCurrentUser();
+    if (!mounted || route == null) return;
+    Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+  }
+
+  @override
   void dispose() {
     _identifierController.dispose();
     _passwordController.dispose();
@@ -83,7 +95,8 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
         }
 
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          Navigator.pushNamedAndRemoveUntil(
+              context, '/admin-dashboard', (route) => false);
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

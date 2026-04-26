@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../services/auth_service.dart';
 import '../../shared/constants/api_endpoints.dart';
 import '../../shared/constants/app_colors.dart';
 import 'otp_verification_page.dart';
@@ -18,6 +19,18 @@ class CustomerLogin extends StatefulWidget {
 class _CustomerLoginState extends State<CustomerLogin> {
   final TextEditingController _phoneController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _redirectIfLoggedIn();
+  }
+
+  Future<void> _redirectIfLoggedIn() async {
+    final route = await AuthService.dashboardRouteForCurrentUser();
+    if (!mounted || route == null) return;
+    Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+  }
 
   @override
   void dispose() {

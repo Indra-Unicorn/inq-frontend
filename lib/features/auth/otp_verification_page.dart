@@ -93,9 +93,8 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
     try {
       final response = await http.post(
         Uri.parse(
-            '${ApiEndpoints.baseUrl}${ApiEndpoints.customerLoginInitiate}'),
+            '${ApiEndpoints.baseUrl}${ApiEndpoints.customerLoginInitiate}?phoneNumber=${Uri.encodeQueryComponent(widget.phoneNumber)}'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'phoneNumber': widget.phoneNumber}),
       );
 
       final data = jsonDecode(response.body);
@@ -180,7 +179,8 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
 
         if (mounted) {
           final destination = widget.returnTo ?? '/customer-dashboard';
-          Navigator.pushReplacementNamed(context, destination);
+          Navigator.pushNamedAndRemoveUntil(
+              context, destination, (route) => false);
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

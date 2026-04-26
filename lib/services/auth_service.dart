@@ -180,6 +180,22 @@ class AuthService {
     }
   }
 
+  // Returns the dashboard route for the currently-logged-in user,
+  // or null if not logged in. Used by pre-login pages to redirect
+  // already-authenticated users back to their home.
+  static Future<String?> dashboardRouteForCurrentUser() async {
+    if (!await isLoggedIn()) return null;
+    final userType = await getUserType();
+    switch (userType) {
+      case AppConstants.userTypeMerchant:
+        return '/merchant-dashboard';
+      case AppConstants.userTypeAdmin:
+        return '/admin-dashboard';
+      default:
+        return '/customer-dashboard';
+    }
+  }
+
   // Get user ID from stored data
   static Future<String?> getUserId() async {
     try {

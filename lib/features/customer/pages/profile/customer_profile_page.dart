@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io' show Platform;
@@ -1024,32 +1025,62 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           ),
           const SizedBox(height: 20),
           _buildSettingItem(
-            'Notifications',
-            'Manage your notification preferences',
-            Icons.notifications_outlined,
-            () {
-              // TODO: Navigate to notifications settings
-            },
-          ),
-          const SizedBox(height: 12),
-          _buildSettingItem(
             'Privacy & Security',
             'Control your privacy settings',
             Icons.security_outlined,
-            () {
-              // TODO: Navigate to privacy settings
-            },
+            () => Navigator.pushNamed(context, '/privacy-policy'),
           ),
           const SizedBox(height: 12),
           _buildSettingItem(
             'Help & Support',
             'Get help and contact support',
             Icons.help_outline,
-            () {
-              // TODO: Navigate to help
-            },
+            _launchSupportEmail,
           ),
         ],
+      ),
+    );
+  }
+
+  static const String _supportEmail = 'team@inqueue.in';
+
+  Future<void> _launchSupportEmail() async {
+    try {
+      if (kIsWeb) {
+        final gmailUrl = Uri.parse(
+          'https://mail.google.com/mail/?view=cm&fs=1&to=$_supportEmail&su=${Uri.encodeQueryComponent('inQueue Support Request')}&body=${Uri.encodeQueryComponent('Hello inQueue Support Team,\n\n')}',
+        );
+        if (await canLaunchUrl(gmailUrl)) {
+          await launchUrl(gmailUrl, mode: LaunchMode.externalApplication);
+          return;
+        }
+      } else {
+        final emailUri = Uri(
+          scheme: 'mailto',
+          path: _supportEmail,
+          queryParameters: {
+            'subject': 'inQueue Support Request',
+            'body': 'Hello inQueue Support Team,\n\n',
+          },
+        );
+        if (await canLaunchUrl(emailUri)) {
+          await launchUrl(emailUri);
+          return;
+        }
+      }
+      _showSupportEmailFallback();
+    } catch (_) {
+      _showSupportEmailFallback();
+    }
+  }
+
+  void _showSupportEmailFallback() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Could not open mail app. Email us at $_supportEmail'),
+        backgroundColor: AppColors.primary,
+        duration: const Duration(seconds: 5),
       ),
     );
   }

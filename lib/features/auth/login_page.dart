@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 import '../../shared/constants/app_colors.dart';
 import 'customer_login.dart';
 import 'merchant_login.dart';
@@ -18,6 +19,13 @@ class _LoginPageState extends State<LoginPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _redirectIfLoggedIn();
+  }
+
+  Future<void> _redirectIfLoggedIn() async {
+    final route = await AuthService.dashboardRouteForCurrentUser();
+    if (!mounted || route == null) return;
+    Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
   }
 
   @override
@@ -87,6 +95,78 @@ class _LoginPageState extends State<LoginPage>
                   ),
                   const MerchantLogin(),
                 ],
+              ),
+            ),
+
+            // Continue as Guest — visually distinct ghost button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: InkWell(
+                onTap: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, '/customer-dashboard', (r) => false);
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.secondary.withValues(alpha: 0.5),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.person_outline_rounded,
+                          color: AppColors.secondary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Continue as Guest',
+                              style: TextStyle(
+                                color: AppColors.secondaryDark,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Skip sign in · Browse stores',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: AppColors.secondary,
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
 

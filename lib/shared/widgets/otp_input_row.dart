@@ -64,6 +64,16 @@ class _OtpInputRowState extends State<OtpInputRow> {
 
   bool _allEmpty() => widget.controllers.every((c) => c.text.isEmpty);
 
+  /// Returns the index of the first empty box, or null if all are filled.
+  /// Used to enforce left-to-right entry — taps on later boxes are
+  /// redirected here so the user can't start typing from the middle.
+  int? _firstEmptyIndex() {
+    for (int i = 0; i < widget.controllers.length; i++) {
+      if (widget.controllers[i].text.isEmpty) return i;
+    }
+    return null;
+  }
+
   Future<void> _tryFillFromClipboard() async {
     try {
       final data = await Clipboard.getData(Clipboard.kTextPlain);
@@ -163,9 +173,16 @@ class _OtpInputRowState extends State<OtpInputRow> {
                   borderSide: BorderSide(color: AppColors.primary, width: 2),
                 ),
               ),
-              // Tap an already-filled box → select the digit so next keystroke
-              // replaces it immediately (no extra backspace needed)
+              // Enforce left-to-right entry: tapping a box past the first
+              // empty one jumps focus back to the first empty.
+              // Otherwise (re-tapping a filled box at or before the first
+               // empty), select the digit so the next keystroke replaces it.
               onTap: () {
+                final firstEmpty = _firstEmptyIndex();
+                if (firstEmpty != null && index > firstEmpty) {
+                  widget.focusNodes[firstEmpty].requestFocus();
+                  return;
+                }
                 widget.controllers[index].selection = TextSelection(
                   baseOffset: 0,
                   extentOffset: widget.controllers[index].text.length,

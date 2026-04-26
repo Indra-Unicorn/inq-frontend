@@ -44,6 +44,13 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
     if (widget.prefillPhone != null && widget.prefillPhone!.isNotEmpty) {
       _phoneController.text = widget.prefillPhone!;
     }
+    _redirectIfLoggedIn();
+  }
+
+  Future<void> _redirectIfLoggedIn() async {
+    final route = await AuthService.dashboardRouteForCurrentUser();
+    if (!mounted || route == null) return;
+    Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
   }
 
   @override
@@ -212,7 +219,8 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
 
         if (mounted) {
           final destination = widget.returnTo ?? '/customer-dashboard';
-          Navigator.pushReplacementNamed(context, destination);
+          Navigator.pushNamedAndRemoveUntil(
+              context, destination, (route) => false);
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
