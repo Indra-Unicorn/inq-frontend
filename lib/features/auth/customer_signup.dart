@@ -218,9 +218,18 @@ class _CustomerSignUpPageState extends State<CustomerSignUpPage>
         await _registerFCMToken(token);
 
         if (mounted) {
-          final destination = widget.returnTo ?? '/customer-dashboard';
-          Navigator.pushNamedAndRemoveUntil(
-              context, destination, (route) => false);
+          final destination = widget.returnTo;
+          if (destination != null && destination != '/customer-dashboard') {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/customer-dashboard',
+              (route) => false,
+            );
+            Navigator.pushNamed(context, destination);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(
+                context, '/customer-dashboard', (route) => false);
+          }
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

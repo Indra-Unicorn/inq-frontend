@@ -178,9 +178,20 @@ class _OTPVerificationPageState extends State<OTPVerificationPage>
         await _registerFCMToken(token);
 
         if (mounted) {
-          final destination = widget.returnTo ?? '/customer-dashboard';
-          Navigator.pushNamedAndRemoveUntil(
-              context, destination, (route) => false);
+          final destination = widget.returnTo;
+          if (destination != null && destination != '/customer-dashboard') {
+            // Push the dashboard as the base, then the destination on top,
+            // so the back button returns to the dashboard instead of a blank screen.
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/customer-dashboard',
+              (route) => false,
+            );
+            Navigator.pushNamed(context, destination);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(
+                context, '/customer-dashboard', (route) => false);
+          }
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

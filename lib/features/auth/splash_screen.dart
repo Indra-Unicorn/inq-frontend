@@ -48,7 +48,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkAuthAndNavigate() async {
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      // On web, skip the artificial delay — users shouldn't be stuck on the
+      // loading screen every time they load or refresh the URL.
+      // On mobile, keep a short delay so the splash animation is visible.
+      if (!kIsWeb) {
+        await Future.delayed(const Duration(seconds: 2));
+      }
 
       final isLoggedIn = await AuthService.isLoggedIn();
 
@@ -188,120 +193,33 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Enhanced App Logo with multiple layers
+                  // App Logo
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Outer glow effect
+                      // Outer glow ring
                       Container(
-                        width: 160,
-                        height: 160,
+                        width: 180,
+                        height: 180,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              const Color(0xFF305CDE).withValues(alpha: 0.1),
-                              const Color(0xFF305CDE).withValues(alpha: 0.05),
+                              const Color(0xFF305CDE).withValues(alpha: 0.12),
+                              const Color(0xFF305CDE).withValues(alpha: 0.04),
                               Colors.transparent,
                             ],
-                            stops: const [0.0, 0.7, 1.0],
+                            stops: const [0.0, 0.6, 1.0],
                           ),
                         ),
                       ),
-                      // Main logo container
-                      Container(
-                        width: 130,
-                        height: 130,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFF305CDE),
-                              Color(0xFF4F75FF),
-                              Color(0xFF20B2AA),
-                            ],
-                            stops: [0.0, 0.5, 1.0],
-                          ),
-                          borderRadius: BorderRadius.circular(32),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF305CDE).withValues(alpha: 0.4),
-                              blurRadius: 25,
-                              offset: const Offset(0, 12),
-                              spreadRadius: 2,
-                            ),
-                            BoxShadow(
-                              color: const Color(0xFF305CDE).withValues(alpha: 0.2),
-                              blurRadius: 40,
-                              offset: const Offset(0, 20),
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Background pattern
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(32),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            // Main icon with enhanced design
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Queue lines background
-                                  Positioned(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 40,
-                                          height: 3,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.3),
-                                            borderRadius: BorderRadius.circular(2),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Container(
-                                          width: 50,
-                                          height: 3,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.4),
-                                            borderRadius: BorderRadius.circular(2),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Container(
-                                          width: 35,
-                                          height: 3,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.3),
-                                            borderRadius: BorderRadius.circular(2),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Main queue icon
-                                  const Icon(
-                                    Icons.people_outline,
-                                    size: 65,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                      // Icon — no background, just the logo on the gradient
+                      SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: Image.asset(
+                          'assets/app_icon/icon_without_background.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ],

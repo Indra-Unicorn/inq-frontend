@@ -384,6 +384,169 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     }
   }
 
+  void _showCustomAmountSheet() {
+    final controller = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Add inQoin',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '1 inQoin = ₹1  ·  Minimum ₹1',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Amount input
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F7FA),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3), width: 1.5),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                    decoration: InputDecoration(
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(left: 16, right: 8, top: 14),
+                        child: Text('₹',
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary)),
+                      ),
+                      prefixIconConstraints: const BoxConstraints(),
+                      hintText: '0',
+                      hintStyle: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary.withOpacity(0.4)),
+                      suffixText: 'inQoin',
+                      suffixStyle: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 18, horizontal: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Quick pick chips
+                Wrap(
+                  spacing: 8,
+                  children: [15, 25, 50, 100].map((v) {
+                    return GestureDetector(
+                      onTap: () => controller.text = v.toString(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.07),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: AppColors.primary.withOpacity(0.2)),
+                        ),
+                        child: Text(
+                          '₹$v',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                    onPressed: () {
+                      final raw = int.tryParse(controller.text.trim());
+                      if (raw == null || raw < 1) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content:
+                                  Text('Please enter a valid amount (min ₹1)')),
+                        );
+                        return;
+                      }
+                      Navigator.pop(ctx);
+                      _openCheckout(raw, raw);
+                    },
+                    child: Text(
+                      'Proceed to Pay',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<Map<String, dynamic>?> _createPaymentOrder(int amount, int inQoinAmount) async {
     final token = await AuthService.getToken();
     if (token == null) {
@@ -460,587 +623,490 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          ProfileHeader(
-            onBackPressed: () => Navigator.pop(context),
-          ),
-          Expanded(
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
+            )
+          : CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Hero header with avatar
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 210,
+                    child: ProfileHeader(
+                      onBackPressed: () => Navigator.pop(context),
+                      name: _userData?['name'],
+                      email: _userData?['email'],
+                      phoneNumber: _userData?['phoneNumber'],
+                      profileImage: _userData?['profileImage'],
+                      onEditAvatar: () {
+                        // TODO: Implement profile image update
+                      },
                     ),
-                  )
-                : SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                  ),
+                ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 64, 20, 0),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Profile Avatar Section
-                        Transform.translate(
-                          offset: const Offset(0, -30),
-                          child: _buildProfileAvatar(),
+                        // Name & identity
+                        Text(
+                          _userData?['name'] ?? 'User Name',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
                         ),
-                        
-                        // Profile Stats Cards
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                          child: _buildStatsCards(),
+                        const SizedBox(height: 4),
+                        Text(
+                          _userData?['phoneNumber'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        
-                        // Buy inQoin Card
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                          child: _buildBuyInQoinCard(),
-                        ),
-                        
-                        // Personal Information Card
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                          child: _buildPersonalInfoCard(),
-                        ),
-                        
-                        // Account Settings Card
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                          child: _buildAccountSettingsCard(),
-                        ),
-                        
-                        // Logout Button
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                          child: _buildLogoutButton(),
-                        ),
+                        if (_userData?['email'] != null &&
+                            _userData!['email'].toString().isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            _userData!['email'],
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-          ),
-        ],
-      ),
+                ),
+
+                // Stats row
+                SliverToBoxAdapter(child: _buildStatsRow()),
+
+                // inQoin Wallet card
+                SliverToBoxAdapter(child: _buildWalletCard()),
+
+                // Personal info card
+                SliverToBoxAdapter(child: _buildPersonalInfoCard()),
+
+                // More section
+                SliverToBoxAdapter(child: _buildMoreSection()),
+
+                // Logout row
+                SliverToBoxAdapter(child: _buildLogoutRow()),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              ],
+            ),
     );
   }
 
-  Widget _buildProfileAvatar() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
+  // ─── Stats ──────────────────────────────────────────────────────────────────
+
+  Widget _buildStatsRow() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+      child: Row(
         children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              // Outer glow effect
-              Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.1),
-                      AppColors.primary.withValues(alpha: 0.05),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-              // Main avatar container
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primary.withValues(alpha: 0.8),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: 58,
-                  backgroundColor: Colors.transparent,
-                  backgroundImage: _userData?['profileImage'] != null &&
-                          _userData!['profileImage'].toString().isNotEmpty
-                      ? NetworkImage(_userData!['profileImage'])
-                      : null,
-                  child: _userData?['profileImage'] == null ||
-                          _userData!['profileImage'].toString().isEmpty
-                      ? const Icon(
-                          Icons.person,
-                          size: 50,
-                          color: Colors.white,
-                        )
-                      : null,
-                ),
-              ),
-              // Edit button
-              Positioned(
-                bottom: 8,
-                right: 8,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.success,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.success.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    onPressed: () {
-                      // TODO: Implement profile image update
-                    },
-                    icon: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          _StatPill(
+            value: (_userData?['inQoin'] ?? 0).toString(),
+            label: 'inQoin',
+            icon: Icons.monetization_on_rounded,
+            color: AppColors.success,
           ),
-          const SizedBox(height: 16),
-          Text(
-            _userData?['name'] ?? 'User Name',
-            style: CommonStyle.heading3.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+          const SizedBox(width: 12),
+          _StatPill(
+            value: (_userData?['pastQueuesJoined'] ?? 0).toString(),
+            label: 'Queues',
+            icon: Icons.people_rounded,
+            color: AppColors.primary,
           ),
-          const SizedBox(height: 4),
-          Text(
-            _userData?['email'] ?? 'No email provided',
-            style: CommonStyle.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
+          const SizedBox(width: 12),
+          _StatPill(
+            value: _formatTimeSaved(
+                (_userData?['timeSaved'] as num?)?.toInt() ?? 0),
+            label: 'Time Saved',
+            icon: Icons.timer_rounded,
+            color: AppColors.warning,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsCards() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatCard(
-            'inQoin Balance',
-            (_userData?['inQoin'] ?? 0).toString(),
-            Icons.monetization_on,
-            AppColors.success,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            'Queues Joined',
-            (_userData?['pastQueuesJoined'] ?? 0).toString(),
-            Icons.queue,
-            AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            'Total Saved Time',
-            _formatTimeSaved((_userData?['timeSaved'] as num?)?.toInt() ?? 0),
-            Icons.access_time,
-            AppColors.warning,
-          ),
-        ),
-      ],
-    );
-  }
+  // ─── Wallet ──────────────────────────────────────────────────────────────────
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: CommonStyle.heading4.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: CommonStyle.caption.copyWith(
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBuyInQoinCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight.withValues(alpha: 0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.add_shopping_cart,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Buy inQoin',
-                style: CommonStyle.heading4.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Purchase inQoin to join queues faster',
-            style: CommonStyle.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInQoinOption(5, 5, '5 inQoin'),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildInQoinOption(10, 10, '10 inQoin'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInQoinOption(int amount, int inQoinAmount, String title) {
+  Widget _buildWalletCard() {
+    final balance = (_userData?['inQoin'] ?? 0).toString();
     final isDisabled = _isProcessingPayment || _userData == null;
-    return InkWell(
-      onTap: isDisabled ? null : () => _openCheckout(amount, inQoinAmount),
-      borderRadius: BorderRadius.circular(12),
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDisabled
-              ? AppColors.primary.withValues(alpha: 0.02)
-              : AppColors.primary.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            width: 1,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF305CDE), Color(0xFF1E3FA3)],
           ),
-        ),
-        child: Column(
-          children: [
-            if (_isProcessingPayment)
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
-                ),
-              )
-            else
-              Text(
-                '₹$amount',
-                style: CommonStyle.heading4.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: isDisabled ? AppColors.textSecondary : AppColors.primary,
-                ),
-              ),
-            const SizedBox(height: 8),
-            Icon(
-              Icons.monetization_on,
-              color: isDisabled ? AppColors.textSecondary : AppColors.primary,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: CommonStyle.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPersonalInfoCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight.withValues(alpha: 0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.person_outline,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Personal Information',
-                  style: CommonStyle.heading4.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (!_isEditing)
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _isEditing = true;
-                    });
-                  },
-                  icon: Icon(
-                    Icons.edit_outlined,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildModernField(
-            label: 'Full Name',
-            controller: _nameController,
-            enabled: _isEditing,
-            icon: Icons.person_outline,
-          ),
-          const SizedBox(height: 16),
-          _buildModernField(
-            label: 'Email Address',
-            controller: _emailController,
-            enabled: _isEditing,
-            keyboardType: TextInputType.emailAddress,
-            icon: Icons.email_outlined,
-            hintText: _userData?['email'] == null ? 'No email provided' : null,
-          ),
-          const SizedBox(height: 16),
-          _buildModernField(
-            label: 'Phone Number',
-            controller: TextEditingController(text: _userData?['phoneNumber'] ?? ''),
-            enabled: false,
-            icon: Icons.phone_outlined,
-          ),
-          if (_isEditing) ...[
-            const SizedBox(height: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isSaving
-                        ? null
-                        : () {
-                            setState(() {
-                              _isEditing = false;
-                              _nameController.text = _userData?['name'] ?? '';
-                              _emailController.text = _userData?['email'] ?? '';
-                            });
-                          },
-                    icon: const Icon(Icons.close, size: 18),
-                    label: const Text('Cancel'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                const Icon(Icons.account_balance_wallet_rounded,
+                    color: Colors.white70, size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'inQoin Wallet',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _isSaving ? null : _saveProfile,
-                    icon: _isSaving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.save, size: 18),
-                    label: const Text('Save Changes'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Active',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  balance,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    'coins',
+                    style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Quick top-up options
+            Row(
+              children: [
+                Expanded(
+                    child: _TopUpButton(
+                        amount: 5,
+                        coins: 5,
+                        isLoading: _isProcessingPayment,
+                        disabled: isDisabled,
+                        onTap: () => _openCheckout(5, 5))),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: _TopUpButton(
+                        amount: 10,
+                        coins: 10,
+                        isLoading: _isProcessingPayment,
+                        disabled: isDisabled,
+                        onTap: () => _openCheckout(10, 10))),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: _TopUpButton(
+                        amount: 20,
+                        coins: 20,
+                        isLoading: _isProcessingPayment,
+                        disabled: isDisabled,
+                        onTap: () => _openCheckout(20, 20))),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Custom amount button
+            GestureDetector(
+              onTap: isDisabled ? null : _showCustomAmountSheet,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_circle_outline_rounded,
+                        color: Colors.white.withOpacity(0.9), size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Enter custom amount',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildAccountSettingsCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight.withValues(alpha: 0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
+  // ─── Personal Info ───────────────────────────────────────────────────────────
+
+  Widget _buildPersonalInfoCard() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: _SectionCard(
+        title: 'Personal Information',
+        icon: Icons.person_outline_rounded,
+        iconColor: AppColors.primary,
+        trailing: _isEditing
+            ? null
+            : GestureDetector(
+                onTap: () => setState(() => _isEditing = true),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit_rounded,
+                          size: 14, color: AppColors.primary),
+                      SizedBox(width: 4),
+                      Text('Edit',
+                          style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ),
+        child: Column(
+          children: [
+            _buildModernField(
+              label: 'Full Name',
+              controller: _nameController,
+              enabled: _isEditing,
+              icon: Icons.badge_outlined,
+            ),
+            const SizedBox(height: 12),
+            _buildModernField(
+              label: 'Email Address',
+              controller: _emailController,
+              enabled: _isEditing,
+              keyboardType: TextInputType.emailAddress,
+              icon: Icons.email_outlined,
+              hintText:
+                  _userData?['email'] == null ? 'No email provided' : null,
+            ),
+            const SizedBox(height: 12),
+            _buildModernField(
+              label: 'Phone Number',
+              controller: TextEditingController(
+                  text: _userData?['phoneNumber'] ?? ''),
+              enabled: false,
+              icon: Icons.phone_outlined,
+            ),
+            if (_isEditing) ...[
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _isSaving
+                          ? null
+                          : () => setState(() {
+                                _isEditing = false;
+                                _nameController.text =
+                                    _userData?['name'] ?? '';
+                                _emailController.text =
+                                    _userData?['email'] ?? '';
+                              }),
+                      style: OutlinedButton.styleFrom(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 13),
+                        side: BorderSide(
+                            color: AppColors.border.withOpacity(0.8)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Cancel',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _saveProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 13),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text('Save',
+                              style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    );
+  }
+
+  // ─── More / Settings ─────────────────────────────────────────────────────────
+
+  Widget _buildMoreSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: _SectionCard(
+        title: 'More',
+        icon: Icons.grid_view_rounded,
+        iconColor: AppColors.warning,
+        child: Column(
+          children: [
+            _buildSettingItem(
+              'Privacy & Security',
+              'Manage your privacy settings',
+              Icons.shield_outlined,
+              AppColors.info,
+              () => Navigator.pushNamed(context, '/privacy-policy'),
+            ),
+            _Divider(),
+            _buildSettingItem(
+              'Help & Support',
+              'Contact our support team',
+              Icons.headset_mic_outlined,
+              AppColors.success,
+              _launchSupportEmail,
+            ),
+            _Divider(),
+            _buildSettingItem(
+              'About',
+              'Learn more about inQueue',
+              Icons.info_outline_rounded,
+              AppColors.primary,
+              () => Navigator.pushNamed(context, '/about-us'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogoutRow() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: InkWell(
+        onTap: _showLogoutDialog,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            color: AppColors.error.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(16),
+            border:
+                Border.all(color: AppColors.error.withOpacity(0.15), width: 1),
+          ),
+          child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.error.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.settings_outlined,
-                  color: AppColors.warning,
-                  size: 20,
-                ),
+                child: const Icon(Icons.logout_rounded,
+                    color: AppColors.error, size: 18),
               ),
-              const SizedBox(width: 12),
-              Text(
-                'Account Settings',
-                style: CommonStyle.heading4.copyWith(
+              const SizedBox(width: 14),
+              const Text(
+                'Sign Out',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
+              const Spacer(),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  color: AppColors.error.withOpacity(0.5), size: 14),
             ],
           ),
-          const SizedBox(height: 20),
-          _buildSettingItem(
-            'Privacy & Security',
-            'Control your privacy settings',
-            Icons.security_outlined,
-            () => Navigator.pushNamed(context, '/privacy-policy'),
-          ),
-          const SizedBox(height: 12),
-          _buildSettingItem(
-            'Help & Support',
-            'Get help and contact support',
-            Icons.help_outline,
-            _launchSupportEmail,
-          ),
-        ],
+        ),
       ),
     );
   }
+
+  Widget _buildAccountSettingsCard() => const SizedBox.shrink();
 
   static const String _supportEmail = 'team@inqueue.in';
 
@@ -1085,77 +1151,47 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     );
   }
 
-  Widget _buildSettingItem(String title, String subtitle, IconData icon, VoidCallback onTap) {
+  Widget _buildSettingItem(String title, String subtitle, IconData icon,
+      Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.border.withValues(alpha: 0.5),
-          ),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: AppColors.textSecondary,
-              size: 24,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 18),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: CommonStyle.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: CommonStyle.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary)),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.textSecondary,
-              size: 16,
-            ),
+            Icon(Icons.chevron_right_rounded,
+                color: AppColors.textSecondary.withOpacity(0.5), size: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: _showLogoutDialog,
-        icon: const Icon(Icons.logout, size: 20),
-        label: const Text('Sign Out'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.error,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-      ),
-    );
-  }
+  Widget _buildLogoutButton() => const SizedBox.shrink();
 
   String _formatTimeSaved(int seconds) {
     if (seconds < 60) {
@@ -1185,36 +1221,227 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: enabled 
-              ? AppColors.primary.withValues(alpha: 0.3)
-              : AppColors.border.withValues(alpha: 0.3),
+          color: enabled
+              ? AppColors.primary.withOpacity(0.4)
+              : AppColors.border.withOpacity(0.4),
         ),
-        color: enabled ? Colors.white : AppColors.background,
+        color: enabled ? Colors.white : const Color(0xFFF5F7FA),
       ),
       child: TextField(
         controller: controller,
         enabled: enabled,
         keyboardType: keyboardType,
-        style: CommonStyle.bodyMedium.copyWith(
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,
         ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hintText,
-          prefixIcon: icon != null 
-              ? Icon(
-                  icon,
-                  color: enabled ? AppColors.primary : AppColors.textSecondary,
-                  size: 20,
-                )
+          prefixIcon: icon != null
+              ? Icon(icon,
+                  color: enabled
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
+                  size: 20)
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-          labelStyle: CommonStyle.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+          labelStyle: const TextStyle(
+              fontSize: 13, color: AppColors.textSecondary),
         ),
       ),
+    );
+  }
+}
+
+// ─── Private helper widgets ──────────────────────────────────────────────────
+
+class _StatPill extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _StatPill(
+      {required this.value,
+      required this.label,
+      required this.icon,
+      required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: color,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TopUpButton extends StatelessWidget {
+  final int amount;
+  final int coins;
+  final bool isLoading;
+  final bool disabled;
+  final VoidCallback onTap;
+
+  const _TopUpButton(
+      {required this.amount,
+      required this.coins,
+      required this.isLoading,
+      required this.disabled,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(12),
+          border:
+              Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+        ),
+        child: isLoading
+            ? const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                ),
+              )
+            : Column(
+                children: [
+                  Text('₹$amount',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800)),
+                  Text('$coins coins',
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500)),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color iconColor;
+  final Widget child;
+  final Widget? trailing;
+
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.iconColor,
+    required this.child,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, color: iconColor, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const Spacer(),
+              if (trailing != null) trailing!,
+            ],
+          ),
+          const SizedBox(height: 18),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      color: AppColors.border.withOpacity(0.5),
+      height: 1,
+      thickness: 1,
     );
   }
 }

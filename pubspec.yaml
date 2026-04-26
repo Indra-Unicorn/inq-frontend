@@ -87,6 +87,7 @@ flutter:
 
   assets:
     - assets/app_icon/icon.png
+    - assets/app_icon/icon_without_background.png
     - assets/splash_screen/splash.png
 
   # To add assets to your application, add an assets section, like this:
