@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../../shared/common_style.dart';
 import '../../../../shared/constants/app_colors.dart';
 import '../../../../shared/constants/app_constants.dart';
 import '../../models/shop.dart';
 
-class StoreDetailsHeader extends StatelessWidget {
+class StoreDetailsHeader extends StatefulWidget {
   final Shop store;
 
   const StoreDetailsHeader({
@@ -14,23 +13,24 @@ class StoreDetailsHeader extends StatelessWidget {
     required this.store,
   });
 
+  @override
+  State<StoreDetailsHeader> createState() => _StoreDetailsHeaderState();
+}
+
+class _StoreDetailsHeaderState extends State<StoreDetailsHeader> {
+  int _currentImageIndex = 0;
+
   void _shareStore(BuildContext context) async {
     try {
-      // Dynamically extract the domain from the API base URL
       final domain = AppConstants.getShareableDomain();
+      final shareableUrl = '$domain/store/${widget.store.shopId}';
+      final deepLink = 'inqueue.in/store/${widget.store.shopId}';
 
-      // Create a shareable URL with the store ID using the dynamic domain
-      final shareableUrl = '$domain/store/${store.shopId}';
-
-      // Create a fallback deep link for the app
-      final deepLink = 'inqueue.in/store/${store.shopId}';
-
-      // Create share text with store information
       final shareText = '''
-Check out ${store.shopName} on InQ!
+Check out ${widget.store.shopName} on InQ!
 
-📍 ${store.address.streetAddress}, ${store.address.city}
-${store.categories.isNotEmpty ? '🏷️ ${store.categories.take(3).join(', ')}' : ''}
+📍 ${widget.store.address.streetAddress}, ${widget.store.address.city}
+${widget.store.categories.isNotEmpty ? '🏷️ ${widget.store.categories.take(3).join(', ')}' : ''}
 
 Join queues and skip the wait! 🚀
 
@@ -39,14 +39,12 @@ $deepLink
 '''
           .trim();
 
-      // Use share_plus to share the content
       await Share.share(
         shareText,
-        subject: 'Check out ${store.shopName} on InQ',
+        subject: 'Check out ${widget.store.shopName} on InQ',
       );
     } catch (e) {
-      // Fallback to clipboard if sharing fails
-      final fallbackUrl = 'http://inqueue.in/store/${store.shopId}';
+      final fallbackUrl = 'http://inqueue.in/store/${widget.store.shopId}';
       await Clipboard.setData(ClipboardData(text: fallbackUrl));
 
       if (context.mounted) {
@@ -63,197 +61,151 @@ $deepLink
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.8),
-            AppColors.primaryLight,
-          ],
-          stops: const [0.0, 0.6, 1.0],
+    return SliverAppBar(
+      expandedHeight: 280.0,
+      pinned: true,
+      stretch: true,
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.3),
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else {
+                Navigator.pushReplacementNamed(context, '/customer-dashboard');
+              }
+            },
+          ),
         ),
       ),
-      child: Stack(
-        children: [
-          // Background pattern
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(0.8, -0.6),
-                  radius: 1.2,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.1),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.share_outlined, color: Colors.white, size: 18),
+              onPressed: () => _shareStore(context),
             ),
           ),
-          // Main content
-          SafeArea(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                  // Navigation and actions
-                  Row(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: IconButton(
-                          onPressed: () {
-                            // Check if we can pop, if not navigate to dashboard
-                            if (Navigator.canPop(context)) {
-                              Navigator.pop(context);
-                            } else {
-                              Navigator.pushReplacementNamed(context, '/customer-dashboard');
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.arrow_back_ios_new,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: IconButton(
-                          onPressed: () => _shareStore(context),
-                          icon: const Icon(
-                            Icons.share_outlined,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Store name and Categories in parallel layout
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Store name on the left
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          store.shopName,
-                          style: CommonStyle.heading1.copyWith(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            height: 1.1,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                offset: const Offset(0, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      
-                      const SizedBox(width: 16),
-                      
-                      // Categories on the right
-                      if (store.categories.isNotEmpty)
-                        Flexible(
-                          flex: 2,
-                          child: Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            alignment: WrapAlignment.end,
-                            children: store.categories.take(2).map((category) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.3),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  category,
-                                  style: CommonStyle.caption.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                    ],
-                  ),
-                  
-                  // Rating info (if available)
-                  if (store.rating > 0) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.star,
-                            color: Colors.amber,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            store.rating.toStringAsFixed(1),
-                            style: CommonStyle.bodySmall.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [StretchMode.zoomBackground],
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (widget.store.images.isNotEmpty)
+              PageView.builder(
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentImageIndex = index;
+                  });
+                },
+                itemCount: widget.store.images.length,
+                itemBuilder: (context, index) {
+                  return Image.network(
+                    widget.store.images[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      child: const Icon(Icons.broken_image, color: AppColors.primary, size: 50),
                     ),
-                  ],
-                ],
+                  );
+                },
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primaryLight,
+                    ],
+                  ),
+                ),
+                child: const Icon(
+                  Icons.store,
+                  color: Colors.white54,
+                  size: 80,
+                ),
+              ),
+            
+            // Gradient Overlay for Top Buttons readability
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 100,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.6),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+            // Bottom fade into background
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 40,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      AppColors.background,
+                      AppColors.background.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            
+            // Image Indicator
+            if (widget.store.images.length > 1)
+              Positioned(
+                bottom: 24,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_currentImageIndex + 1}/${widget.store.images.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

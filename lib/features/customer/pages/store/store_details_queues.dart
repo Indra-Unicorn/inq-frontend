@@ -27,55 +27,98 @@ class StoreQueueCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.shadowLight.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    queue.name,
-                    style: CommonStyle.heading4,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(queue.status).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    _getStatusText(queue.status),
-                    style: CommonStyle.caption.copyWith(
-                      color: _getStatusColor(queue.status),
-                      fontWeight: FontWeight.w600,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        queue.name,
+                        style: CommonStyle.heading3.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
-                  ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(queue.status).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _getStatusColor(queue.status).withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(queue.status),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _getStatusText(queue.status),
+                            style: CommonStyle.caption.copyWith(
+                              color: _getStatusColor(queue.status),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(child: _buildDetailColumn('Queue Size', '${queue.size}/${queue.maxSize}')),
+                    Container(width: 1, height: 30, color: AppColors.border.withValues(alpha: 0.3)),
+                    Expanded(child: _buildDetailColumn('Processing', '${queue.processingRate}/min')),
+                    Container(width: 1, height: 30, color: AppColors.border.withValues(alpha: 0.3)),
+                    Expanded(child: _buildDetailColumn('inQoin Rate', '${queue.inQoinRate}')),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            _buildDetailRow('Queue Size', '${queue.size}/${queue.maxSize}'),
-            _buildDetailRow('Processing Rate', '${queue.processingRate}/min'),
-            _buildDetailRow('inQoin Rate', '${queue.inQoinRate} Qoins'),
-            const SizedBox(height: 20),
-            SizedBox(
+          ),
+          
+          // Divider
+          Container(
+            height: 1,
+            width: double.infinity,
+            color: AppColors.border.withValues(alpha: 0.3),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+          ),
+          
+          // Action Button
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: (queue.status == QueueStatus.active &&
@@ -92,7 +135,7 @@ class StoreQueueCard extends StatelessWidget {
                           : AppColors.textTertiary),
                   foregroundColor: AppColors.textWhite,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -101,12 +144,11 @@ class StoreQueueCard extends StatelessWidget {
                 ),
                 child: isJoining
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
+                        height: 24,
+                        width: 24,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : Text(
@@ -117,40 +159,42 @@ class StoreQueueCard extends StatelessWidget {
                                 : 'Queue ${_getStatusText(queue.status).toLowerCase()}'),
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
                         ),
                       ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: CommonStyle.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          Text(
-            value,
-            style: CommonStyle.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildDetailColumn(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: CommonStyle.heading4.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: CommonStyle.caption.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 11,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+
 
   String _getStatusText(QueueStatus status) {
     switch (status) {

@@ -9,27 +9,11 @@ class CustomerDashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primaryLight,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      color: AppColors.background,
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 16, 20),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
           child: Row(
             children: [
               Expanded(
@@ -38,24 +22,18 @@ class CustomerDashboardHeader extends StatelessWidget {
                   children: [
                     Text(
                       'Discover Stores',
-                      style: CommonStyle.heading3.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            offset: const Offset(0, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
+                      style: CommonStyle.heading2.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Find your perfect queue',
-                      style: CommonStyle.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w400,
+                      style: CommonStyle.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -63,18 +41,14 @@ class CustomerDashboardHeader extends StatelessWidget {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
                 child: IconButton(
                   onPressed: onProfileTap,
                   icon: const Icon(
-                    Icons.person_outline,
-                    color: Colors.white,
+                    Icons.person_outline_rounded,
+                    color: AppColors.primary,
                     size: 24,
                   ),
                   padding: const EdgeInsets.all(12),

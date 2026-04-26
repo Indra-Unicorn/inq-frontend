@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../shared/common_style.dart';
 import '../../../../shared/constants/app_colors.dart';
 import '../../models/shop.dart';
 
-class StoreDetailsInfo extends StatefulWidget {
+class StoreDetailsInfo extends StatelessWidget {
   final Shop store;
 
   const StoreDetailsInfo({
@@ -11,182 +12,208 @@ class StoreDetailsInfo extends StatefulWidget {
     required this.store,
   });
 
-  @override
-  State<StoreDetailsInfo> createState() => _StoreDetailsInfoState();
-}
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url)) {
+      debugPrint('Could not launch $urlString');
+    }
+  }
 
-class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
-  bool _isExpanded = false;
+  void _openMap() {
+    final query = Uri.encodeComponent(
+      '${store.shopName}, ${_formatAddress(store.address)}',
+    );
+    final url = 'https://www.google.com/maps/search/?api=1&query=$query';
+    _launchUrl(url);
+  }
+
+  void _callShop() {
+    if (store.shopPhoneNumber != null) {
+      _launchUrl('tel:${store.shopPhoneNumber}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Container(
+      color: AppColors.background,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Store Name & Rating
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  store.shopName,
+                  style: CommonStyle.heading2.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              if (store.rating > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        store.rating.toStringAsFixed(1),
+                        style: CommonStyle.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        ' (${store.ratingCount})',
+                        style: CommonStyle.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Categories
+          if (store.categories.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: store.categories.map((category) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundLight,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Text(
+                    category,
+                    style: CommonStyle.caption.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          
+          const SizedBox(height: 24),
+
+          // Action Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              if (store.shopPhoneNumber != null && store.shopPhoneNumber!.isNotEmpty)
+                _buildActionButton(
+                  icon: Icons.phone_outlined,
+                  label: 'Call',
+                  onTap: _callShop,
+                ),
+              _buildActionButton(
+                icon: Icons.directions_outlined,
+                label: 'Directions',
+                onTap: _openMap,
+              ),
+              _buildActionButton(
+                icon: Icons.info_outline,
+                label: 'Details',
+                onTap: () {
+                  // Scrolling/more details
+                },
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+          const Divider(height: 1, thickness: 1),
+          const SizedBox(height: 24),
+
           // Quick Stats Row
           _buildQuickStats(),
-          const SizedBox(height: 12),
           
-          // Collapsible Main Info Card
+          const SizedBox(height: 24),
+          
+          // Address & Hours
+          _buildModernInfoItem(
+            icon: Icons.location_on_outlined,
+            label: 'Address',
+            value: _formatAddress(store.address),
+            color: AppColors.primary,
+          ),
+          const SizedBox(height: 16),
+          _buildModernInfoItem(
+            icon: Icons.schedule_outlined,
+            label: 'Business Hours',
+            value: store.openTime != null && store.closeTime != null
+                ? '${store.openTime} - ${store.closeTime}'
+                : 'Not specified',
+            color: AppColors.success,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.backgroundLight,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadowLight.withValues(alpha: 0.1),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isExpanded = !_isExpanded;
-                    });
-                  },
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primary,
-                              AppColors.primary.withValues(alpha: 0.8),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.store_outlined,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Store Details',
-                              style: CommonStyle.heading4.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _isExpanded ? 'Tap to collapse' : 'Tap to view details',
-                              style: CommonStyle.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      AnimatedRotation(
-                        turns: _isExpanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 300),
-                        child: Icon(
-                          Icons.expand_more,
-                          color: AppColors.textSecondary,
-                          size: 24,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Collapsible content
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  height: _isExpanded ? null : 0,
-                  child: _isExpanded ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 24),
-                      
-                      // Info items in a more modern layout
-                      _buildModernInfoItem(
-                  icon: Icons.schedule_outlined,
-                  label: 'Business Hours',
-                  value: widget.store.openTime != null && widget.store.closeTime != null
-                      ? '${widget.store.openTime} - ${widget.store.closeTime}'
-                      : 'Not specified',
-                  color: AppColors.primary,
-                ),
-                
-                if (widget.store.shopPhoneNumber != null) ...[
-                  const SizedBox(height: 16),
-                  _buildModernInfoItem(
-                    icon: Icons.phone_outlined,
-                    label: 'Phone Number',
-                    value: widget.store.shopPhoneNumber!,
-                    color: AppColors.success,
-                    isClickable: true,
-                  ),
-                ],
-                
-                const SizedBox(height: 16),
-                _buildModernInfoItem(
-                  icon: Icons.location_on_outlined,
-                  label: 'Address',
-                  value: _formatAddress(widget.store.address),
-                  color: AppColors.warning,
-                ),
-                
-                if (widget.store.rating > 0) ...[
-                  const SizedBox(height: 16),
-                  _buildModernInfoItem(
-                    icon: Icons.star_outlined,
-                    label: 'Customer Rating',
-                    value: '${widget.store.rating.toStringAsFixed(1)} ★ (${widget.store.ratingCount} reviews)',
-                    color: Colors.amber,
-                  ),
-                ],
-                    ],
-                  ) : const SizedBox.shrink(),
-                ),
-              ],
+            child: Icon(icon, color: AppColors.primary, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: CommonStyle.caption.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildQuickStats() {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
             'Status',
-            widget.store.shopStatus,
-            Icons.access_time_outlined,
-            widget.store.statusColor,
+            store.shopStatus,
+            Icons.storefront_outlined,
+            store.statusColor,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: _buildStatCard(
             'Avg Wait',
-            widget.store.avgEntryTimeMinutes > 0 ? '${widget.store.avgEntryTimeMinutes}m' : 'No data',
+            store.avgEntryTimeMinutes > 0 ? '${store.avgEntryTimeMinutes}m' : '--',
             Icons.timer_outlined,
             AppColors.primary,
           ),
@@ -195,49 +222,31 @@ class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
         Expanded(
           child: _buildStatCard(
             'Queues',
-            '${widget.store.queueResponses?.length ?? 0}',
-            Icons.queue_outlined,
+            '${store.queueResponses?.length ?? 0}',
+            Icons.people_outline,
             AppColors.success,
           ),
         ),
       ],
     );
   }
-  
+
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: color.withValues(alpha: 0.15),
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 16,
-            ),
-          ),
-          const SizedBox(height: 6),
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 8),
           Text(
             value,
             style: CommonStyle.bodyMedium.copyWith(
@@ -259,71 +268,50 @@ class _StoreDetailsInfoState extends State<StoreDetailsInfo> {
       ),
     );
   }
-  
+
   Widget _buildModernInfoItem({
     required IconData icon,
     required String label,
     required String value,
     required Color color,
-    bool isClickable = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.border.withValues(alpha: 0.3),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: CommonStyle.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: CommonStyle.caption.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: CommonStyle.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: isClickable ? FontWeight.w600 : FontWeight.w500,
-                  ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: CommonStyle.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          if (isClickable)
-            Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.textSecondary,
-              size: 14,
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
-
 
   String _formatAddress(ShopAddress address) {
     final parts = <String>[];

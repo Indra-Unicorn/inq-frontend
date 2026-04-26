@@ -6,6 +6,7 @@ import '../../services/shop_service.dart';
 import 'customer_dashboard_header.dart';
 import 'customer_dashboard_store_list.dart';
 import 'customer_dashboard_bottom_nav.dart';
+import 'customer_dashboard_categories.dart';
 import '../../../../services/notification_service.dart';
 import '../../../../shared/widgets/error_dialog.dart';
 import '../../services/profile_service.dart';
@@ -69,8 +70,6 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   }
 
   void _onSearchFocusChanged() {
-    // Only show search tray when focus is gained and there are results
-    // Don't hide it when focus is lost - let user interact with results
     if (_searchFocusNode.hasFocus && _searchResults.isNotEmpty) {
       setState(() {
         _showSearchTray = true;
@@ -91,7 +90,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
 
     final now = DateTime.now();
     if (_lastSearchTime != null &&
-        now.difference(_lastSearchTime!) < Duration(milliseconds: 400)) {
+        now.difference(_lastSearchTime!) < const Duration(milliseconds: 400)) {
       return;
     }
     _lastSearchTime = now;
@@ -140,7 +139,6 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
           _isLoading = false;
         });
         
-        // Show error dialog for loading stores
         ErrorDialog.show(
           context,
           title: 'Unable to Load Stores',
@@ -148,7 +146,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
           buttonText: 'Retry',
           onPressed: () {
             Navigator.of(context).pop();
-            _loadStores(); // Retry loading stores
+            _loadStores();
           },
         );
       }
@@ -174,8 +172,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         }
       } else {
         try {
-          await profileService
-              .updateCustomerLocation(); // Call with no location
+          await profileService.updateCustomerLocation(); 
         } catch (e) {
           // Silently handle location update error
         }
@@ -193,7 +190,6 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   }
 
   void _onStoreTap(Shop store) {
-    // Always navigate with shop ID to ensure URL consistency
     Navigator.pushNamed(
       context,
       '/store/${store.shopId}',
@@ -201,75 +197,60 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     setState(() {
       _showSearchTray = false;
       _searchController.clear();
+      _searchFocusNode.unfocus();
     });
   }
 
   void _onProfileTap() async {
-    // Check if user is logged in before accessing profile
     final isLoggedIn = await AuthService.isLoggedIn();
     if (!isLoggedIn) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Login Required'),
-          content: const Text('Please login to access your profile.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pushNamed(
-                  context,
-                  '/login',
-                  arguments: {'returnTo': '/customer-profile'},
-                );
-              },
-              child: const Text('Login'),
-            ),
-          ],
-        ),
-      );
+      _showLoginDialog('/customer-profile');
       return;
     }
     Navigator.pushNamed(context, '/customer-profile');
   }
 
   void _onHistoryTap() async {
-    // Check if user is logged in before accessing queue history
     final isLoggedIn = await AuthService.isLoggedIn();
     if (!isLoggedIn) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Login Required'),
-          content: const Text('Please login to view your queue history.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pushNamed(
-                  context,
-                  '/login',
-                  arguments: {'returnTo': '/queue-status'},
-                );
-              },
-              child: const Text('Login'),
-            ),
-          ],
-        ),
-      );
+      _showLoginDialog('/queue-status');
       return;
     }
     Navigator.pushNamed(context, '/queue-status');
+  }
+
+  void _showLoginDialog(String returnTo) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Login Required'),
+        content: const Text('Please login to continue.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.pushNamed(
+                context,
+                '/login',
+                arguments: {'returnTo': returnTo},
+              );
+            },
+            child: const Text('Login'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Shop> get _filteredStores {
+    if (_selectedCategory == 'All') return _stores;
+    return _stores.where((store) => store.categories.contains(_selectedCategory)).toList();
   }
 
   @override
@@ -290,17 +271,20 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                     Column(
                       children: [
                         CustomerDashboardHeader(onProfileTap: _onProfileTap),
+                        
+                        // Search Bar
                         if (!_showSearchTray)
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.backgroundLight,
                                 borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.border.withValues(alpha: 0.3)),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.shadowLight.withValues(alpha: 0.1),
-                                    blurRadius: 12,
+                                    color: AppColors.shadowLight.withValues(alpha: 0.05),
+                                    blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
                                 ],
@@ -313,8 +297,8 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                   hintStyle: CommonStyle.bodyMedium.copyWith(
                                     color: AppColors.textSecondary,
                                   ),
-                                  prefixIcon: Container(
-                                    padding: const EdgeInsets.all(12),
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.all(12),
                                     child: Icon(
                                       Icons.search_rounded,
                                       color: AppColors.primary,
@@ -331,58 +315,47 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                               ),
                             ),
                           ),
+                          
+                        // Categories
+                        if (!_showSearchTray)
+                          CustomerDashboardCategories(
+                            categories: _categories,
+                            selectedCategory: _selectedCategory,
+                            onCategorySelected: (cat) {
+                              setState(() {
+                                _selectedCategory = cat;
+                              });
+                            },
+                          ),
+
+                        // Store List
                         Expanded(
                           child: _isLoading
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(20),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primary.withValues(alpha: 0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            AppColors.primary,
-                                          ),
-                                          strokeWidth: 3,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      Text(
-                                        'Loading stores...',
-                                        style: CommonStyle.bodyMedium.copyWith(
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.primary,
                                   ),
                                 )
                               : _buildResponsiveStoreList(isDesktop),
                         ),
                       ],
                     ),
+                    
+                    // Search Tray Overlay
                     if (_showSearchTray)
                       Positioned.fill(
                         child: Material(
-                          color: Colors.white,
+                          color: AppColors.background,
                           child: Column(
                             children: [
-                              // Search bar at the top of the tray (always visible)
                               SafeArea(
                                 bottom: false,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.shadowLight.withValues(alpha: 0.1),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
+                                    color: AppColors.background,
+                                    border: Border(
+                                      bottom: BorderSide(color: AppColors.borderLight),
+                                    ),
                                   ),
                                   child: Padding(
                                     padding: const EdgeInsets.fromLTRB(20, 20, 16, 16),
@@ -393,13 +366,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                             decoration: BoxDecoration(
                                               color: AppColors.backgroundLight,
                                               borderRadius: BorderRadius.circular(16),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: AppColors.shadowLight.withValues(alpha: 0.05),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
+                                              border: Border.all(color: AppColors.border.withValues(alpha: 0.3)),
                                             ),
                                             child: TextField(
                                               controller: _searchController,
@@ -409,8 +376,8 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                                 hintStyle: CommonStyle.bodyMedium.copyWith(
                                                   color: AppColors.textSecondary,
                                                 ),
-                                                prefixIcon: Container(
-                                                  padding: const EdgeInsets.all(12),
+                                                prefixIcon: const Padding(
+                                                  padding: EdgeInsets.all(12),
                                                   child: Icon(
                                                     Icons.search_rounded,
                                                     color: AppColors.primary,
@@ -435,7 +402,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                             borderRadius: BorderRadius.circular(12),
                                           ),
                                           child: IconButton(
-                                            icon: Icon(
+                                            icon: const Icon(
                                               Icons.close_rounded,
                                               size: 24,
                                               color: AppColors.textPrimary,
@@ -454,191 +421,20 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                   ),
                                 ),
                               ),
-                              // Results below
                               Expanded(
                                 child: _searchLoading
-                                    ? const Center(
-                                        child: CircularProgressIndicator())
+                                    ? const Center(child: CircularProgressIndicator())
                                     : _searchError != null
                                         ? Center(
                                             child: Padding(
-                                              padding: EdgeInsets.all(24.0),
+                                              padding: const EdgeInsets.all(24.0),
                                               child: Text(_searchError!,
-                                                  style: TextStyle(
-                                                      color: Colors.red)),
+                                                  style: const TextStyle(color: Colors.red)),
                                             ),
                                           )
                                         : _searchResults.isEmpty
-                                            ? Center(
-                                                child: Column(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  children: [
-                                                    Container(
-                                                      padding: const EdgeInsets.all(24),
-                                                      decoration: BoxDecoration(
-                                                        color: AppColors.backgroundLight,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: Icon(
-                                                        Icons.search_off_rounded,
-                                                        size: 64,
-                                                        color: AppColors.textSecondary,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 16),
-                                                    Text(
-                                                      'No stores found',
-                                                      style: CommonStyle.heading4.copyWith(
-                                                        color: AppColors.textPrimary,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 8),
-                                                    Text(
-                                                      'Try different keywords',
-                                                      style: CommonStyle.bodyMedium.copyWith(
-                                                        color: AppColors.textSecondary,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )
-                                            : ListView.builder(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 8),
-                                                itemCount:
-                                                    _searchResults.length,
-                                                itemBuilder: (context, index) {
-                                                  if (index >=
-                                                      _searchResults.length) {
-                                                    return const SizedBox
-                                                        .shrink();
-                                                  }
-                                                  final shop =
-                                                      _searchResults[index];
-                                                  return Material(
-                                                    color: Colors.transparent,
-                                                    child: InkWell(
-                                                      onTap: () {
-                                                        Navigator.pushNamed(
-                                                          context,
-                                                          '/store/${shop.shopId}',
-                                                        ).then((_) {
-                                                          if (mounted) {
-                                                            setState(() {
-                                                              _showSearchTray = false;
-                                                              _searchController.clear();
-                                                              _searchFocusNode.unfocus();
-                                                            });
-                                                          }
-                                                        });
-                                                      },
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.symmetric(
-                                                          horizontal: 20,
-                                                          vertical: 16,
-                                                        ),
-                                                        child: Row(
-                                                          children: [
-                                                            Container(
-                                                              width: 56,
-                                                              height: 56,
-                                                              decoration: BoxDecoration(
-                                                                borderRadius: BorderRadius.circular(16),
-                                                                boxShadow: [
-                                                                  BoxShadow(
-                                                                    color: AppColors.shadowLight.withValues(alpha: 0.1),
-                                                                    blurRadius: 8,
-                                                                    offset: const Offset(0, 2),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              child: ClipRRect(
-                                                                borderRadius: BorderRadius.circular(16),
-                                                                child: shop.images.isNotEmpty
-                                                                    ? Image.network(
-                                                                        shop.images.first,
-                                                                        width: 56,
-                                                                        height: 56,
-                                                                        fit: BoxFit.cover,
-                                                                        errorBuilder: (context, error, stackTrace) =>
-                                                                            Container(
-                                                                          width: 56,
-                                                                          height: 56,
-                                                                          decoration: BoxDecoration(
-                                                                            gradient: LinearGradient(
-                                                                              colors: [
-                                                                                AppColors.primary.withValues(alpha: 0.1),
-                                                                                AppColors.primaryLight.withValues(alpha: 0.1),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                          child: const Icon(
-                                                                            Icons.store_rounded,
-                                                                            color: AppColors.primary,
-                                                                            size: 28,
-                                                                          ),
-                                                                        ),
-                                                                      )
-                                                                    : Container(
-                                                                        width: 56,
-                                                                        height: 56,
-                                                                        decoration: BoxDecoration(
-                                                                          gradient: LinearGradient(
-                                                                            colors: [
-                                                                              AppColors.primary.withValues(alpha: 0.1),
-                                                                              AppColors.primaryLight.withValues(alpha: 0.1),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                        child: const Icon(
-                                                                          Icons.store_rounded,
-                                                                          color: AppColors.primary,
-                                                                          size: 28,
-                                                                        ),
-                                                                      ),
-                                                              ),
-                                                            ),
-                                                            const SizedBox(width: 16),
-                                                            Expanded(
-                                                              child: Column(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Text(
-                                                                    shop.shopName,
-                                                                    style: CommonStyle.bodyLarge.copyWith(
-                                                                      fontWeight: FontWeight.w600,
-                                                                      color: AppColors.textPrimary,
-                                                                    ),
-                                                                    maxLines: 1,
-                                                                    overflow: TextOverflow.ellipsis,
-                                                                  ),
-                                                                  if (shop.categories.isNotEmpty) ...[
-                                                                    const SizedBox(height: 4),
-                                                                    Text(
-                                                                      shop.categories.join(', '),
-                                                                      style: CommonStyle.bodySmall.copyWith(
-                                                                        color: AppColors.textSecondary,
-                                                                      ),
-                                                                      maxLines: 1,
-                                                                      overflow: TextOverflow.ellipsis,
-                                                                    ),
-                                                                  ],
-                                                                ],
-                                                              ),
-                                                            ),
-                                                            Icon(
-                                                              Icons.chevron_right_rounded,
-                                                              color: AppColors.textSecondary,
-                                                              size: 24,
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
+                                            ? _buildEmptySearchResults()
+                                            : _buildSearchResults(),
                               ),
                             ],
                           ),
@@ -667,8 +463,148 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     );
   }
 
+  Widget _buildEmptySearchResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: AppColors.backgroundLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.search_off_rounded,
+              size: 64,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No stores found',
+            style: CommonStyle.heading4.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try different keywords',
+            style: CommonStyle.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: _searchResults.length,
+      itemBuilder: (context, index) {
+        final shop = _searchResults[index];
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _onStoreTap(shop),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadowLight.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: shop.images.isNotEmpty
+                          ? Image.network(
+                              shop.images.first,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildSearchPlaceholder(),
+                            )
+                          : _buildSearchPlaceholder(),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          shop.shopName,
+                          style: CommonStyle.bodyLarge.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (shop.categories.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            shop.categories.join(', '),
+                            style: CommonStyle.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                    size: 24,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchPlaceholder() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.1),
+            AppColors.primaryLight.withValues(alpha: 0.1),
+          ],
+        ),
+      ),
+      child: const Icon(
+        Icons.store_rounded,
+        color: AppColors.primary,
+        size: 28,
+      ),
+    );
+  }
+
   Widget _buildResponsiveStoreList(bool isDesktop) {
-    if (_stores.isEmpty) {
+    final displayStores = _filteredStores;
+
+    if (displayStores.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -679,7 +615,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.store_outlined,
                 size: 64,
                 color: AppColors.primary,
@@ -695,7 +631,9 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Check back later for new stores',
+              _selectedCategory == 'All' 
+                  ? 'Check back later for new stores'
+                  : 'Try selecting a different category',
               style: CommonStyle.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -706,30 +644,25 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     }
 
     if (isDesktop) {
-      // Use a grid for desktop
       return GridView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           childAspectRatio: 1.2,
         ),
-        itemCount: _stores.length,
+        itemCount: displayStores.length,
         itemBuilder: (context, index) {
-          if (index >= _stores.length) {
-            return const SizedBox.shrink();
-          }
           return CustomerDashboardStoreList(
-            stores: [_stores[index]],
+            stores: [displayStores[index]],
             onStoreTap: _onStoreTap,
           );
         },
       );
     } else {
-      // Use the existing list for mobile
       return CustomerDashboardStoreList(
-        stores: _stores,
+        stores: displayStores,
         onStoreTap: _onStoreTap,
       );
     }

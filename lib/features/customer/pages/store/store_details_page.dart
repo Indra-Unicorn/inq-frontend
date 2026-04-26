@@ -8,7 +8,6 @@ import '../../services/shop_service.dart';
 import 'store_details_header.dart';
 import 'store_details_info.dart';
 import 'store_details_queues.dart';
-import 'store_images_section.dart';
 import '../../models/queue_status.dart';
 import '../../../../shared/widgets/error_dialog.dart';
 import '../../../../services/auth_service.dart';
@@ -191,32 +190,15 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                     child: CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
-                        // Enhanced Header
+                        // Hero Header (SliverAppBar)
+                        StoreDetailsHeader(
+                          store: currentShop!,
+                        ),
+                        
+                        // Info Section
                         SliverToBoxAdapter(
-                          child: StoreDetailsHeader(
+                          child: StoreDetailsInfo(
                             store: currentShop!,
-                          ),
-                        ),
-                        
-                        // Spacing between header and images
-                        const SliverToBoxAdapter(
-                          child: SizedBox(height: 24),
-                        ),
-                        
-                        // Images Section with better spacing
-                        SliverToBoxAdapter(
-                          child: StoreImagesSection(
-                            store: currentShop!,
-                          ),
-                        ),
-                        
-                        // Enhanced Info Section
-                        SliverToBoxAdapter(
-                          child: Transform.translate(
-                            offset: const Offset(0, -20),
-                            child: StoreDetailsInfo(
-                              store: currentShop!,
-                            ),
                           ),
                         ),
                         
@@ -278,7 +260,9 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                         )
                       else if (_error != null)
                         SliverFillRemaining(
-                          child: Center(
+                          hasScrollBody: true,
+                          child: SingleChildScrollView(
+                            child: Center(
                             child: Padding(
                               padding: const EdgeInsets.all(32),
                               child: Container(
@@ -348,10 +332,13 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                               ),
                             ),
                           ),
+                          ),
                         )
                       else if (_queues.isEmpty)
                         SliverFillRemaining(
-                          child: Center(
+                          hasScrollBody: true,
+                          child: SingleChildScrollView(
+                            child: Center(
                             child: Padding(
                               padding: const EdgeInsets.all(32),
                               child: Container(
@@ -421,6 +408,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                               ),
                             ),
                           ),
+                          ),
                         )
                       else if (isDesktop)
                         SliverPadding(
@@ -431,7 +419,7 @@ class _StoreDetailsPageState extends State<StoreDetailsPage> {
                               crossAxisCount: 2,
                               crossAxisSpacing: 16,
                               mainAxisSpacing: 16,
-                              childAspectRatio: 1.6,
+                              mainAxisExtent: 260,
                             ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
